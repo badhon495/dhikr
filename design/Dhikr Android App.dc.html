@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="color-scheme" content="light">
+<link rel="stylesheet" href="_ds/organic-35d1fed7-f8ab-44e7-804e-e8b82263fdd0/styles.css">
+<script src="_ds/organic-35d1fed7-f8ab-44e7-804e-e8b82263fdd0/_ds_bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600&family=Noto+Sans+Bengali:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{color-scheme:light;margin:0;background:#e6ddcd;font-family:"Figtree",system-ui,sans-serif}
+a{color:#8c491a;text-decoration:none}a:hover{color:#c67139}
+[data-theme="light"]{--ap-bg:#f5ead8;--ap-surf:#ebddc5;--ap-card:#f9f4ed;--ap-text:#201e1d;--ap-dim:#645c50;--ap-faint:#a19786;--ap-line:rgba(32,30,29,.13);--ap-sage:#7a8a5e;--ap-sage-soft:#e1eecc;--ap-terra:#c67139;--ap-terra-soft:#ffe1d0;--ap-track:rgba(32,30,29,.10)}
+[data-theme="dark"]{--ap-bg:#1c1a17;--ap-surf:#2a261f;--ap-card:#332e26;--ap-text:#f6efe2;--ap-dim:#c0b6a5;--ap-faint:#82796a;--ap-line:rgba(246,239,226,.12);--ap-sage:#aebf92;--ap-sage-soft:#3d472b;--ap-terra:#f6a06b;--ap-terra-soft:#4d2f18;--ap-track:rgba(246,239,226,.10)}
+@keyframes ap-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding:34px 20px 48px;background:#e6ddcd;min-height:100vh;box-sizing:border-box">
+
+<div style="display:flex;flex-direction:column;gap:3px;text-align:center">
+<div style="font-family:'Caprasimo',serif;font-size:26px;color:#201e1d;letter-spacing:-.01em">Dhikr</div>
+<div style="font-size:12.5px;color:#645c50">Android prototype · tap the counter, switch tabs, run a routine</div>
+</div>
+
+<x-import component-from-global-scope="AndroidDevice" from="./android-frame.jsx" width="{{ 412 }}" height="{{ 892 }}" dark="{{ isDark }}" hint-size="428px,908px">
+<div data-theme="{{ theme }}" style="position:relative;height:100%;display:flex;flex-direction:column;background:var(--ap-bg);color:var(--ap-text);font-family:'Figtree',system-ui,sans-serif;overflow:hidden">
+
+<!-- ── COUNTER ───────────────────────────────────────── -->
+<sc-if value="{{ isCounter }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Counter" style="flex:1;display:flex;flex-direction:column;min-height:0">
+
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px 6px">
+<div onClick="{{ goHome }}" style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ap-dim)" style-hover="background:var(--ap-surf)">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ activeName }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ sessionLabel }}</div>
+</div>
+<div onClick="{{ toggleLock }}" title="Counter lock" style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:{{ lockColor }}" style-hover="background:var(--ap-surf)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="3"></rect><path d="{{ lockShackle }}"></path></svg>
+</div>
+</div>
+
+<sc-if value="{{ inRoutine }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;gap:7px;padding:2px 14px 8px;overflow:hidden">
+<sc-for list="{{ routineChips }}" as="c" hint-placeholder-count="3">
+<div style="flex:none;display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:600;background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</div>
+</sc-for>
+</div>
+</sc-if>
+
+<div onClick="{{ tap }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;user-select:none;padding:6px 20px;min-height:0;overflow:auto">
+
+<sc-if value="{{ hasArabic }}" hint-placeholder-val="{{ true }}">
+<div dir="rtl" style="font-family:'Noto Naskh Arabic',serif;font-size:30px;line-height:1.7;color:var(--ap-text);text-align:center;padding-bottom:2px">{{ activeArabic }}</div>
+</sc-if>
+<div style="font-family:'Noto Sans Bengali',sans-serif;font-size:{{ bnSize }};line-height:{{ bnLine }};color:var(--ap-dim);text-align:{{ bnAlign }};padding-bottom:{{ bnPad }};text-wrap:pretty;flex:none">{{ activeBengali }}</div>
+
+<div style="position:relative;width:{{ ringPx }};height:{{ ringPx }};flex:none;display:flex;align-items:center;justify-content:center">
+<svg width="100%" height="100%" viewBox="0 0 252 252" style="position:absolute;inset:0;transform:rotate(-90deg)">
+<circle cx="126" cy="126" r="112" fill="none" stroke="var(--ap-track)" stroke-width="12"></circle>
+<circle cx="126" cy="126" r="112" fill="none" stroke="var(--ap-terra)" stroke-width="12" stroke-linecap="round" stroke-dasharray="703.7" stroke-dashoffset="{{ dashOffset }}" style="transition:stroke-dashoffset 160ms cubic-bezier(.2,.7,.3,1)"></circle>
+</svg>
+<div style="position:absolute;inset:9%;border-radius:999px;background:var(--ap-card);box-shadow:var(--shadow-sm);transform:scale({{ ringScale }});transition:transform 120ms ease-out"></div>
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;transform:scale({{ numScale }});transition:transform 110ms ease-out">
+<div style="font-family:'Caprasimo',serif;font-size:{{ countSize }};line-height:1;color:var(--ap-text);font-variant-numeric:tabular-nums;letter-spacing:-.03em">{{ count }}</div>
+<div style="font-size:13px;font-weight:600;color:var(--ap-faint);font-variant-numeric:tabular-nums">of {{ lapTarget }}</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:9px;padding-top:20px">
+<div style="display:flex;align-items:center;gap:7px">
+<sc-for list="{{ lapPips }}" as="p" hint-placeholder-count="3">
+<div style="width:{{ p.w }};height:8px;border-radius:999px;background:{{ p.bg }}"></div>
+</sc-for>
+</div>
+<div style="font-size:12.5px;font-weight:600;color:var(--ap-dim);font-variant-numeric:tabular-nums">{{ lapLabel }}</div>
+</div>
+
+<div style="font-size:11.5px;color:var(--ap-faint);padding-top:16px">{{ tapHint }}</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 16px 16px">
+<div onClick="{{ undo }}" style="display:flex;align-items:center;gap:7px;padding:11px 18px;border-radius:999px;background:var(--ap-surf);color:var(--ap-text);font-size:13.5px;font-weight:600;cursor:pointer;min-height:44px;box-sizing:border-box" style-hover="background:var(--ap-card)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg>Undo</div>
+<div onClick="{{ togglePause }}" style="display:flex;align-items:center;gap:7px;padding:11px 18px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};font-size:13.5px;font-weight:600;cursor:pointer;min-height:44px;box-sizing:border-box">{{ pauseLabel }}</div>
+<div onClick="{{ askReset }}" title="Reset" style="width:46px;height:46px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--ap-surf);color:var(--ap-dim);cursor:pointer" style-hover="background:var(--ap-card)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 3v6h-6"></path></svg>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ── HOME ──────────────────────────────────────────── -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Home" style="flex:1;overflow:auto;padding:8px 16px 8px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;align-items:center;gap:14px;padding-top:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:3px">
+<div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.15;letter-spacing:-.01em">Assalamu alaikum</div>
+<div style="font-size:12.5px;color:var(--ap-dim)">Monday, 25 August</div>
+</div>
+
+<div style="position:relative;width:74px;height:74px;flex:none">
+<svg width="74" height="74" viewBox="0 0 74 74" style="transform:rotate(-90deg)">
+<circle cx="37" cy="37" r="31" fill="none" stroke="var(--ap-track)" stroke-width="7"></circle>
+<circle cx="37" cy="37" r="31" fill="none" stroke="var(--ap-terra)" stroke-width="7" stroke-linecap="round" stroke-dasharray="194.8" stroke-dashoffset="{{ dayDash }}"></circle>
+</svg>
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">{{ dayPct }}</div>
+</div>
+</div>
+
+<div onClick="{{ resumeSession }}" style="display:flex;align-items:center;gap:13px;padding:15px 16px;border-radius:28px;background:var(--ap-sage-soft);cursor:pointer;border:1px solid var(--ap-line)">
+<div style="width:42px;height:42px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};display:flex;align-items:center;justify-content:center;flex:none">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l12 7-12 7z"></path></svg>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">Continue session</div>
+<div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ activeName }}</div>
+</div>
+<div style="font-size:14px;font-weight:700;color:var(--ap-dim);font-variant-numeric:tabular-nums;flex:none">{{ resumeCount }}</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Favourites</div>
+<div onClick="{{ goLibrary }}" style="font-size:12.5px;font-weight:600;color:var(--ap-terra);cursor:pointer">All</div>
+</div>
+<sc-for list="{{ favourites }}" as="d" hint-placeholder-count="3">
+<div onClick="{{ d.open }}" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:22px;background:var(--ap-card);cursor:pointer;box-shadow:var(--shadow-sm)" style-hover="background:var(--ap-surf)">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</div>
+<div style="font-family:'Noto Sans Bengali',sans-serif;font-size:12px;color:var(--ap-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.bn }}</div>
+</div>
+<div dir="rtl" style="font-family:'Noto Naskh Arabic',serif;font-size:17px;color:var(--ap-dim);flex:none">{{ d.ar }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Routines</div>
+<div onClick="{{ goRoutines }}" style="font-size:12.5px;font-weight:600;color:var(--ap-terra);cursor:pointer">Manage</div>
+</div>
+<div style="display:flex;gap:10px">
+<sc-for list="{{ routines }}" as="r" hint-placeholder-count="3">
+<div onClick="{{ r.start }}" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;padding:14px 13px;border-radius:22px;background:var(--ap-surf);cursor:pointer;border:1px solid var(--ap-line)" style-hover="background:var(--ap-card)">
+<div style="font-size:13px;font-weight:700;line-height:1.25;text-wrap:pretty">{{ r.name }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ r.meta }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ── SETTINGS ──────────────────────────────────────── -->
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Settings" style="flex:1;display:flex;flex-direction:column;min-height:0">
+<div style="padding:20px 16px 12px;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">Settings</div>
+<div style="flex:1;overflow:auto;padding:4px 16px 8px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">Theme</div>
+<div style="display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--ap-surf);border:1px solid var(--ap-line)">
+<sc-for list="{{ themeOpts }}" as="t" hint-placeholder-count="3">
+<div onClick="{{ t.pick }}" style="flex:1;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:700;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div>
+</sc-for>
+</div>
+</div>
+
+<sc-for list="{{ settingGroups }}" as="g" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">{{ g.title }}</div>
+<div style="display:flex;flex-direction:column;padding:4px 16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+<div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:14px;padding:14px 0;cursor:pointer;border-top:1px solid var(--ap-line)">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font-size:14px;font-weight:600;line-height:1.3;text-wrap:pretty">{{ r.label }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint);line-height:1.4;text-wrap:pretty">{{ r.note }}</div>
+</div>
+<div style="position:relative;width:46px;height:26px;border-radius:999px;background:{{ r.trackBg }};flex:none;transition:background 140ms ease-out">
+<div style="position:absolute;top:2px;left:{{ r.knobX }};width:22px;height:22px;border-radius:999px;background:var(--ap-card);box-shadow:var(--shadow-sm);transition:left 140ms cubic-bezier(.2,.7,.3,1)"></div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">Reminder times</div>
+<div style="display:flex;flex-direction:column;padding:4px 16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<sc-for list="{{ reminderRows }}" as="r" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-top:1px solid var(--ap-line)">
+<div style="width:8px;height:8px;border-radius:999px;background:{{ r.dot }};flex:none"></div>
+<div style="font-family:'Caprasimo',serif;font-size:17px;color:{{ r.fg }};font-variant-numeric:tabular-nums;flex:none">{{ r.time }}</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+<div style="font-size:13.5px;font-weight:600;color:{{ r.fg }}">{{ r.label }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint)">{{ r.days }}</div>
+</div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ap-faint)" stroke-width="2.75" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:10px;padding:14px 0;border-top:1px solid var(--ap-line);color:var(--ap-terra);font-size:13.5px;font-weight:700;cursor:pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add a reminder</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:9px">
+<div style="font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">Your data</div>
+<div style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:26px;background:var(--ap-sage-soft);border:1px solid var(--ap-line)">
+<div style="display:flex;align-items:flex-start;gap:11px">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--ap-sage)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6z"></path></svg>
+<div style="font-size:12.5px;line-height:1.55;color:var(--ap-text);text-wrap:pretty">Everything stays on this phone. No account, no ads, no analytics, and nothing is sent to a server.</div>
+</div>
+<div style="display:flex;gap:9px">
+<div style="flex:1;height:46px;border-radius:999px;background:var(--ap-card);display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ap-text)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"></path></svg>Export</div>
+<div style="flex:1;height:46px;border-radius:999px;background:var(--ap-card);display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:700;cursor:pointer;color:var(--ap-text)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5M7 9l5-5 5 5M5 20h14"></path></svg>Import</div>
+</div>
+<div style="font-size:11px;color:var(--ap-dim);font-variant-numeric:tabular-nums">Last backup — MyTasbihBackup.json · 23 Aug, 21:14</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:4px;padding:2px 4px 8px">
+<div style="font-size:12px;color:var(--ap-faint)">Dhikr 1.0 · Offline · Works without an account</div>
+<div style="font-size:12px;color:var(--ap-faint)">Language — English, বাংলা, العربية</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ── LIBRARY ───────────────────────────────────────── -->
+<sc-if value="{{ isLibrary }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Tasbih library" style="flex:1;display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:20px 16px 12px">
+<div style="font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">Tasbih</div>
+<div onClick="{{ goEditor }}" style="display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};font-size:12.5px;font-weight:700;cursor:pointer">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New</div>
+</div>
+<div style="padding:0 16px 12px">
+<div style="display:flex;align-items:center;gap:9px;padding:0 15px;height:46px;border-radius:999px;background:var(--ap-surf);border:1px solid var(--ap-line)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ap-faint)" stroke-width="2.75" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<input value="{{ query }}" onChange="{{ setQuery }}" placeholder="Search name, Arabic, transliteration" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font-family:'Figtree',system-ui,sans-serif;font-size:13.5px;color:var(--ap-text)">
+</div>
+</div>
+<div style="flex:1;overflow:auto;padding:0 16px 8px;display:flex;flex-direction:column;gap:9px">
+<div style="font-size:11.5px;color:var(--ap-faint);padding-bottom:1px">{{ resultLabel }}</div>
+<sc-for list="{{ results }}" as="d" hint-placeholder-count="6">
+<div onClick="{{ d.open }}" style="display:flex;align-items:center;gap:12px;padding:14px 15px;border-radius:22px;background:var(--ap-card);cursor:pointer;box-shadow:var(--shadow-sm)" style-hover="background:var(--ap-surf)">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+<div style="font-size:14.5px;font-weight:600;line-height:1.25;text-wrap:pretty">{{ d.name }}</div>
+<div style="font-family:'Noto Sans Bengali',sans-serif;font-size:12px;line-height:1.6;color:var(--ap-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ d.bn }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ d.meta }}</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none">
+<div dir="rtl" style="font-family:'Noto Naskh Arabic',serif;font-size:18px;color:var(--ap-text);max-width:96px;text-align:right">{{ d.ar }}</div>
+<div onClick="{{ d.fav }}" style="color:{{ d.favColor }};display:flex">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="{{ d.favFill }}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 20s-7-4.4-7-9.4A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7 3c0 5-7 9.4-7 9.4z"></path></svg>
+</div>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+<div style="padding:34px 10px;text-align:center;font-size:13px;color:var(--ap-faint)">Nothing matches that. Create it as a custom Tasbih.</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ── EDITOR ────────────────────────────────────────── -->
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Custom Tasbih editor" style="flex:1;display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;align-items:center;gap:8px;padding:14px 12px 8px">
+<div onClick="{{ goLibrary }}" style="width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ap-dim)" style-hover="background:var(--ap-surf)">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><path d="M15 18l-6-6 6-6"></path></svg>
+</div>
+<div style="font-family:'Caprasimo',serif;font-size:19px">New Tasbih</div>
+</div>
+<div style="flex:1;overflow:auto;padding:4px 18px 8px;display:flex;flex-direction:column;gap:15px">
+<sc-for list="{{ editorFields }}" as="f" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">{{ f.label }}</label>
+<input value="{{ f.value }}" onChange="{{ f.set }}" dir="{{ f.dir }}" placeholder="{{ f.hint }}" style="height:48px;padding:0 16px;border-radius:999px;border:1px solid var(--ap-line);background:var(--ap-card);outline:0;font-family:{{ f.font }};font-size:14px;color:var(--ap-text);box-sizing:border-box">
+</div>
+</sc-for>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Personal note</label>
+<textarea value="{{ noteValue }}" onChange="{{ setNote }}" placeholder="Why you are reciting it" rows="3" style="padding:13px 16px;border-radius:22px;border:1px solid var(--ap-line);background:var(--ap-card);outline:0;font-family:'Figtree',system-ui,sans-serif;font-size:14px;color:var(--ap-text);resize:none;box-sizing:border-box"></textarea>
+</div>
+<div style="display:flex;gap:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px">
+<label style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Lap target</label>
+<div style="display:flex;align-items:center;justify-content:space-between;height:48px;padding:0 6px 0 16px;border-radius:999px;border:1px solid var(--ap-line);background:var(--ap-card)">
+<span style="font-size:16px;font-weight:700;font-variant-numeric:tabular-nums">{{ newLap }}</span>
+<div style="display:flex;gap:4px">
+<div onClick="{{ lapDown }}" style="width:36px;height:36px;border-radius:999px;background:var(--ap-surf);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;font-weight:700;color:var(--ap-dim)">−</div>
+<div onClick="{{ lapUp }}" style="width:36px;height:36px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;font-weight:700">+</div>
+</div>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px">
+<label style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Daily goal</label>
+<div style="display:flex;gap:5px">
+<sc-for list="{{ goalOpts }}" as="g" hint-placeholder-count="3">
+<div onClick="{{ g.pick }}" style="flex:1;height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums;background:{{ g.bg }};color:{{ g.fg }};border:1px solid var(--ap-line);box-sizing:border-box">{{ g.label }}</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div onClick="{{ saveCustom }}" style="margin-top:4px;height:52px;border-radius:999px;background:var(--ap-terra);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;cursor:pointer">Save Tasbih</div>
+<div style="font-size:11.5px;color:var(--ap-faint);text-align:center;padding-bottom:6px">Stored on this device only. Nothing is uploaded.</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ── ROUTINES ──────────────────────────────────────── -->
+<sc-if value="{{ isRoutines }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Routines" style="flex:1;display:flex;flex-direction:column;min-height:0">
+<div style="padding:20px 16px 12px;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">Routines</div>
+<div style="flex:1;overflow:auto;padding:0 16px 8px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ routines }}" as="r" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:11px;padding:16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<div style="font-size:16px;font-weight:700">{{ r.name }}</div>
+<div style="font-size:11.5px;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ r.meta }}</div>
+</div>
+<div onClick="{{ r.start }}" style="display:flex;align-items:center;gap:6px;padding:9px 15px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};font-size:12.5px;font-weight:700;cursor:pointer;flex:none">Start</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ r.steps }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--ap-line)">
+<div style="width:22px;font-size:11.5px;font-weight:700;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ s.n }}</div>
+<div style="flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</div>
+<div style="font-size:13px;font-weight:700;color:var(--ap-terra);font-variant-numeric:tabular-nums">{{ s.count }}</div>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ap-faint)" stroke-width="2.75" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div onClick="{{ goEditor }}" style="height:50px;border-radius:999px;border:1.5px dashed var(--ap-line);display:flex;align-items:center;justify-content:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--ap-dim);cursor:pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>New routine</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ── INSIGHTS (statistics + history) ───────────────── -->
+<sc-if value="{{ isInsights }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Insights" style="flex:1;display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:20px 16px 12px">
+<div style="font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">Insights</div>
+<div style="font-size:12px;color:var(--ap-faint)">August</div>
+</div>
+<sc-if value="{{ historyEmptyState }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 40px;text-align:center">
+<div style="width:66px;height:66px;border-radius:999px;background:var(--ap-surf);display:flex;align-items:center;justify-content:center;color:var(--ap-faint)">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l4 2"></path></svg>
+</div>
+<div style="font-size:15px;font-weight:700">No sessions yet</div>
+<div style="font-size:13px;color:var(--ap-dim);line-height:1.5;text-wrap:pretty">Counts appear here as soon as you finish your first session.</div>
+<div onClick="{{ goCounter }}" style="margin-top:4px;padding:12px 22px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};font-size:13.5px;font-weight:700;cursor:pointer">Start counting</div>
+</div>
+</sc-if>
+<sc-if value="{{ historyHasData }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;overflow:auto;padding:0 16px 8px;display:flex;flex-direction:column;gap:14px">
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<sc-for list="{{ totals }}" as="t" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:3px;padding:14px 15px;border-radius:22px;background:var(--ap-surf);border:1px solid var(--ap-line)">
+<div style="font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ap-dim)">{{ t.label }}</div>
+<div style="font-family:'Caprasimo',serif;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums">{{ t.value }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:11px;padding:16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Last 7 days</div>
+<div style="display:flex;align-items:flex-end;gap:9px;height:112px">
+<sc-for list="{{ week }}" as="b" hint-placeholder-count="7">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end">
+<div style="font-size:10.5px;color:var(--ap-faint);font-variant-numeric:tabular-nums">{{ b.count }}</div>
+<div style="width:100%;height:{{ b.h }};border-radius:10px;background:{{ b.bg }}"></div>
+<div style="font-size:10.5px;font-weight:600;color:var(--ap-dim)">{{ b.day }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">Consistency</div>
+<div style="font-size:11.5px;color:var(--ap-faint)">23 days this month</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+<sc-for list="{{ calendar }}" as="c" hint-placeholder-count="31">
+<div style="aspect-ratio:1;border-radius:9px;background:{{ c.bg }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:{{ c.fg }};font-variant-numeric:tabular-nums">{{ c.day }}</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding-top:2px">
+<div style="font-size:10.5px;color:var(--ap-faint)">less</div>
+<sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+<div style="width:16px;height:16px;border-radius:6px;background:{{ l.bg }}"></div>
+</sc-for>
+<div style="font-size:10.5px;color:var(--ap-faint)">more</div>
+</div>
+</div>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;padding:4px 2px 0">
+<div style="font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ap-dim)">History</div>
+<div style="font-size:11.5px;color:var(--ap-faint)">grouped by Dhikr</div>
+</div>
+
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:8px;padding:15px 16px;border-radius:26px;background:var(--ap-card);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="flex:1;min-width:0;font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.name }}</div>
+<div style="font-size:12px;font-weight:700;color:var(--ap-terra);font-variant-numeric:tabular-nums;flex:none">{{ h.total }}</div>
+</div>
+<sc-for list="{{ h.days }}" as="d" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:11px;padding-top:7px;border-top:1px solid var(--ap-line)">
+<div style="width:76px;font-size:12.5px;color:var(--ap-dim);flex:none">{{ d.day }}</div>
+<div style="flex:1;height:7px;border-radius:999px;background:var(--ap-track);overflow:hidden">
+<div style="height:100%;width:{{ d.w }};border-radius:999px;background:var(--ap-sage)"></div>
+</div>
+<div style="width:42px;text-align:right;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;flex:none">{{ d.count }}</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ── BOTTOM NAV ────────────────────────────────────── -->
+<div style="display:flex;align-items:stretch;padding:6px 4px 8px;background:var(--ap-surf);border-top:1px solid var(--ap-line);flex:none">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+<div onClick="{{ n.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;cursor:pointer;min-height:52px;box-sizing:border-box">
+<div style="display:flex;align-items:center;justify-content:center;width:52px;height:28px;border-radius:999px;background:{{ n.pillBg }};color:{{ n.color }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d }}"></path></svg>
+</div>
+<div style="font-size:10.5px;font-weight:600;color:{{ n.color }}">{{ n.label }}</div>
+</div>
+</sc-for>
+</div>
+
+<!-- ── OVERLAYS ──────────────────────────────────────── -->
+<sc-if value="{{ showResume }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(20,18,16,.45);display:flex;align-items:flex-end;padding:18px;z-index:5">
+<div style="width:100%;background:var(--ap-card);border-radius:30px;padding:22px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-lg);animation:ap-rise 220ms ease-out">
+<div style="font-family:'Caprasimo',serif;font-size:20px;letter-spacing:-.01em">Continue where you left off?</div>
+<div style="font-size:13.5px;color:var(--ap-dim);line-height:1.5">{{ resumeLine }}</div>
+<div style="display:flex;gap:10px;padding-top:14px">
+<div onClick="{{ startNew }}" style="flex:1;height:48px;border-radius:999px;background:var(--ap-surf);color:var(--ap-text);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer">Start new</div>
+<div onClick="{{ continueSession }}" style="flex:1;height:48px;border-radius:999px;background:var(--ap-terra);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer">Continue</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showGoal }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ dismissGoal }}" style="position:absolute;inset:0;background:rgba(20,18,16,.5);display:flex;align-items:center;justify-content:center;padding:26px;z-index:6;cursor:pointer">
+<div style="width:100%;background:var(--ap-card);border-radius:34px;padding:30px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;box-shadow:var(--shadow-lg);animation:ap-rise 240ms ease-out">
+<div style="width:76px;height:76px;border-radius:999px;background:var(--ap-sage-soft);display:flex;align-items:center;justify-content:center;color:var(--ap-sage)">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5 5L20 7"></path></svg>
+</div>
+<div style="font-family:'Caprasimo',serif;font-size:22px;letter-spacing:-.01em">{{ goalTitle }}</div>
+<div style="font-size:13.5px;color:var(--ap-dim);line-height:1.5;text-wrap:pretty">{{ goalLine }}</div>
+<div style="margin-top:10px;padding:13px 26px;border-radius:999px;background:var(--ap-sage);color:{{ onSage }};font-size:14px;font-weight:700">Done</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showReset }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(20,18,16,.45);display:flex;align-items:center;justify-content:center;padding:26px;z-index:7">
+<div style="width:100%;background:var(--ap-card);border-radius:30px;padding:24px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-lg);animation:ap-rise 200ms ease-out">
+<div style="font-family:'Caprasimo',serif;font-size:19px">Reset this session?</div>
+<div style="font-size:13.5px;color:var(--ap-dim);line-height:1.5">{{ resetLine }} will be cleared. This cannot be undone.</div>
+<div style="display:flex;gap:10px;padding-top:14px">
+<div onClick="{{ cancelReset }}" style="flex:1;height:48px;border-radius:999px;background:var(--ap-surf);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;cursor:pointer">Keep counting</div>
+<div onClick="{{ doReset }}" style="flex:1;height:48px;border-radius:999px;background:var(--ap-terra);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer">Reset</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;right:0;bottom:74px;display:flex;justify-content:center;z-index:4;pointer-events:none">
+<div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:var(--ap-terra-soft);color:var(--ap-terra);font-size:12px;font-weight:700;box-shadow:var(--shadow-sm)">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="3"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+Counter locked — reset and nav are blocked</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+
+<div style="font-size:11.5px;color:#645c50;max-width:430px;text-align:center;line-height:1.5;text-wrap:pretty">Arabic and Bengali transliteration only; no hadith references, counts-as-obligation claims, or attributed benefits are shown. Use the Tweaks panel for dark mode, large-counter mode, and the empty-history state.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:1010},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;largeCounter&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;hapticHint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Display&quot;},&quot;emptyHistory&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype state&quot;},&quot;resumePrompt&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype state&quot;}}">
+const DHIKR = [
+  {id:'kursi', name:'Ayatul Kursi', ar:'', bn:'আল্লাহু লা ইলাহা ইল্লা হুয়াল হাইয়্যুল কইয়্যুমু লা তা খুজুহু সিনাত্যু ওয়ালা নাউম। লাহু মা ফিছছামা ওয়াতি ওয়ামা ফিল আরদ। মান যাল্লাযী ইয়াস ফায়ু ইন দাহু ইল্লা বি ইজনিহি ইয়া লামু মা বাইনা আইদিহিম ওয়ামা খল ফাহুম ওয়ালা ইউ হিতুনা বিশাই ইম্ মিন ইল্ মিহি ইল্লা বিমা সাআ ওয়াসিয়া কুরসিইউ হুস ছামা ওয়াতি ওয়াল আরদ্ ওয়ালা ইয়া উদুহু হিফজুহুমা ওয়াহুয়াল আলিয়্যুল আজিম', tr:'', lapTarget:7, laps:1, fav:true},
+  {id:'subhan', name:'SubhanAllah', ar:'سُبْحَانَ اللّٰه', bn:'সুবহানাল্লাহ', tr:'Glory be to Allah', lapTarget:33, laps:3, fav:true},
+  {id:'hamd', name:'Alhamdulillah', ar:'الْحَمْدُ لِلّٰه', bn:'আলহামদুলিল্লাহ', tr:'All praise is due to Allah', lapTarget:33, laps:3, fav:true},
+  {id:'akbar', name:'Allahu Akbar', ar:'اللّٰهُ أَكْبَر', bn:'আল্লাহু আকবার', tr:'Allah is the greatest', lapTarget:34, laps:3, fav:true},
+  {id:'istighfar', name:'Astaghfirullah', ar:'أَسْتَغْفِرُ اللّٰه', bn:'আস্তাগফিরুল্লাহ', tr:'I seek forgiveness from Allah', lapTarget:100, laps:1, fav:false},
+  {id:'bihamdihi', name:'Subhanallahi wa bihamdihi', ar:'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ', bn:'সুবহানাল্লাহি ওয়া বিহামদিহি', tr:'Glory be to Allah and praise be to Him', lapTarget:100, laps:1, fav:false},
+  {id:'hawla', name:'La hawla wa la quwwata illa billah', ar:'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللّٰه', bn:'লা হাওলা ওয়ালা কুওয়াতা ইল্লা বিল্লাহ', tr:'There is no power nor strength except with Allah', lapTarget:33, laps:1, fav:false}
+];
+
+const ROUTINES = [
+  {id:'morning', name:'Morning Dhikr', steps:[['subhan',33],['hamd',33],['akbar',34]]},
+  {id:'salah', name:'After Salah', steps:[['subhan',33],['hamd',33],['akbar',34]]},
+  {id:'sleep', name:'Before Sleep', steps:[['istighfar',100],['bihamdihi',100]]}
+];
+
+const HISTORY = [
+  {id:'subhan', days:[['Today','132'],['Yesterday','99'],['Sat 23 Aug','99'],['Fri 22 Aug','66']], total:'1,914'},
+  {id:'hamd', days:[['Today','132'],['Yesterday','99'],['Sat 23 Aug','66'],['Thu 21 Aug','99']], total:'1,782'},
+  {id:'akbar', days:[['Today','136'],['Yesterday','102'],['Sat 23 Aug','68']], total:'1,836'},
+  {id:'istighfar', days:[['Today','66'],['Sat 23 Aug','100'],['Wed 20 Aug','200']], total:'1,300'},
+  {id:'bihamdihi', days:[['Yesterday','100'],['Fri 22 Aug','100']], total:'700'}
+];
+
+const WEEK = [['Tue',420],['Wed',512],['Thu',388],['Fri',610],['Sat',433],['Sun',295],['Mon',466]];
+const CAL = [2,1,3,2,0,2,3,1,2,2,3,0,1,2,2,3,3,1,0,2,2,3,2,1,2,0,0,0,0,0,0];
+
+const NAV = [
+  {k:'home', label:'Home', d:'M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z'},
+  {k:'library', label:'Tasbih', d:'M5 19V5a1 1 0 0 1 1-1h11a2 2 0 0 1 2 2v13H7a2 2 0 0 0-2 2M9 8h7'},
+  {k:'counter', label:'Count', d:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 8v8M8 12h8'},
+  {k:'insights', label:'Insights', d:'M4 20h16M7 20v-6M12 20v-11M17 20v-4'},
+  {k:'settings', label:'Settings', d:'M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4M19.5 14.4a1.7 1.7 0 0 0 .3 1.9 1.9 1.9 0 1 1-2.7 2.7 1.7 1.7 0 0 0-2.9 1.2 1.9 1.9 0 1 1-3.8 0 1.7 1.7 0 0 0-2.9-1.2 1.9 1.9 0 1 1-2.7-2.7 1.7 1.7 0 0 0-1.2-2.9 1.9 1.9 0 1 1 0-3.8 1.7 1.7 0 0 0 1.2-2.9 1.9 1.9 0 1 1 2.7-2.7 1.7 1.7 0 0 0 2.9-1.2 1.9 1.9 0 1 1 3.8 0 1.7 1.7 0 0 0 2.9 1.2 1.9 1.9 0 1 1 2.7 2.7 1.7 1.7 0 0 0 1.2 2.9 1.9 1.9 0 1 1 0 3.8 1.7 1.7 0 0 0-1.5 1.1'}
+];
+
+const byId = id => DHIKR.find(d => d.id === id) || DHIKR[0];
+const fmt = n => n.toLocaleString('en-US');
+
+class Component extends DCLogic {
+  state = {
+    screen: 'counter',
+    activeId: 'kursi',
+    count: 3, lap: 1, prev: null,
+    running: true, elapsed: 763,
+    locked: false, showResume: true, showGoal: false, showReset: false,
+    numScale: 1, ringScale: 1,
+    query: '', favs: {kursi:true, subhan:true, hamd:true, akbar:true},
+    routineId: null, routineStep: 0,
+    newName: '', newAr: '', newTr: '', newNote: '', newLap: 33, newGoal: 100,
+    goalMsg: null,
+    set: {haptic:true, sound:false, awake:true, lockOnStart:false, reminders:true, autoAdvance:true, arabicFirst:true},
+    themePick: 'System'
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (this.state.running && this.state.screen === 'counter') {
+        this.setState(s => ({elapsed: s.elapsed + 1}));
+      }
+    }, 1000);
+    if (this.props.resumePrompt === false) this.setState({showResume: false});
+  }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._p); }
+
+  active() { return byId(this.state.activeId); }
+  lapTarget() {
+    const s = this.state;
+    if (s.routineId) {
+      const r = ROUTINES.find(x => x.id === s.routineId);
+      return r.steps[s.routineStep][1];
+    }
+    return this.active().lapTarget;
+  }
+  laps() { return this.state.routineId ? 1 : this.active().laps; }
+
+  pulse() {
+    clearTimeout(this._p);
+    this.setState({numScale: 1.07, ringScale: 1.02});
+    this._p = setTimeout(() => this.setState({numScale: 1, ringScale: 1}), 110);
+  }
+
+  tap = () => {
+    const s = this.state, target = this.lapTarget(), laps = this.laps();
+    if (this.props.hapticHint !== false) this.pulse();
+    if (s.count + 1 < target) { this.setState({count: s.count + 1, prev: {count: s.count, lap: s.lap}}); return; }
+    if (s.lap < laps) {
+      this.setState({count: 0, lap: s.lap + 1, prev: {count: s.count, lap: s.lap}});
+      return;
+    }
+    // final lap complete
+    if (s.routineId) {
+      const r = ROUTINES.find(x => x.id === s.routineId);
+      if (s.routineStep + 1 < r.steps.length) {
+        const next = r.steps[s.routineStep + 1];
+        this.setState({routineStep: s.routineStep + 1, activeId: next[0], count: 0, lap: 1, prev: null});
+        return;
+      }
+      this.setState({count: target, showGoal: true, running: false, goalMsg: 'routine'});
+      return;
+    }
+    this.setState({count: target, showGoal: true, running: false, goalMsg: 'goal'});
+  };
+
+  undo = () => {
+    const p = this.state.prev;
+    if (!p) return;
+    if (this.props.hapticHint !== false) this.pulse();
+    this.setState({count: p.count, lap: p.lap, prev: null});
+  };
+
+  go = k => () => { if (this.state.locked && this.state.screen === 'counter') return; this.setState({screen: k}); };
+
+  openDhikr = id => () => this.setState({screen:'counter', activeId:id, count:0, lap:1, prev:null, running:true, elapsed:0, routineId:null, showResume:false});
+  startRoutine = id => () => {
+    const r = ROUTINES.find(x => x.id === id);
+    this.setState({screen:'counter', routineId:id, routineStep:0, activeId:r.steps[0][0], count:0, lap:1, prev:null, running:true, elapsed:0, showResume:false});
+  };
+  toggleFav = id => e => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    this.setState(s => ({favs: Object.assign({}, s.favs, {[id]: !s.favs[id]})}));
+  };
+
+  renderVals() {
+    const s = this.state, p = this.props;
+    const dark = (p.theme || 'light') === 'dark';
+    const a = this.active();
+    const target = this.lapTarget(), laps = this.laps();
+    const sage = dark ? '#aebf92' : '#7a8a5e';
+    const onSage = dark ? '#272e1b' : '#f9f4ed';
+    const calBg = ['var(--ap-track)', dark ? '#3d472b' : '#e1eecc', dark ? '#728157' : '#aebf92', sage];
+    const calFg = l => (l >= 2 ? (dark ? '#f6efe2' : '#272e1b') : 'var(--ap-faint)');
+    const emptyHist = p.emptyHistory === true;
+
+    const longBn = a.bn.length > 90;
+    const q = s.query.trim().toLowerCase();
+    const matches = DHIKR.filter(d => !q || (d.name + ' ' + d.ar + ' ' + d.bn + ' ' + d.tr).toLowerCase().includes(q));
+
+    const routine = s.routineId ? ROUTINES.find(x => x.id === s.routineId) : null;
+    const mm = String(Math.floor(s.elapsed / 60)).padStart(2, '0');
+    const ss = String(s.elapsed % 60).padStart(2, '0');
+    const total = (s.lap - 1) * target + s.count;
+    const rate = s.elapsed > 4 ? Math.round(total / (s.elapsed / 60)) : 0;
+
+    return {
+      theme: dark ? 'dark' : 'light',
+      isDark: dark, onSage,
+
+      isCounter: s.screen === 'counter', isHome: s.screen === 'home',
+      isLibrary: s.screen === 'library', isEditor: s.screen === 'editor',
+      isRoutines: s.screen === 'routines',
+      isInsights: s.screen === 'insights',
+      goInsights: this.go('insights'),
+
+      activeName: a.name, activeArabic: a.ar, activeBengali: a.bn,
+      hasArabic: !!a.ar,
+      isLongText: longBn,
+      bnSize: longBn ? '13.5px' : '14.5px',
+      bnLine: longBn ? '2.0' : '1.45',
+      bnAlign: longBn ? 'justify' : 'center',
+      bnPad: longBn ? '16px' : '22px',
+      ringPx: longBn ? '178px' : '252px',
+      count: s.count, lapTarget: target,
+      countSize: p.largeCounter ? (longBn ? '76px' : '116px') : (longBn ? '56px' : '84px'),
+      dashOffset: 703.7 * (1 - Math.min(1, s.count / target)),
+      numScale: s.numScale, ringScale: s.ringScale,
+      lapLabel: routine ? ('Step ' + (s.routineStep + 1) + ' of ' + routine.steps.length) : ('Lap ' + s.lap + ' of ' + laps + ' · ' + total + ' of ' + target * laps),
+      lapPips: Array.from({length: laps}, (_, i) => ({
+        w: i + 1 === s.lap ? '26px' : '8px',
+        bg: i + 1 < s.lap ? sage : (i + 1 === s.lap ? 'var(--ap-terra)' : 'var(--ap-track)')
+      })),
+      sessionLabel: mm + ':' + ss + (rate ? '  ·  ' + rate + '/min' : ''),
+      tapHint: s.locked ? 'Locked — counting still works' : 'Tap anywhere to count',
+      pauseLabel: s.running ? 'Pause' : 'Resume',
+      lockColor: s.locked ? 'var(--ap-terra)' : 'var(--ap-faint)',
+      lockShackle: s.locked ? 'M8 11V8a4 4 0 0 1 8 0v3' : 'M8 11V8a4 4 0 0 1 7-2.6',
+      locked: s.locked,
+
+      tap: this.tap, undo: this.undo,
+      togglePause: () => this.setState({running: !s.running}),
+      toggleLock: () => this.setState({locked: !s.locked}),
+      askReset: () => { if (!s.locked) this.setState({showReset: true}); },
+      cancelReset: () => this.setState({showReset: false}),
+      doReset: () => this.setState({showReset: false, count: 0, lap: 1, prev: null, elapsed: 0}),
+      resetLine: total + ' counts',
+
+      goHome: this.go('home'), goLibrary: this.go('library'), goRoutines: this.go('routines'),
+      goEditor: this.go('editor'), goCounter: this.go('counter'),
+      historyGoCounter: this.go('counter'),
+
+      inRoutine: !!routine,
+      routineChips: routine ? routine.steps.map((st, i) => ({
+        label: byId(st[0]).name.split(' ')[0] + ' ' + st[1],
+        bg: i === s.routineStep ? sage : 'var(--ap-surf)',
+        fg: i === s.routineStep ? onSage : (i < s.routineStep ? 'var(--ap-faint)' : 'var(--ap-dim)')
+      })) : [],
+
+      dayPct: '58%', dayDash: 194.8 * 0.42,
+      resumeCount: s.count + '/' + target,
+      resumeSession: this.go('counter'),
+      favourites: DHIKR.filter(d => s.favs[d.id]).map(d => ({name: d.name, bn: d.bn, ar: d.ar, open: this.openDhikr(d.id)})),
+      routines: ROUTINES.map(r => ({
+        name: r.name,
+        meta: r.steps.length + ' steps · ' + r.steps.reduce((n, x) => n + x[1], 0) + ' counts',
+        steps: r.steps.map((x, i) => ({n: i + 1, name: byId(x[0]).name, count: x[1]})),
+        start: this.startRoutine(r.id)
+      })),
+
+      query: s.query,
+      setQuery: e => this.setState({query: e.target.value}),
+      resultLabel: q ? matches.length + ' of ' + DHIKR.length + ' match "' + s.query + '"' : DHIKR.length + ' built-in · 0 custom',
+      noResults: matches.length === 0,
+      results: matches.map(d => ({
+        name: d.name, bn: d.bn, ar: d.ar,
+        meta: d.laps > 1 ? (d.lapTarget + ' × ' + d.laps + ' laps') : (d.lapTarget + ' per lap'),
+        open: this.openDhikr(d.id), fav: this.toggleFav(d.id),
+        favColor: s.favs[d.id] ? 'var(--ap-terra)' : 'var(--ap-faint)',
+        favFill: s.favs[d.id] ? 'currentColor' : 'none'
+      })),
+
+      editorFields: [
+        {label:'Name', value:s.newName, hint:'e.g. Evening Tasbih', dir:'ltr', font:"'Figtree',system-ui,sans-serif", set:e=>this.setState({newName:e.target.value})},
+        {label:'Arabic text', value:s.newAr, hint:'اكتب الذكر', dir:'rtl', font:"'Noto Naskh Arabic',serif", set:e=>this.setState({newAr:e.target.value})},
+        {label:'Translation', value:s.newTr, hint:'What it means', dir:'ltr', font:"'Figtree',system-ui,sans-serif", set:e=>this.setState({newTr:e.target.value})}
+      ],
+      noteValue: s.newNote,
+      setNote: e => this.setState({newNote: e.target.value}),
+      newLap: s.newLap,
+      lapUp: () => this.setState({newLap: s.newLap + 1}),
+      lapDown: () => this.setState({newLap: Math.max(1, s.newLap - 1)}),
+      goalOpts: [33, 100, 500].map(g => ({
+        label: g, pick: () => this.setState({newGoal: g}),
+        bg: s.newGoal === g ? sage : 'var(--ap-card)',
+        fg: s.newGoal === g ? onSage : 'var(--ap-dim)'
+      })),
+      saveCustom: () => this.setState({screen: 'library'}),
+
+      historyEmptyState: emptyHist,
+      historyHasData: !emptyHist,
+      history: HISTORY.map(h => ({
+        name: byId(h.id).name, total: h.total,
+        days: h.days.map(d => ({day: d[0], count: d[1], w: Math.min(100, (parseInt(d[1], 10) / 200) * 100) + '%'}))
+      })),
+
+      totals: [
+        {label:'Today', value:'466'}, {label:'This week', value:'3,124'},
+        {label:'This month', value:'11,240'}, {label:'All time', value:'84,619'}
+      ],
+      week: WEEK.map(w => ({
+        day: w[0], count: w[1],
+        h: Math.round((w[1] / 660) * 88) + 'px',
+        bg: w[0] === 'Mon' ? 'var(--ap-terra)' : sage
+      })),
+      calendar: CAL.map((l, i) => ({day: i + 1, bg: calBg[l], fg: calFg(l)})),
+      legend: calBg.map(b => ({bg: b})),
+
+      isSettings: s.screen === 'settings',
+      goSettings: this.go('settings'),
+      themeOpts: ['System', 'Light', 'Dark'].map(t => ({
+        label: t, pick: () => this.setState({themePick: t}),
+        bg: s.themePick === t ? sage : 'transparent',
+        fg: s.themePick === t ? onSage : 'var(--ap-dim)'
+      })),
+      settingGroups: [
+        {title: 'Counting', rows: [
+          {k:'haptic', label:'Vibration on each count', note:'Short tick, off in silent mode'},
+          {k:'sound', label:'Sound on each count', note:'Bundled locally, no download'},
+          {k:'awake', label:'Keep screen awake while counting', note:'Only during an active session'},
+          {k:'lockOnStart', label:'Counter lock on start', note:'Blocks reset and navigation by accident'},
+          {k:'autoAdvance', label:'Advance routines automatically', note:'Move to the next step on completion'}
+        ]},
+        {title: 'Display', rows: [
+          {k:'arabicFirst', label:'Arabic above transliteration', note:'Otherwise transliteration leads'}
+        ]},
+        {title: 'Reminders', rows: [
+          {k:'reminders', label:'Daily reminders', note:'Local notifications only'}
+        ]}
+      ].map(g => ({
+        title: g.title,
+        rows: g.rows.map(r => ({
+          label: r.label, note: r.note,
+          on: !!s.set[r.k],
+          toggle: () => this.setState(st => ({set: Object.assign({}, st.set, {[r.k]: !st.set[r.k]})})),
+          trackBg: s.set[r.k] ? sage : 'var(--ap-track)',
+          knobX: s.set[r.k] ? '22px' : '2px'
+        }))
+      })),
+      reminderRows: [
+        {time:'06:10', label:'After Fajr', days:'Every day', on:true},
+        {time:'21:30', label:'Before sleep', days:'Sun–Thu', on:true},
+        {time:'17:45', label:'After Asr', days:'Fri, Sat', on:false}
+      ].map(r => ({
+        time: r.time, label: r.label, days: r.days,
+        dot: r.on ? sage : 'var(--ap-track)',
+        fg: r.on ? 'var(--ap-text)' : 'var(--ap-faint)'
+      })),
+
+      showResume: s.showResume,
+      resumeLine: a.name + ' — ' + s.count + ' of ' + target + ', paused ' + mm + ':' + ss + ' ago.',
+      continueSession: () => this.setState({showResume: false}),
+      startNew: () => this.setState({showResume: false, count: 0, lap: 1, elapsed: 0, prev: null}),
+
+      showGoal: s.showGoal,
+      goalTitle: s.goalMsg === 'routine' ? 'Routine complete' : 'Goal reached',
+      goalLine: s.goalMsg === 'routine'
+        ? (routine ? routine.name + ' finished — ' + routine.steps.reduce((n, x) => n + x[1], 0) + ' counts in ' + mm + ':' + ss + '.' : '')
+        : (fmt(target * laps) + ' of ' + a.name + ' in ' + mm + ':' + ss + '.'),
+      dismissGoal: () => this.setState({showGoal: false, count: 0, lap: 1, elapsed: 0, running: true, prev: null}),
+      showReset: s.showReset,
+
+      nav: NAV.map(n => ({
+        label: n.label, d: n.d, go: this.go(n.k),
+        pillBg: s.screen === n.k ? (dark ? '#3d472b' : '#e1eecc') : 'transparent',
+        color: s.screen === n.k ? (dark ? '#aebf92' : '#56633f') : 'var(--ap-faint)'
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
