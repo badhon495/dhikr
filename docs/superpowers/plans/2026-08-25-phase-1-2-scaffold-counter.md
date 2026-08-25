@@ -269,7 +269,6 @@ dependencies {
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:name=".DhikrApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -290,10 +289,14 @@ dependencies {
 </manifest>
 ```
 
-Note: this references `.DhikrApplication` (created in Task 4) and default launcher
-mipmaps. If `@mipmap/ic_launcher` doesn't exist yet, Android Studio's default project
-template icons are acceptable placeholders for this phase — ask the user before
-spending time on custom launcher icon design, since it isn't in scope.
+Note: this manifest deliberately has no `android:name` on `<application>` yet — a
+custom `DhikrApplication` class doesn't exist until Task 4, and referencing it before
+then would fail the build. Task 4 adds `android:name=".DhikrApplication"` back into
+this file once the class exists (see Task 4's Files list). This also references
+default launcher mipmaps. If `@mipmap/ic_launcher` doesn't exist yet, Android
+Studio's default project template icons are acceptable placeholders for this phase —
+ask the user before spending time on custom launcher icon design, since it isn't in
+scope.
 
 - [ ] **Step 11: Write `app/src/main/res/values/strings.xml`**
 
@@ -383,15 +386,14 @@ git commit -m "Scaffold Android project: Gradle, AGP, Compose, minimal MainActiv
 - Create: `app/src/main/res/font/figtree.ttf` (binary, downloaded)
 - Create: `app/src/main/res/font/noto_naskh_arabic.ttf` (binary, downloaded)
 - Create: `app/src/main/res/font/noto_sans_bengali.ttf` (binary, downloaded)
-- Create: `app/src/main/res/font/caprasimo.xml`
-- Create: `app/src/main/res/font/figtree_family.xml`
-- Create: `app/src/main/res/font/noto_naskh_arabic_family.xml`
-- Create: `app/src/main/res/font/noto_sans_bengali_family.xml`
 
 **Interfaces:**
-- Produces: four `androidx.compose.ui.text.font.FontFamily` values (`Caprasimo`,
-  `Figtree`, `NotoNaskhArabic`, `NotoSansBengali`), defined in Task 3's `Type.kt`,
-  built from the font resources created here via `Font(R.font.xxx, ...)`.
+- Produces: four raw font resources (`R.font.caprasimo_regular`, `R.font.figtree`,
+  `R.font.noto_naskh_arabic`, `R.font.noto_sans_bengali`), consumed directly by
+  Task 3's `Type.kt` via Compose's `Font(R.font.xxx, ...)` constructor. No
+  `font-family` XML wrapper files are created — those exist for `android:fontFamily`
+  in classic Android View XML, which this Compose-only project never uses; creating
+  them would be dead weight nothing reads.
 
 - [ ] **Step 1: Download the four font TTFs from the google/fonts OFL source**
 
@@ -422,64 +424,13 @@ Android resource filenames must be lowercase snake_case with no brackets — the
 `[wght]` / `[wdth,wght]` suffixes from the upstream filenames are intentionally
 dropped in the local filenames above.
 
-- [ ] **Step 2: Write `caprasimo.xml`** (single static weight, no variable axis)
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="400"
-        android:font="@font/caprasimo_regular" />
-</font-family>
-```
-
-- [ ] **Step 3: Write `figtree_family.xml`** (variable font — single entry per
-      Android's font-family XML variable-font support on API 26+; on API 24–25 the
-      system renders the font's default instance regardless of `android:fontWeight`,
-      which is the accepted limitation from the spec)
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="400"
-        android:font="@font/figtree" />
-</font-family>
-```
-
-- [ ] **Step 4: Write `noto_naskh_arabic_family.xml`**
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="400"
-        android:font="@font/noto_naskh_arabic" />
-</font-family>
-```
-
-- [ ] **Step 5: Write `noto_sans_bengali_family.xml`**
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:android="http://schemas.android.com/apk/res/android">
-    <font
-        android:fontStyle="normal"
-        android:fontWeight="400"
-        android:font="@font/noto_sans_bengali" />
-</font-family>
-```
-
-- [ ] **Step 6: Build to verify font resources are valid and package correctly**
+- [ ] **Step 2: Build to verify font resources are valid and package correctly**
 
 Run: `./gradlew assembleDebug`
-Expected: `BUILD SUCCESSFUL`. A malformed font file or XML will fail resource
-processing at this step.
+Expected: `BUILD SUCCESSFUL`. A malformed font file will fail resource processing at
+this step.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add app/src/main/res/font/
@@ -718,12 +669,15 @@ git commit -m "Add Organic design token colors, typography, shapes, DhikrTheme"
 - Create: `app/src/main/java/com/dhikr/app/core/model/Dhikr.kt`
 - Create: `app/src/main/java/com/dhikr/app/core/model/BuiltInDhikr.kt`
 - Create: `app/src/main/java/com/dhikr/app/DhikrApplication.kt`
+- Modify: `app/src/main/AndroidManifest.xml` (add `android:name=".DhikrApplication"`
+  to the `<application>` tag — Task 1 deliberately left this attribute off since the
+  class didn't exist yet)
 
 **Interfaces:**
 - Produces: `data class Dhikr(id, name, arabic, transliteration, translation, lapTarget, lapCount, isFavorite)`
   and `object BuiltInDhikr { val all: List<Dhikr> }`.
-- `DhikrApplication` is referenced by `AndroidManifest.xml` (`android:name=".DhikrApplication"`,
-  written in Task 1) — must exist for the manifest to resolve.
+- `DhikrApplication` will be referenced by `AndroidManifest.xml` once this task adds
+  the attribute back (Step 3a below).
 
 - [ ] **Step 1: Write `Dhikr.kt`**
 
@@ -841,16 +795,37 @@ import android.app.Application
 class DhikrApplication : Application()
 ```
 
+- [ ] **Step 3a: Add `android:name=".DhikrApplication"` to the manifest's
+      `<application>` tag**
+
+Modify `app/src/main/AndroidManifest.xml` (created in Task 1) so the `<application>`
+opening tag reads:
+
+```xml
+    <application
+        android:name=".DhikrApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Dhikr"
+        android:supportsRtl="true">
+```
+
+(i.e. add the `android:name=".DhikrApplication"` line; every other attribute stays
+as Task 1 wrote it.)
+
 - [ ] **Step 4: Build to verify**
 
 Run: `./gradlew assembleDebug`
-Expected: `BUILD SUCCESSFUL`.
+Expected: `BUILD SUCCESSFUL`. This is the first point in the plan where the manifest
+fully resolves — if it fails here, check that `DhikrApplication.kt`'s package and
+class name exactly match the manifest's `android:name=".DhikrApplication"` reference.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/src/main/java/com/dhikr/app/core/model/ app/src/main/java/com/dhikr/app/DhikrApplication.kt
-git commit -m "Add Dhikr domain model and built-in library content"
+git add app/src/main/java/com/dhikr/app/core/model/ app/src/main/java/com/dhikr/app/DhikrApplication.kt app/src/main/AndroidManifest.xml
+git commit -m "Add Dhikr domain model, built-in library content, and DhikrApplication"
 ```
 
 ---
@@ -1456,9 +1431,10 @@ git commit -m "Add CounterViewModel with debounced session persistence"
 - Create: `app/src/main/java/com/dhikr/app/feature/counter/CounterScreen.kt`
 - Create: `app/src/main/java/com/dhikr/app/feature/counter/CounterIcons.kt`
 - Modify: `app/src/main/java/com/dhikr/app/DhikrApp.kt`
-- Modify: `app/src/main/AndroidManifest.xml` (none expected — listed for completeness, skip if unchanged)
 - Modify: `app/src/main/res/values/strings.xml`
-- Modify: `app/src/main/java/com/dhikr/app/MainActivity.kt` (flush session on stop)
+- Modify: `app/src/main/java/com/dhikr/app/feature/counter/CounterViewModel.kt` (add
+  `flushSession()`, called from a lifecycle observer in `CounterScreen.kt` — see
+  Step 5; `MainActivity.kt` itself is not touched by this task)
 
 **Interfaces:**
 - Consumes: `CounterViewModel` (Task 7), `DhikrTheme`/`DhikrColors` (Task 3),
@@ -2001,13 +1977,13 @@ Add the missing `import androidx.compose.runtime.remember` while implementing �
 omitted above by oversight, must be present for `remember(context) { ... }` to
 compile.
 
-- [ ] **Step 5: Flush the session synchronously on `ON_STOP` from `MainActivity`**
+- [ ] **Step 5: Flush the session on `ON_STOP` via a Compose lifecycle observer**
 
-Modify `MainActivity.kt` so the app never loses a session to process death between
-the 500ms debounce window and backgrounding. Simplest correct approach: perform the
-flush inside `DhikrApp`/`CounterViewModel` via a `DisposableEffect` observing
-`LocalLifecycleOwner`, rather than threading it through `MainActivity` — update the
-plan's approach here to:
+The app must never lose a session to process death between the 500ms debounce
+window and backgrounding. This is done entirely in Compose — via a
+`DisposableEffect` observing `LocalLifecycleOwner` inside `CounterScreen` — not by
+touching `MainActivity.kt` (see the note at the end of this step for why the Files
+list above doesn't include it).
 
 In `CounterScreen.kt`, add near the top of `CounterScreen`'s body:
 ```kotlin
@@ -2030,9 +2006,8 @@ fun flushSession() {
     viewModelScope.launch { persist() }
 }
 ```
-`MainActivity.kt` itself needs no changes — remove it from this task's Files list
-understanding (the plan's Files section above listed it defensively; skip modifying
-it since the lifecycle-observer approach lives entirely in Compose).
+`MainActivity.kt` itself needs no changes — the lifecycle-observer approach lives
+entirely in Compose, which is why it isn't in this task's Files list.
 
 - [ ] **Step 6: Build to verify**
 
