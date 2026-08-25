@@ -71,7 +71,8 @@ app/src/main/java/com/dhikr/app/
 ```
 
 - `applicationId` / package: `com.dhikr.app`
-- `minSdk 24` (Android 7.0), `targetSdk`/`compileSdk` = latest stable (35)
+- `minSdk 24` (Android 7.0), `targetSdk`/`compileSdk` = 36 (latest stable as of
+  Aug 2026, confirmed against AGP 9.3.0's supported range at plan time)
 - Kotlin, Jetpack Compose (BOM, latest stable), Material 3, Kotlin Coroutines,
   AndroidX Lifecycle/ViewModel, AndroidX DataStore (Preferences), Navigation Compose.
 - No Room, no WorkManager, no notification/widget dependencies added this phase —
