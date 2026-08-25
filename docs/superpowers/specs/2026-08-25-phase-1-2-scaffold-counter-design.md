@@ -71,8 +71,11 @@ app/src/main/java/com/dhikr/app/
 ```
 
 - `applicationId` / package: `com.dhikr.app`
-- `minSdk 24` (Android 7.0), `targetSdk`/`compileSdk` = 36 (latest stable as of
-  Aug 2026, confirmed against AGP 9.3.0's supported range at plan time)
+- `minSdk 24` (Android 7.0), `targetSdk`/`compileSdk` = 37 (raised from an initial
+  36 during implementation: Compose BOM 2026.08.00 bundles Compose 1.12.0, which
+  hard-requires compileSdk 37 via AGP's AAR metadata check with no override; AGP
+  9.3.0 supports up to API 37 per its own release notes, so this is within the
+  already-verified-compatible range)
 - Kotlin, Jetpack Compose (BOM, latest stable), Material 3, Kotlin Coroutines,
   AndroidX Lifecycle/ViewModel, AndroidX DataStore (Preferences), Navigation Compose.
 - No Room, no WorkManager, no notification/widget dependencies added this phase —

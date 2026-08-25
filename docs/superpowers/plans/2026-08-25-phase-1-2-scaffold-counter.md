@@ -25,7 +25,12 @@ WorkManager, no notification/widget libraries this phase.
 ## Global Constraints
 
 - `applicationId` / package root: `com.dhikr.app`
-- `minSdk 24`, `targetSdk`/`compileSdk 36`
+- `minSdk 24`, `targetSdk`/`compileSdk 37` (raised from 36 during Task 1
+  implementation: Compose BOM 2026.08.00 bundles Compose 1.12.0, which hard-requires
+  compileSdk 37 via AGP's AAR metadata check, with no override — confirmed via
+  https://developer.android.com/jetpack/androidx/releases/compose-runtime and the
+  live build failure. AGP 9.3.0 supports up to API 37 per its own release notes, so
+  this is within the already-verified-compatible range.)
 - AGP `9.3.0`, Gradle wrapper `9.5.0`, JDK `17`, Kotlin `2.3.20`, Compose BOM `2026.08.00`
 - No ads/tracking/analytics SDKs, no account/login, no network calls, no Room this phase
 - No database write on every tap — debounced/batched persistence off the tap path
@@ -207,12 +212,12 @@ plugins {
 
 android {
     namespace = "com.dhikr.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.dhikr.app"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
     }
