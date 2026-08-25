@@ -115,9 +115,19 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ```
+
+AGP 9.0+ has **built-in Kotlin support** and hard-rejects the separate
+`org.jetbrains.kotlin.android` / `org.jetbrains.kotlin.plugin.compose` Gradle
+plugins being applied alongside it (this is a documented breaking change:
+https://kotl.in/gradle/agp-built-in-kotlin — confirmed via Google's own migration
+guide at https://developer.android.com/build/migrate-to-built-in-kotlin). Since
+Kotlin 2.0, the Compose compiler ships bundled with the Kotlin distribution and is
+version-matched automatically — there is no separate Compose-compiler plugin or
+version to pin under AGP 9's built-in Kotlin model. Do not add `kotlin-android` or
+`kotlin-compose` to the `[plugins]` table; `agp` and `kotlin` version refs are still
+needed (AGP consumes the `kotlin` version internally for its built-in support), so
+keep both entries in `[versions]` above.
 
 - [ ] **Step 3: Write root `settings.gradle.kts`**
 
@@ -146,8 +156,6 @@ include(":app")
 ```kotlin
 plugins {
     alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.kotlin.compose) apply false
 }
 ```
 
@@ -187,8 +195,6 @@ do not guess or fabricate a wrapper jar.
 ```kotlin
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -221,9 +227,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 
     buildFeatures {
         compose = true
@@ -233,6 +236,16 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+// AGP 9's built-in Kotlin support moves compiler options out of android{} and
+// into this top-level kotlin{} block (replaces the old android.kotlinOptions{}
+// DSL). jvmTarget would default to compileOptions' targetCompatibility (17)
+// even without this block; it's set explicitly here for clarity.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
