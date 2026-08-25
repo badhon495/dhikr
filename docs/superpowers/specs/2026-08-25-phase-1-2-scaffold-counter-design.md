@@ -35,8 +35,8 @@ meaningful and are listed starting from Phase 3 onward in plan.md.
    (`Dhikr Android App.dc.html` lines 594–621).
 3. A Counter screen in Compose, visually faithful to `design/README.md` §"1. Counter",
    backed by the engine through a ViewModel, with session state surviving process death.
-4. Unit tests for the engine's edge cases and a Compose UI test for the primary
-   tap/undo/lap/reset flow.
+4. A successful Gradle build. See "Testing" below — no automated tests are required
+   this phase; the user verifies behavior manually.
 
 ## Non-goals
 
@@ -163,11 +163,12 @@ Logic ported directly from the prototype's proven `tap()`/`undo()` (verified aga
 - **pause()/resume()**: toggle `running`; the engine does not run its own timer —
   elapsed-time tracking is a ViewModel/UI concern so the engine has no background
   work and cannot leak (plan.md §51/§52).
-- Edge cases explicitly handled and unit-tested: `lapTarget = 1` (every tap completes
-  a lap), `totalLaps = 1` (no lap rollover, behaves like a flat counter),
-  target already reached + extra increment (no-op, no overflow), undo with no prior
-  state (no-op, does not throw), undo immediately after a lap-boundary increment
-  (restores prior lap's count correctly).
+- Edge cases explicitly handled in the implementation (no automated tests required
+  this phase — see "Testing"): `lapTarget = 1` (every tap completes a lap),
+  `totalLaps = 1` (no lap rollover, behaves like a flat counter), target already
+  reached + extra increment (no-op, no overflow), undo with no prior state (no-op,
+  does not throw), undo immediately after a lap-boundary increment (restores prior
+  lap's count correctly).
 
 Progress/derived values (never stored, computed on read, per `design/README.md`
 "State" section): `totalCount = (lap - 1) * lapTarget + count`, `progressFraction =
@@ -252,30 +253,23 @@ Per plan.md §57, this phase's failure modes and fallbacks:
 
 ## Testing
 
-**Unit tests** (`TasbihCounter`, JVM, no Android dependency):
-- Increment below lap target, at lap target (lap rollover), at final target
-  (completion + no-op on further increments).
-- `lapTarget = 1`, `totalLaps = 1`.
-- Undo after a plain increment; undo across a lap boundary; undo with nothing to
-  undo (no-op, no throw).
-- Progress fraction and total-count derivation at various count/lap combinations.
-- Reset clears count, lap, and pending undo state.
+Verification for this phase is **build-only**: after implementation, run a Gradle
+build (`assembleDebug` or equivalent) and confirm it succeeds. Do not write unit
+tests, Compose UI tests, or perform manual/emulator verification — the user will test
+the running app manually. If the build passes, the phase is considered done; do not
+spend further effort trying to exercise app behavior.
 
-**Compose UI test** (primary flow, per plan.md §58):
-- Tap increments the displayed count immediately.
-- Undo restores the previous count.
-- Reaching lap target advances the lap pip and resets the in-lap count.
-- Reset button opens a confirmation dialog; confirming clears the session, dismissing
-  leaves it untouched.
-- Lock toggle blocks the back button and hides/disables reset without blocking
-  counting.
-
-**Manual verification**: run on emulator/device — cold start with no prior session,
-cold start with a persisted session (kill app mid-session, relaunch), rotate device
-mid-session (state survives), long-text Dhikr (Ayatul Kursi) renders in full without
-clipping and switches to the compact ring/count sizing.
+This overrides plan.md §58/§59's general unit/UI/integration/edge-case testing
+requirements for this phase specifically — those apply to later phases if/when the
+user asks for them.
 
 ## Open questions / assumptions carried forward
+
+If an implementation question arises that isn't already answered by this spec,
+`plan.md`, or `design/README.md`, ask the user directly rather than guessing or
+picking a "reasonable default" silently. The items below are assumptions already
+confirmed as reasonable to carry forward without re-asking; anything new that comes
+up during implementation should be asked, not inferred.
 
 - Ayatul Kursi's Arabic field is empty in both the prototype and this phase (per
   `design/README.md` §Content note); Arabic text for it is not fabricated here and
