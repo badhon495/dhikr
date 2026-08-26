@@ -43,7 +43,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -68,6 +73,7 @@ private const val LONG_TEXT_THRESHOLD = 90
 fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+    val haptic = LocalHapticFeedback.current
     var showResetDialog by remember { mutableStateOf(false) }
 
     // Flush the in-flight session to disk on ON_STOP so a session is never lost
@@ -182,7 +188,10 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 .clickable(
                     interactionSource = tapInteractionSource,
                     indication = null,
-                ) { viewModel.onTap() },
+                ) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    viewModel.onTap()
+                },
         ) {
             val viewportHeight = maxHeight
             Column(
@@ -253,7 +262,10 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                             .clip(CircleShape)
                             .background(colors.card),
                     )
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    ) {
                         Text(
                             text = state.count.toString(),
                             style = countStyle,

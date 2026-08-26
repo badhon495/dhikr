@@ -87,12 +87,20 @@ class CounterViewModel(
     }
 
     fun onUndo() {
+        // If the session was complete, increment() had paused the engine as part
+        // of finishing — undoing past that point should un-stick it. An ordinary
+        // undo of a normal tap while the user had manually paused must NOT force
+        // a resume, so only auto-resume when completion is what caused the
+        // paused state.
+        val wasComplete = engine.snapshot().isComplete
         engine.undo()
+        if (wasComplete && !engine.isRunning()) engine.resume()
         _uiState.value = buildState()
     }
 
     fun onReset() {
         engine.reset()
+        engine.resume()
         elapsedSeconds = 0
         _uiState.value = buildState()
     }

@@ -20,6 +20,6 @@ fun DhikrTheme(
 ) {
     val tokens = if (darkTheme) DarkDhikrColors else LightDhikrColors
     CompositionLocalProvider(LocalDhikrColors provides tokens) {
-        MaterialTheme(content = content)
+        MaterialTheme(typography = DhikrTypography, content = content)
     }
 }
