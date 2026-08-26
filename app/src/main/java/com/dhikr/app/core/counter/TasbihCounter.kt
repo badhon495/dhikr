@@ -11,14 +11,12 @@ class TasbihCounter(lapTarget: Int, private val totalLaps: Int) {
     private var complete = false
 
     fun increment(): CounterSnapshot {
-        if (complete) {
-            // No-op once the final lap's target is reached — prevents overflow on
-            // rapid/double taps after completion.
-            return snapshot()
-        }
-
         previous = count to lap
         var justCompletedLap = false
+        // True only on the tap that first reaches the final lap's target —
+        // goal-reached signals (session log, routine advance) fire once here,
+        // not on every subsequent tap.
+        var justCompleted = false
 
         if (count + 1 < lapTarget) {
             count += 1
@@ -26,13 +24,20 @@ class TasbihCounter(lapTarget: Int, private val totalLaps: Int) {
             count = 0
             lap += 1
             justCompletedLap = true
-        } else {
+        } else if (!complete) {
             count = lapTarget
             complete = true
-            running = false
+            justCompleted = true
+        } else {
+            // Goal already reached on final lap — keep lapping past it using
+            // lapTarget as modulus instead of freezing count or piling up
+            // past lapTarget forever.
+            count = 0
+            lap += 1
+            justCompletedLap = true
         }
 
-        return snapshot().copy(justCompletedLap = justCompletedLap)
+        return snapshot().copy(justCompletedLap = justCompletedLap, isComplete = justCompleted)
     }
 
     fun undo(): CounterSnapshot {
@@ -69,7 +74,7 @@ class TasbihCounter(lapTarget: Int, private val totalLaps: Int) {
     }
 
     fun resume() {
-        if (!complete) running = true
+        running = true
     }
 
     fun isRunning(): Boolean = running

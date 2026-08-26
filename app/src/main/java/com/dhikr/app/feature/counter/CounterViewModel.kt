@@ -80,7 +80,16 @@ class CounterViewModel(
 
     private suspend fun initializeSession() {
         val savedSession = sessionRepository.sessionFlow.first()
-        val routineIdToLoad = requestedRoutineId ?: savedSession?.routineId
+        // The saved routine only resumes on a true bare "continue" (neither a
+        // specific Tasbih nor a specific routine requested). If the caller
+        // asked for a specific Tasbih (requestedStartingId set) but no
+        // routine, that is an explicit pick that must win over — and exit —
+        // whatever routine was left unfinished, same as it already wins over
+        // a plain saved single-Tasbih session below (finding #3). Without
+        // this, picking any other Tasbih while a routine is in progress
+        // silently reopened the unfinished routine instead.
+        val routineIdToLoad = requestedRoutineId
+            ?: savedSession?.routineId.takeIf { requestedStartingId == null }
         if (routineIdToLoad != null) {
             val routine = routineRepository.getWithSteps(routineIdToLoad)
             if (routine != null && routine.steps.isNotEmpty()) {

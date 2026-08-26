@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#3DDC84</color>
+    <!-- Mirrors DhikrColorTokens.bg (Color.kt) so the window background under
+         the transparent edge-to-edge status/nav bars matches app content
+         instead of the platform's default white, which otherwise bleeds
+         through as a white status bar before Compose draws its first frame. -->
+    <color name="window_background">#F5EAD8</color>
 </resources>

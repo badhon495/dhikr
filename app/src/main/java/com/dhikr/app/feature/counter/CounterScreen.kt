@@ -1,5 +1,6 @@
 package com.dhikr.app.feature.counter
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -50,10 +51,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -71,11 +76,56 @@ import kotlin.math.min
 private const val LONG_TEXT_THRESHOLD = 90
 
 @Composable
-fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
+fun CounterScreen(
+    viewModel: CounterViewModel,
+    onBack: () -> Unit,
+    // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
+    // bottom nav bar lives in — CounterScreen has no reach to it directly.
+    onLockedChanged: (Boolean) -> Unit = {},
+) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
     val haptic = LocalHapticFeedback.current
     var showResetDialog by remember { mutableStateOf(false) }
+
+    // The on-screen back chevron is gated on !state.locked, but the system
+    // back gesture/button bypasses that entirely — it doesn't go through
+    // the chevron's clickable at all. Intercept and swallow it here so a
+    // pocket-touch (or the OS back gesture) can't leave a locked session.
+    BackHandler(enabled = state.locked) {}
+
+    // Locking the counter goes beyond this screen's own controls: it also
+    // hides the app's bottom nav bar (DhikrApp owns that Scaffold, so it
+    // can't read CounterViewModel directly) and drops the system status/
+    // navigation bars into immersive mode so a pocket-touch can't background
+    // the app or pull down notifications mid-session. The nav-bar side is
+    // reported upward here; the system-bar side is handled locally below.
+    LaunchedEffect(state.locked) {
+        onLockedChanged(state.locked)
+    }
+
+    val view = LocalView.current
+    DisposableEffect(state.locked, view) {
+        val window = (view.context as? android.app.Activity)?.window
+        if (window != null) {
+            val controller = WindowCompat.getInsetsController(window, view)
+            if (state.locked) {
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+            } else {
+                controller.show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+        onDispose {
+            // Always restore system bars on leaving the screen, regardless of
+            // lock state, so a locked session left via the system back
+            // gesture/task switcher never strands the app in immersive mode.
+            if (window != null) {
+                WindowCompat.getInsetsController(window, view).show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
 
     // Flush the in-flight session to disk on ON_STOP so a session is never lost
     // to process death inside the ViewModel's 500ms save debounce window.
@@ -398,20 +448,22 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.surface)
-                    .clickable(enabled = state.sessionReady && state.canUndo) { viewModel.onUndo() }
+                    // Undo is blocked while locked, same as reset — a pocket
+                    // touch shouldn't be able to unwind counted taps either.
+                    .clickable(enabled = state.sessionReady && state.canUndo && !state.locked) { viewModel.onUndo() }
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Icon(
                     imageVector = undoIcon(),
                     contentDescription = null,
-                    tint = if (state.canUndo) colors.text else colors.faint,
+                    tint = if (state.canUndo && !state.locked) colors.text else colors.faint,
                     modifier = Modifier.size(17.dp),
                 )
                 Text(
                     text = stringResource(R.string.counter_undo),
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (state.canUndo) colors.text else colors.faint,
+                    color = if (state.canUndo && !state.locked) colors.text else colors.faint,
                 )
             }
             Row(
@@ -419,9 +471,12 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(PillShape)
-                    .background(colors.sage)
+                    .background(if (state.locked) colors.surface else colors.sage)
                     // Room's seed data may not have loaded yet (finding #2).
-                    .clickable(enabled = state.sessionReady) { viewModel.onTogglePause() }
+                    // Pause/resume is blocked while locked too — the lock's
+                    // whole point is a session that can't be knocked off
+                    // course by a stray touch.
+                    .clickable(enabled = state.sessionReady && !state.locked) { viewModel.onTogglePause() }
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Text(
@@ -432,7 +487,7 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                     },
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = colors.onSage,
+                    color = if (state.locked) colors.faint else colors.onSage,
                 )
             }
             Box(

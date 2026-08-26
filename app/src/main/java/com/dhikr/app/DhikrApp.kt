@@ -10,7 +10,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -67,8 +69,28 @@ fun DhikrApp() {
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
 
+        // Hoisted here rather than read off CounterViewModel directly: this
+        // Scaffold — and the bottom nav bar it owns — sits outside the
+        // NavHost destination that creates the Counter screen's ViewModel.
+        // CounterScreen reports lock changes up through onLockedChanged.
+        var counterLocked by remember { mutableStateOf(false) }
+        val currentBackStackEntry by navController.currentBackStackEntryAsState()
+        val onCounterRoute = currentBackStackEntry?.destination?.route?.substringBefore("?") ==
+            ROUTE_COUNTER.substringBefore("?")
+
         Scaffold(
-            bottomBar = { DhikrBottomNav(navController) },
+            containerColor = DhikrTheme.colors.bg,
+            bottomBar = {
+                // Locking the counter hides the bottom nav entirely, on top
+                // of CounterScreen locking its own back/undo/pause/reset
+                // controls — a pocket touch shouldn't be able to switch tabs
+                // out of a locked session either. Guarded on onCounterRoute
+                // too so a stale true from a just-left session can't hide
+                // the bar elsewhere in the app.
+                if (!(counterLocked && onCounterRoute)) {
+                    DhikrBottomNav(navController)
+                }
+            },
         ) { padding ->
             NavHost(
                 navController = navController,
@@ -124,7 +146,11 @@ fun DhikrApp() {
                             dhikrId, routineId, historyRepository,
                         ),
                     )
-                    CounterScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+                    CounterScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onLockedChanged = { counterLocked = it },
+                    )
                 }
                 composable(ROUTE_INSIGHTS) {
                     val viewModel: InsightsViewModel = viewModel(

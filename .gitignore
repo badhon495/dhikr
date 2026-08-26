@@ -13,3 +13,11 @@
 *.apk
 *.aab
 .superpowers/
+
+# AI agent/IDE config dirs
+.clinerules/
+.cursor/
+.opencode/
+.windsurf/
+.github/
+AGENTS.md
