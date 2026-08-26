@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -177,11 +178,38 @@ private fun DhikrBottomNav(navController: NavController) {
 
     NavigationBar(containerColor = colors.surface) {
         items.forEach { (route, labelRes, iconRes) ->
-            val selected = currentRoute?.startsWith(route.substringBefore("?")) == true
+            val baseRoute = route.substringBefore("?")
+            // Finding #7: an exact match against the route's own base path
+            // (not startsWith) so a sub-route sharing the same prefix — e.g.
+            // ROUTE_TASBIH_EDITOR ("tasbih/editor?id={id}") vs
+            // ROUTE_TASBIH_LIBRARY ("tasbih") — doesn't fool the Tasbih tab
+            // into showing selected while the editor screen is open.
+            // currentRoute is the *route template* (e.g. "tasbih/editor?id={id}"),
+            // not the resolved path, so comparing its own substringBefore("?")
+            // against baseRoute is the correct like-for-like comparison.
+            val selected = currentRoute?.substringBefore("?") == baseRoute
             val label = stringResource(labelRes)
             NavigationBarItem(
                 selected = selected,
-                onClick = { if (!selected) navController.navigate(route.substringBefore("?")) },
+                onClick = {
+                    if (!selected) {
+                        // Finding #7: standard Compose Navigation bottom-nav
+                        // pattern — popUpTo the graph's start destination with
+                        // saveState so switching tabs doesn't grow the back
+                        // stack unbounded (and the system back button doesn't
+                        // walk the whole tab-switch history), launchSingleTop
+                        // so repeated taps on the same tab don't stack
+                        // duplicate entries, and restoreState so returning to
+                        // a previously-visited tab resumes where it left off.
+                        navController.navigate(baseRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
                 icon = { Icon(painterResource(iconRes), contentDescription = label) },
                 label = { Text(label, fontSize = 10.5.sp) },
                 colors = NavigationBarItemDefaults.colors(
