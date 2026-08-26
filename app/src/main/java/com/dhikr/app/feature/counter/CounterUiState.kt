@@ -2,6 +2,8 @@ package com.dhikr.app.feature.counter
 
 import com.dhikr.app.core.database.entity.TasbihEntity
 
+data class RoutineStepDisplay(val tasbihName: String, val targetCount: Int)
+
 data class CounterUiState(
     val dhikr: TasbihEntity,
     val count: Int,
@@ -13,6 +15,10 @@ data class CounterUiState(
     val elapsedSeconds: Int,
     val isComplete: Boolean,
     val justCompletedLap: Boolean,
+    val routineSteps: List<RoutineStepDisplay> = emptyList(),
+    val currentRoutineStepIndex: Int = -1,
+    val isRoutineComplete: Boolean = false,
+    val routineName: String? = null,
 ) {
     val totalCount: Int get() = (lap - 1) * dhikr.lapTarget + count
     val progressFraction: Float get() = count.toFloat() / dhikr.lapTarget.toFloat()

@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.counter.TasbihCounter
+import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
+import com.dhikr.app.core.database.dao.RoutineWithSteps
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.model.CounterSessionState
@@ -24,7 +26,9 @@ import kotlinx.coroutines.launch
 class CounterViewModel(
     private val sessionRepository: SessionRepository,
     private val tasbihRepository: TasbihRepository,
+    private val routineRepository: RoutineRepository,
     startingDhikrId: String? = null,
+    startingRoutineId: String? = null,
 ) : ViewModel() {
 
     private lateinit var dhikr: TasbihEntity
@@ -41,10 +45,16 @@ class CounterViewModel(
     // case dhikr/engine are never assigned and _uiState stays at Empty.
     private var sessionReady = false
 
+    // Routine state — empty/−1 means "not running a routine".
+    private var activeRoutine: RoutineWithSteps? = null
+    private var routineStepIndex = -1
+    private var routineStepNames: List<String> = emptyList()
+
     private val _uiState = MutableStateFlow(CounterUiState.Empty)
     val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
 
     private val requestedStartingId = startingDhikrId
+    private val requestedRoutineId = startingRoutineId
 
     init {
         viewModelScope.launch {
@@ -61,7 +71,30 @@ class CounterViewModel(
 
     private suspend fun initializeSession() {
         val savedSession = sessionRepository.sessionFlow.first()
-        val idToLoad = savedSession?.activeDhikrId ?: requestedStartingId
+        val routineIdToLoad = requestedRoutineId ?: savedSession?.routineId
+        if (routineIdToLoad != null) {
+            val routine = routineRepository.getWithSteps(routineIdToLoad)
+            if (routine != null && routine.steps.isNotEmpty()) {
+                activeRoutine = routine
+                val sortedSteps = routine.steps.sortedBy { it.stepOrder }
+                routineStepNames = sortedSteps.map { step ->
+                    tasbihRepository.getById(step.tasbihId)?.name ?: step.tasbihId
+                }
+                routineStepIndex = (savedSession?.routineStep ?: 0).coerceIn(0, sortedSteps.lastIndex)
+                val currentStep = sortedSteps[routineStepIndex]
+                val stepTasbih = tasbihRepository.getById(currentStep.tasbihId)
+                if (stepTasbih != null) {
+                    dhikr = stepTasbih
+                    engine = TasbihCounter(currentStep.targetCount, 1)
+                    applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
+                    sessionReady = true
+                    _uiState.value = buildState()
+                    return
+                }
+            }
+        }
+        // Not a routine (or the routine/step Tasbih couldn't be resolved —
+        // fall through to plain single-Tasbih behavior rather than crashing).
         // Never crash if the requested/saved Tasbih can't be found (deleted
         // custom Tasbih, corrupted DataStore referencing a stale id, etc.) —
         // fall back to whatever Tasbih Room actually has, per plan.md §57's
@@ -71,12 +104,19 @@ class CounterViewModel(
         // and leaving `dhikr`/`engine` uninitialized in that one pathological
         // case is acceptable since the screen has nothing to count without at
         // least one Tasbih existing.
+        val idToLoad = savedSession?.activeDhikrId ?: requestedStartingId
         val loaded = idToLoad?.let { tasbihRepository.getById(it) }
             ?: tasbihRepository.observeAll().first().firstOrNull()
         if (loaded == null) return // nothing to load; _uiState stays at Empty
         dhikr = loaded
         engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
-        if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
+        applyRestoredCountIfMatching(savedSession, loaded.id)
+        sessionReady = true
+        _uiState.value = buildState()
+    }
+
+    private fun applyRestoredCountIfMatching(savedSession: CounterSessionState?, loadedTasbihId: String) {
+        if (savedSession != null && savedSession.activeDhikrId == loadedTasbihId) {
             // Engine has no public state setter beyond increment/undo/reset by
             // design (keeps it a minimal state machine) — for restore we
             // reconstruct via the package-private restore hook instead of
@@ -92,8 +132,6 @@ class CounterViewModel(
             elapsedSeconds = savedSession.elapsedSeconds
             if (!savedSession.running) engine.pause()
         }
-        sessionReady = true
-        _uiState.value = buildState()
     }
 
     private fun startTimer() {
@@ -110,7 +148,40 @@ class CounterViewModel(
 
     fun onTap() {
         val snap = engine.increment()
+        if (snap.isComplete && activeRoutine != null) {
+            advanceRoutineStep()
+            return
+        }
         _uiState.value = buildState(justCompletedLap = snap.justCompletedLap)
+    }
+
+    private fun advanceRoutineStep() {
+        val routine = activeRoutine ?: return
+        val sortedSteps = routine.steps.sortedBy { it.stepOrder }
+        val nextIndex = routineStepIndex + 1
+        if (nextIndex > sortedSteps.lastIndex) {
+            // Last step just completed — signal routine completion, no
+            // interruption to the current display (the completion overlay is
+            // a Compose-level dialog in CounterScreen, not a state reset here).
+            _uiState.value = buildState().copy(isRoutineComplete = true)
+            return
+        }
+        viewModelScope.launch {
+            val nextStep = sortedSteps[nextIndex]
+            val nextTasbih = tasbihRepository.getById(nextStep.tasbihId) ?: return@launch
+            routineStepIndex = nextIndex
+            dhikr = nextTasbih
+            engine = TasbihCounter(nextStep.targetCount, 1)
+            // elapsedSeconds is intentionally left as-is — the session timer
+            // runs continuously across routine steps, it does not reset per step.
+            _uiState.value = buildState()
+        }
+    }
+
+    /** Dismisses the "Routine complete" dialog. The routine's steps are all
+     * already done at this point, so there is nothing else to reset. */
+    fun onRoutineCompleteAcknowledged() {
+        _uiState.value = _uiState.value.copy(isRoutineComplete = false)
     }
 
     fun onUndo() {
@@ -144,6 +215,13 @@ class CounterViewModel(
 
     private fun buildState(justCompletedLap: Boolean = false): CounterUiState {
         val snap = engine.snapshot()
+        val routine = activeRoutine
+        val steps = if (routine != null) {
+            val sortedSteps = routine.steps.sortedBy { it.stepOrder }
+            routineStepNames.mapIndexed { i, name -> RoutineStepDisplay(name, sortedSteps[i].targetCount) }
+        } else {
+            emptyList()
+        }
         return CounterUiState(
             dhikr = dhikr,
             count = snap.count,
@@ -155,6 +233,9 @@ class CounterViewModel(
             elapsedSeconds = elapsedSeconds,
             isComplete = snap.isComplete,
             justCompletedLap = justCompletedLap,
+            routineSteps = steps,
+            currentRoutineStepIndex = routineStepIndex,
+            routineName = routine?.routine?.name,
         )
     }
 
@@ -190,8 +271,8 @@ class CounterViewModel(
                 running = s.running,
                 elapsedSeconds = s.elapsedSeconds,
                 locked = s.locked,
-                routineId = null,
-                routineStep = 0,
+                routineId = activeRoutine?.routine?.id,
+                routineStep = routineStepIndex.coerceAtLeast(0),
             )
         )
     }
@@ -207,11 +288,13 @@ class CounterViewModel(
     class Factory(
         private val sessionRepository: SessionRepository,
         private val tasbihRepository: TasbihRepository,
+        private val routineRepository: RoutineRepository,
         private val startingDhikrId: String? = null,
+        private val startingRoutineId: String? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CounterViewModel(sessionRepository, tasbihRepository, startingDhikrId) as T
+            return CounterViewModel(sessionRepository, tasbihRepository, routineRepository, startingDhikrId, startingRoutineId) as T
         }
     }
 }

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -170,6 +171,41 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                     tint = if (state.locked) colors.terra else colors.faint,
                     modifier = Modifier.size(19.dp),
                 )
+            }
+        }
+
+        // ---- Routine progress chips: current sage-filled, completed faint,
+        // upcoming dim. Only rendered when a routine is actively running. ----
+        if (state.routineSteps.isNotEmpty()) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp)
+                    .padding(bottom = 8.dp),
+            ) {
+                state.routineSteps.forEachIndexed { index, step ->
+                    val isCurrent = index == state.currentRoutineStepIndex
+                    val isCompleted = index < state.currentRoutineStepIndex
+                    val bg = if (isCurrent) colors.sage else colors.surface
+                    val fg = when {
+                        isCurrent -> colors.onSage
+                        isCompleted -> colors.faint
+                        else -> colors.dim
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(bg)
+                            .padding(horizontal = 11.dp, vertical = 5.dp),
+                    ) {
+                        Text(
+                            "${step.tasbihName.substringBefore(' ')} ${step.targetCount}",
+                            fontSize = 11.5.sp,
+                            color = fg,
+                        )
+                    }
+                }
             }
         }
 
@@ -432,13 +468,82 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
             },
         )
     }
+
+    if (state.isRoutineComplete) {
+        AlertDialog(
+            onDismissRequest = { /* no-op: dismissal happens via the Done button only */ },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            textContentColor = colors.dim,
+            shape = RoundedCornerShape(34.dp),
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(colors.sageSoft),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = checkIcon(),
+                            contentDescription = stringResource(R.string.routine_complete_check_content_description),
+                            tint = colors.sage,
+                            modifier = Modifier.size(34.dp),
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.routine_complete_title),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.text,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.routine_complete_body,
+                            state.routineName ?: state.dhikr.name,
+                            state.totalCount,
+                            formatDuration(state.elapsedSeconds),
+                        ),
+                        fontSize = 13.5.sp,
+                        color = colors.dim,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    TextButton(
+                        onClick = { viewModel.onRoutineCompleteAcknowledged() },
+                        modifier = Modifier.padding(top = 14.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.routine_complete_done),
+                            color = colors.sage,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+}
+
+/** Plain "MM:SS" duration, with no pace readout — use for dialog body text
+ * where a bare duration is needed (see formatSessionLabel below for the
+ * pace-augmented variant used in the top-bar session label). */
+private fun formatDuration(elapsedSeconds: Int): String {
+    val minutes = elapsedSeconds / 60
+    val seconds = elapsedSeconds % 60
+    return "%02d:%02d".format(minutes, seconds)
 }
 
 /** "12:34" once the session is a few seconds old, plus a "· 41/min" pace readout. */
 private fun formatSessionLabel(elapsedSeconds: Int, total: Int): String {
-    val minutes = elapsedSeconds / 60
-    val seconds = elapsedSeconds % 60
-    val time = "%02d:%02d".format(minutes, seconds)
+    val time = formatDuration(elapsedSeconds)
     if (elapsedSeconds <= 4) return time
     val rate = (total.toFloat() / (elapsedSeconds / 60f)).toInt()
     return if (rate > 0) "$time  ·  $rate/min" else time

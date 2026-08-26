@@ -126,6 +126,28 @@ fun resetIcon(): ImageVector = ImageVector.Builder(
     }
 }.build()
 
+fun checkIcon(): ImageVector = ImageVector.Builder(
+    name = "Check",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    // Simple checkmark: (5,13) -> (10,18) -> (19,6). Straight lines only, no
+    // curves needed for this shape.
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ) {
+        moveTo(5f, 13f)
+        lineTo(10f, 18f)
+        lineTo(19f, 6f)
+    }
+}.build()
+
 fun lockIcon(locked: Boolean): ImageVector = ImageVector.Builder(
     name = if (locked) "LockClosed" else "LockOpen",
     defaultWidth = 24.dp,

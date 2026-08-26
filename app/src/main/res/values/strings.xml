@@ -20,6 +20,13 @@
     <string name="reset_dialog_keep_counting">Keep counting</string>
     <string name="reset_dialog_confirm">Reset</string>
 
+    <!-- Routine step chips + routine-complete dialog -->
+    <string name="counter_step_label">Step %1$d of %2$d</string>
+    <string name="routine_complete_title">Routine complete</string>
+    <string name="routine_complete_body">%1$s finished — %2$d counts in %3$s.</string>
+    <string name="routine_complete_done">Done</string>
+    <string name="routine_complete_check_content_description">Routine complete</string>
+
     <!-- Home stub (placeholder until the real Home screen lands) -->
     <string name="home_title">Dhikr</string>
     <string name="home_start_counter">Start SubhanAllah</string>
