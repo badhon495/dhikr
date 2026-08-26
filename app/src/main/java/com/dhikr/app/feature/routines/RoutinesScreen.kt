@@ -2,7 +2,6 @@ package com.dhikr.app.feature.routines
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -143,7 +143,14 @@ private fun RoutineCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(width = 1.dp, color = colors.line)
+                    .drawBehind {
+                        drawLine(
+                            color = colors.line,
+                            start = Offset(0f, 0f),
+                            end = Offset(size.width, 0f),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                    }
                     .padding(top = 10.dp, bottom = 2.dp),
             ) {
                 Text("${index + 1}", fontSize = 12.sp, color = colors.faint, modifier = Modifier.padding(end = 10.dp))
