@@ -67,9 +67,12 @@ Navigation Compose, DataStore, Coroutines).
 
 **Interfaces:**
 - Produces: `AppDatabase` (abstract Room database class, no entities/DAOs wired
-  yet — this task only proves Room + KSP compile and a database instance can be
-  built), plus a `DhikrApplication.database: AppDatabase` lazily-constructed
+  yet), plus a `DhikrApplication.database: AppDatabase` lazily-constructed
   singleton other tasks' repositories will consume via `context.applicationContext`.
+  This task does NOT reach a green `assembleDebug` build on its own — Room
+  rejects an empty `@Database(entities = [])` at KSP-processing time regardless
+  of version, so the toolchain wiring is verified but the first fully successful
+  build happens in Task 2, which adds the first real entity. See Step 6 below.
 
 - [ ] **Step 1: Add Room + KSP to the version catalog**
 
@@ -127,6 +130,16 @@ reorder what's already there):
 
 - [ ] **Step 4: Write the `AppDatabase` skeleton**
 
+Room's `@Database` annotation does **not** accept an empty `entities = []` list —
+it fails KSP annotation processing at compile time with "must specify list of
+entities," regardless of Room version (this is a hard Room requirement, not a
+version issue). Because of this, `AppDatabase.kt` cannot be built to a fully
+green `assembleDebug` in this task in isolation — Task 2 (which immediately
+follows and adds the first real entity, `TasbihEntity`) is where the first
+successful build of this file happens. Write the file anyway, in this
+intentionally-not-yet-compilable form — Task 2 fills in the entities array
+before ever attempting a build:
+
 ```kotlin
 package com.dhikr.app.core.database
 
@@ -134,7 +147,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [],
+    entities = [], // filled in by Task 2 — see that task's Step 5; do not attempt
+                    // to build this file until then, per this task's Step 6
     version = 1,
     exportSchema = false,
 )
@@ -144,9 +158,6 @@ abstract class AppDatabase : RoomDatabase()
 `exportSchema = false` for now — this project has no `schemas/` directory
 committed and no migration-testing infrastructure (out of scope this phase per
 Global Constraints); revisit if a later phase adds real schema-migration tests.
-Entities list is empty here on purpose — Tasks 2/6/9 each add their own
-entity(ies) to this annotation as they're introduced, so this file's `@Database`
-annotation is touched by several later tasks (expected, not a conflict).
 
 - [ ] **Step 5: Wire a lazy singleton `AppDatabase` instance into `DhikrApplication`**
 
@@ -173,21 +184,35 @@ Lazy, not eager at `onCreate()` — per plan.md §50, do not initialize heavy wo
 unconditionally at startup; the first screen that actually needs the database
 (Task 3+) triggers construction on first access.
 
-- [ ] **Step 6: Build to verify**
+- [ ] **Step 6: Verify Gradle/plugin wiring resolves, WITHOUT expecting a full
+      green build**
 
-Run: `./gradlew assembleDebug`
-Expected: `BUILD SUCCESSFUL`. This proves the KSP toolchain is wired correctly
-before any entity/DAO code (which would produce far more confusing errors if the
-plugin setup itself were wrong). If KSP or Room dependency resolution fails here,
-stop and check the exact version numbers against what's currently published
-(library versions can move between when this plan was written and when it's
-executed) — ask the user before substituting a different version.
+Run: `./gradlew assembleDebug`. This is expected to reach the `kspDebugKotlin`
+task and fail there with Room's "must specify list of entities" error — that
+specific failure, at that specific task, means the KSP/Room toolchain itself is
+wired correctly (dependencies resolved, the plugin applied, KSP located and ran
+the Room processor on `AppDatabase`) and the *only* remaining problem is the
+empty entities list, which Task 2 resolves immediately next. Confirm the failure
+is exactly this — a `kspDebugKotlin` failure whose message is specifically about
+entities — and not a dependency-resolution error, a plugin-not-found error, or
+any other failure earlier in the build. If the failure is anything other than
+this specific, expected one, treat it as a real problem and follow the version-
+substitution caution above (ask the user, don't guess) rather than assuming it's
+the same expected issue.
+
+Do not attempt to work around this by adding a placeholder entity or any other
+fix within this task — Task 2 is where this gets resolved, by design (confirmed
+with the user after Task 1 first hit this in practice).
 
 - [ ] **Step 7: Commit**
 
+This task's changes are committed even though `assembleDebug` does not fully
+succeed yet — the expected, diagnosed failure from Step 6 is not a reason to
+withhold the commit; Task 2 completes the picture immediately next.
+
 ```bash
 git add gradle/libs.versions.toml build.gradle.kts app/build.gradle.kts app/src/main/java/com/dhikr/app/core/database/AppDatabase.kt app/src/main/java/com/dhikr/app/DhikrApplication.kt
-git commit -m "Add Room + KSP dependencies and AppDatabase skeleton"
+git commit -m "Add Room + KSP dependencies and AppDatabase skeleton (entities filled in by Task 2)"
 ```
 
 ---
@@ -481,9 +506,14 @@ delete either file in this task, even though `SeedData.kt` now duplicates
 - [ ] **Step 8: Build to verify**
 
 Run: `./gradlew assembleDebug`
-Expected: `BUILD SUCCESSFUL`. Room's KSP annotation processor will fail loudly and
-specifically if `TasbihEntity`/`TasbihDao` have a mismatched type or missing
-`@PrimaryKey` — read the error carefully if it fails, Room's compile-time
+Expected: `BUILD SUCCESSFUL`. This is the first fully green build since Task 1 —
+Task 1's `AppDatabase.kt` had an empty entities list (a deliberate, expected
+intermediate state; Room doesn't allow an empty list, so Task 1 couldn't reach
+`BUILD SUCCESSFUL` on its own) and Step 5 above just filled it in with
+`TasbihEntity::class`, which resolves that. Room's KSP annotation processor will
+also fail loudly and specifically if `TasbihEntity`/`TasbihDao` have a mismatched
+type or missing `@PrimaryKey` — read the error carefully if it fails for a
+different reason than Task 1's already-expected one, Room's compile-time
 diagnostics are usually precise about the exact problem.
 
 - [ ] **Step 9: Commit**
