@@ -12,10 +12,13 @@ import androidx.compose.ui.unit.dp
 // Vector paths ported from the prototype's inline SVGs
 // (design/Dhikr Android App.dc.html lines 40, 47, 92, 95). All icons share the
 // prototype's stroke treatment: 24x24 viewport, 2.75 stroke width, round caps
-// and joins, no fill. Elliptical arcs from the SVG source ("A9 9 0 1 0 ...") are
-// approximated with cubic beziers, since ImageVector has no arc-to helper; the
-// standard circular-arc bezier constant (kappa ~= 0.5523 of the radius) is used
-// so quarter-turns are visually indistinguishable from true arcs.
+// and joins, no fill. Elliptical arcs from the SVG source ("a9 9 0 1 0 ...") are
+// converted to cubic beziers, since ImageVector has no arc-to helper. Each arc's
+// centre and sweep are solved from the SVG endpoint parameterisation, then split
+// into equal sub-90-degree segments using the exact circular-arc control-point
+// formula (k = 4/3 * tan(step/4)) so every on-curve point lies on the true
+// circle. Both the sweep DIRECTION and the terminal point matter visually — see
+// the per-icon notes below.
 private const val STROKE_WIDTH = 2.75f
 
 fun backChevronIcon(): ImageVector = ImageVector.Builder(
@@ -59,10 +62,15 @@ fun undoIcon(): ImageVector = ImageVector.Builder(
         lineTo(3f, 13f)
         lineTo(9f, 13f)
     }
-    // SVG: M3 13a9 9 0 1 0 3-7.7L3 8
-    // A ~285-degree clockwise sweep on a radius-9 circle centred at (12, 13),
-    // from (3, 13) round to roughly (6, 5.3). Built from three exact quarter
-    // arcs plus a shorter closing segment. k = 9 * 0.5523.
+    // SVG: M3 13a9 9 0 1 0 3-7.7
+    // Solving the SVG arc endpoint parameterisation for r=9 through (3,13) and
+    // (6,5.3) gives centre (11.95, 12.05) — NOT (12,13) — and sweep=0 means a
+    // counter-clockwise on-screen sweep of -305.3 degrees. The arc must end
+    // ABOVE its start, so the gap in the spiral meets the arrowhead chevron at
+    // upper-left; traversing the other way mirrors the icon vertically and
+    // leaves the arrowhead detached.
+    // Split into 4 equal sub-90-degree segments, each an exact circular bezier
+    // (k = 4/3 * tan(step/4)), so every point lies on the true radius-9 circle.
     path(
         fill = null,
         stroke = SolidColor(Color.Black),
@@ -70,15 +78,11 @@ fun undoIcon(): ImageVector = ImageVector.Builder(
         strokeLineCap = StrokeCap.Round,
         strokeLineJoin = StrokeJoin.Round,
     ) {
-        moveTo(3f, 13f)
-        // (3,13) -> (12,4), top-left quarter
-        curveTo(3f, 8.03f, 7.03f, 4f, 12f, 4f)
-        // (12,4) -> (21,13), top-right quarter
-        curveTo(16.97f, 4f, 21f, 8.03f, 21f, 13f)
-        // (21,13) -> (12,22), bottom-right quarter
-        curveTo(21f, 17.97f, 16.97f, 22f, 12f, 22f)
-        // (12,22) -> (6.0,20.3), short arc closing the ~285-degree sweep
-        curveTo(9.83f, 22f, 7.73f, 21.36f, 6.0f, 20.2f)
+        moveTo(3.00f, 12.99f)
+        curveTo(3.43f, 17.12f, 6.63f, 20.42f, 10.75f, 20.97f)
+        curveTo(14.86f, 21.53f, 18.82f, 19.20f, 20.33f, 15.33f)
+        curveTo(21.84f, 11.46f, 20.51f, 7.07f, 17.12f, 4.68f)
+        curveTo(13.72f, 2.30f, 9.13f, 2.55f, 6.01f, 5.29f)
     }
 }.build()
 
@@ -90,8 +94,11 @@ fun resetIcon(): ImageVector = ImageVector.Builder(
     viewportHeight = 24f,
 ).apply {
     // SVG: M21 12a9 9 0 1 1-3-6.7
-    // A ~285-degree counter-clockwise sweep on a radius-9 circle centred at
-    // (12, 12), from (21, 12) round to roughly (18, 5.3).
+    // Centre solves to (12, 12.01) and sweep=1 gives a clockwise on-screen
+    // sweep of +311.9 degrees, from (21,12) round to (18, 5.3) — direction
+    // confirmed correct. Split into 4 equal sub-90-degree segments, each an
+    // exact circular bezier, so the terminus lands on the true radius-9 circle
+    // instead of bulging off it.
     path(
         fill = null,
         stroke = SolidColor(Color.Black),
@@ -99,15 +106,11 @@ fun resetIcon(): ImageVector = ImageVector.Builder(
         strokeLineCap = StrokeCap.Round,
         strokeLineJoin = StrokeJoin.Round,
     ) {
-        moveTo(21f, 12f)
-        // (21,12) -> (12,21), bottom-right quarter
-        curveTo(21f, 16.97f, 16.97f, 21f, 12f, 21f)
-        // (12,21) -> (3,12), bottom-left quarter
-        curveTo(7.03f, 21f, 3f, 16.97f, 3f, 12f)
-        // (3,12) -> (12,3), top-left quarter
-        curveTo(3f, 7.03f, 7.03f, 3f, 12f, 3f)
-        // (12,3) -> (18.0,5.2), short arc closing the ~285-degree sweep
-        curveTo(14.17f, 3f, 16.27f, 3.64f, 18.0f, 4.8f)
+        moveTo(21.00f, 12.00f)
+        curveTo(21.00f, 16.25f, 18.04f, 19.92f, 13.88f, 20.81f)
+        curveTo(9.73f, 21.70f, 5.52f, 19.56f, 3.78f, 15.68f)
+        curveTo(2.05f, 11.81f, 3.26f, 7.24f, 6.69f, 4.74f)
+        curveTo(10.13f, 2.23f, 14.84f, 2.47f, 18.00f, 5.30f)
     }
     // SVG: M21 3v6h-6
     path(
