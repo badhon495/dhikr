@@ -23,4 +23,16 @@
     <!-- Home stub (placeholder until the real Home screen lands) -->
     <string name="home_title">Dhikr</string>
     <string name="home_start_counter">Start SubhanAllah</string>
+
+    <!-- Tasbih library screen -->
+    <string name="tasbih_library_title">Tasbih</string>
+    <string name="tasbih_library_new">+ New</string>
+    <string name="tasbih_library_search_placeholder">Search name, Arabic, transliteration</string>
+    <string name="tasbih_library_search_content_description">Search</string>
+    <string name="tasbih_library_result_count_all">%1$d built-in · %2$d custom</string>
+    <string name="tasbih_library_result_count_filtered">%1$d of %2$d match \"%3$s\"</string>
+    <string name="tasbih_library_empty">Nothing matches that. Create it as a custom Tasbih.</string>
+    <string name="tasbih_library_favorite_content_description">Favorite</string>
+    <string name="tasbih_library_meta_laps">%1$d × %2$d laps</string>
+    <string name="tasbih_library_meta_per_lap">%1$d per lap</string>
 </resources>
