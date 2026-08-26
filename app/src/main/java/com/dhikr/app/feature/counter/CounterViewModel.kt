@@ -123,6 +123,15 @@ class CounterViewModel(
         )
     }
 
+    /**
+     * Immediately persist the current session, bypassing the 500ms save debounce.
+     * Called from CounterScreen's ON_STOP lifecycle observer so a session is never
+     * lost to process death inside the debounce window.
+     */
+    fun flushSession() {
+        viewModelScope.launch { persist() }
+    }
+
     private suspend fun persist() {
         // Read previousCount/previousLap from the engine's snapshot directly
         // (not from _uiState, which only exposes the derived canUndo boolean) so
@@ -147,8 +156,9 @@ class CounterViewModel(
 
     override fun onCleared() {
         // Flush synchronously isn't possible from onCleared (no suspend context) —
-        // rely on the ON_STOP-triggered flush instead; see MainActivity wiring in
-        // Task 8. viewModelScope is already cancelled here so no launch{} is started.
+        // rely on the ON_STOP-triggered flush instead; see the DisposableEffect
+        // lifecycle observer in CounterScreen.kt, which calls flushSession().
+        // viewModelScope is already cancelled here so no launch{} is started.
         super.onCleared()
     }
 
