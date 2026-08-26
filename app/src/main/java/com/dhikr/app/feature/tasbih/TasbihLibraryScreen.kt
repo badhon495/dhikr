@@ -1,7 +1,9 @@
 package com.dhikr.app.feature.tasbih
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,11 +22,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.ui.theme.DhikrTheme
+import com.dhikr.app.ui.theme.DialogShape
 import com.dhikr.app.ui.theme.ListRowShape
 import com.dhikr.app.ui.theme.PillShape
 
@@ -47,9 +56,20 @@ fun TasbihLibraryScreen(
     viewModel: TasbihLibraryViewModel,
     onOpenTasbih: (String) -> Unit,
     onNewTasbih: () -> Unit,
+    onEditTasbih: (String) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+
+    // Long-press action menu (Edit/Delete) state — which non-built-in Tasbih,
+    // if any, currently has its menu open (finding #4 + #5).
+    var actionMenuTarget by remember { mutableStateOf<TasbihEntity?>(null) }
+    var deleteConfirmTarget by remember { mutableStateOf<TasbihEntity?>(null) }
+    var deleteBlockedMessage by remember { mutableStateOf<TasbihDeleteBlocked?>(null) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.deleteBlocked.collect { deleteBlockedMessage = it }
+    }
 
     Column(
         modifier = Modifier
@@ -167,35 +187,166 @@ fun TasbihLibraryScreen(
                         onToggleFavorite = {
                             viewModel.onToggleFavorite(tasbih.id, tasbih.isFavorite)
                         },
+                        // Long-press is only meaningful for custom Tasbih — built-in
+                        // ones can't be edited or deleted (finding #4 + #5).
+                        onLongPress = if (!tasbih.isBuiltIn) {
+                            { actionMenuTarget = tasbih }
+                        } else null,
                     )
                 }
                 item { Box(modifier = Modifier.height(8.dp)) }
             }
         }
     }
+
+    actionMenuTarget?.let { tasbih ->
+        TasbihActionMenu(
+            tasbih = tasbih,
+            onDismiss = { actionMenuTarget = null },
+            onEdit = {
+                actionMenuTarget = null
+                onEditTasbih(tasbih.id)
+            },
+            onDelete = {
+                actionMenuTarget = null
+                deleteConfirmTarget = tasbih
+            },
+        )
+    }
+
+    deleteConfirmTarget?.let { tasbih ->
+        AlertDialog(
+            onDismissRequest = { deleteConfirmTarget = null },
+            title = { Text(stringResource(R.string.tasbih_library_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.tasbih_library_delete_confirm_body)) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            textContentColor = colors.dim,
+            shape = DialogShape,
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.onDeleteTasbih(tasbih)
+                    deleteConfirmTarget = null
+                }) {
+                    Text(
+                        text = stringResource(R.string.tasbih_library_delete_confirm_action),
+                        color = colors.terra,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmTarget = null }) {
+                    Text(
+                        text = stringResource(R.string.tasbih_library_delete_cancel_action),
+                        color = colors.dim,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+        )
+    }
+
+    deleteBlockedMessage?.let { blocked ->
+        AlertDialog(
+            onDismissRequest = { deleteBlockedMessage = null },
+            title = { Text(stringResource(R.string.tasbih_library_delete_blocked_title, blocked.tasbihName)) },
+            text = { Text(stringResource(R.string.tasbih_library_delete_blocked_body, blocked.routineNames.joinToString())) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            textContentColor = colors.dim,
+            shape = DialogShape,
+            confirmButton = {
+                TextButton(onClick = { deleteBlockedMessage = null }) {
+                    Text(
+                        text = stringResource(R.string.tasbih_library_delete_blocked_dismiss),
+                        color = colors.terra,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+        )
+    }
 }
 
+@Composable
+private fun TasbihActionMenu(
+    tasbih: TasbihEntity,
+    onDismiss: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.tasbih_library_actions_title, tasbih.name)) },
+        containerColor = colors.card,
+        titleContentColor = colors.text,
+        shape = DialogShape,
+        text = {
+            Column {
+                Text(
+                    text = stringResource(R.string.tasbih_library_actions_edit),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onEdit() }
+                        .padding(vertical = 12.dp),
+                )
+                Text(
+                    text = stringResource(R.string.tasbih_library_actions_delete),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.terra,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onDelete() }
+                        .padding(vertical = 12.dp),
+                )
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(R.string.tasbih_library_delete_cancel_action),
+                    color = colors.dim,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TasbihRow(
     tasbih: TasbihEntity,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onLongPress: (() -> Unit)?,
 ) {
     val colors = DhikrTheme.colors
     val favoriteDescription = stringResource(R.string.tasbih_library_favorite_content_description)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        // The row's own tap target (opens the Dhikr) is this outer `clickable`.
-        // The favorite heart below sits in its own nested `clickable` Box; a
-        // click consumed by a nested clickable region does not propagate to an
-        // ancestor's clickable in Compose, so tapping the heart toggles the
-        // favorite WITHOUT also firing this row's onClick/opening the Dhikr.
+        // The row's own tap target (opens the Dhikr) is this outer
+        // combinedClickable. The favorite heart below sits in its own nested
+        // `clickable` Box; a click consumed by a nested clickable region does
+        // not propagate to an ancestor's clickable in Compose, so tapping the
+        // heart toggles the favorite WITHOUT also firing this row's
+        // onClick/opening the Dhikr. Long-press (only wired for non-built-in
+        // Tasbih — onLongPress is null for built-in rows) opens the
+        // Edit/Delete action menu (finding #4 + #5), matching
+        // RoutinesScreen's long-press-to-delete pattern.
         modifier = Modifier
             .fillMaxWidth()
             .clip(ListRowShape)
             .background(colors.card)
-            .clickable { onClick() }
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress)
             .padding(14.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {

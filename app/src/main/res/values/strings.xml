@@ -50,6 +50,16 @@
     <string name="tasbih_library_favorite_content_description">Favorite</string>
     <string name="tasbih_library_meta_laps">%1$d × %2$d laps</string>
     <string name="tasbih_library_meta_per_lap">%1$d per lap</string>
+    <string name="tasbih_library_actions_title">%1$s</string>
+    <string name="tasbih_library_actions_edit">Edit</string>
+    <string name="tasbih_library_actions_delete">Delete</string>
+    <string name="tasbih_library_delete_confirm_title">Delete this Tasbih?</string>
+    <string name="tasbih_library_delete_confirm_body">This cannot be undone.</string>
+    <string name="tasbih_library_delete_confirm_action">Delete</string>
+    <string name="tasbih_library_delete_cancel_action">Cancel</string>
+    <string name="tasbih_library_delete_blocked_title">Can\'t delete %1$s</string>
+    <string name="tasbih_library_delete_blocked_body">It\'s used by %1$s. Remove it from that routine first.</string>
+    <string name="tasbih_library_delete_blocked_dismiss">OK</string>
     <string name="tasbih_editor_title_new">New Tasbih</string>
     <string name="tasbih_editor_title_edit">Edit Tasbih</string>
     <string name="tasbih_editor_name_label">Name</string>

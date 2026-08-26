@@ -95,6 +95,7 @@ fun DhikrApp() {
                         viewModel = viewModel,
                         onOpenTasbih = { id -> navController.navigate("counter?dhikrId=$id") },
                         onNewTasbih = { navController.navigate("tasbih/editor") },
+                        onEditTasbih = { id -> navController.navigate("tasbih/editor?id=$id") },
                     )
                 }
                 composable(
