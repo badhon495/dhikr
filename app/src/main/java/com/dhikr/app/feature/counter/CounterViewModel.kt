@@ -118,7 +118,15 @@ class CounterViewModel(
         // and leaving `dhikr`/`engine` uninitialized in that one pathological
         // case is acceptable since the screen has nothing to count without at
         // least one Tasbih existing.
-        val idToLoad = savedSession?.activeDhikrId ?: requestedStartingId
+        // Finding #3: an explicit navigation argument (tapping a specific
+        // Tasbih from the library, a favorite on Home, etc.) must win over
+        // whatever session was last saved — otherwise, since
+        // SessionRepository.clear() is never called, every tap on a specific
+        // Tasbih after the very first saved session would silently reopen
+        // the old one instead of the one just tapped. The saved session is
+        // only used as a fallback when nothing specific was requested (e.g.
+        // the "Continue session" entry point, which navigates with no id).
+        val idToLoad = requestedStartingId ?: savedSession?.activeDhikrId
         val loaded = idToLoad?.let { tasbihRepository.getById(it) }
             ?: tasbihRepository.observeAll().first().firstOrNull()
         if (loaded == null) return // nothing to load; _uiState stays at Empty
@@ -166,6 +174,14 @@ class CounterViewModel(
     }
 
     fun onTap() {
+        // Guard against a tap landing before initializeSession() has loaded a
+        // Tasbih from Room (DhikrApplication seeds the database
+        // asynchronously and fully decoupled from Compose navigation) — the
+        // Empty UI state renders normally with no visual signal that the
+        // ViewModel isn't ready yet, so without this guard a fast tap here
+        // would dereference the lateinit `engine`/`dhikr` and crash with
+        // UninitializedPropertyAccessException (finding #2).
+        if (!sessionReady) return
         val snap = engine.increment()
         if (snap.isComplete && activeRoutine != null) {
             advanceRoutineStep()
@@ -254,6 +270,8 @@ class CounterViewModel(
     }
 
     fun onUndo() {
+        // See onTap() — same not-ready-yet guard (finding #2).
+        if (!sessionReady) return
         // If the session was complete, increment() had paused the engine as part
         // of finishing — undoing past that point should un-stick it. An ordinary
         // undo of a normal tap while the user had manually paused must NOT force
@@ -266,6 +284,8 @@ class CounterViewModel(
     }
 
     fun onReset() {
+        // See onTap() — same not-ready-yet guard (finding #2).
+        if (!sessionReady) return
         engine.reset()
         engine.resume()
         elapsedSeconds = 0
@@ -273,11 +293,17 @@ class CounterViewModel(
     }
 
     fun onTogglePause() {
+        // See onTap() — same not-ready-yet guard (finding #2).
+        if (!sessionReady) return
         if (engine.isRunning()) engine.pause() else engine.resume()
         _uiState.value = buildState()
     }
 
     fun onToggleLock() {
+        // See onTap() — same not-ready-yet guard (finding #2). Unlike the
+        // other handlers this one doesn't touch engine/dhikr directly, but
+        // buildState() below does, so the guard is still required.
+        if (!sessionReady) return
         locked = !locked
         _uiState.value = buildState()
     }
@@ -305,6 +331,10 @@ class CounterViewModel(
             routineSteps = steps,
             currentRoutineStepIndex = routineStepIndex,
             routineName = routine?.routine?.name,
+            // buildState() is only ever called after sessionReady has been
+            // set true (initializeSession()'s success path, or the handlers
+            // above, all of which now guard on it first) — see finding #2.
+            sessionReady = true,
         )
     }
 

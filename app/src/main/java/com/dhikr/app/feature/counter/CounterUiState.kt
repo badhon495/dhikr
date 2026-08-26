@@ -19,6 +19,11 @@ data class CounterUiState(
     val currentRoutineStepIndex: Int = -1,
     val isRoutineComplete: Boolean = false,
     val routineName: String? = null,
+    // False only for the transient window before Room's seed data has loaded
+    // a Tasbih (see CounterViewModel.sessionReady). CounterScreen gates the
+    // tap area and control row on this so they don't present live-looking
+    // affordances while there is nothing to count yet (finding #2).
+    val sessionReady: Boolean = true,
 ) {
     val totalCount: Int get() = (lap - 1) * dhikr.lapTarget + count
     val progressFraction: Float get() = count.toFloat() / dhikr.lapTarget.toFloat()
@@ -31,6 +36,7 @@ data class CounterUiState(
             ),
             count = 0, lap = 1, totalLaps = 1, canUndo = false, running = false,
             locked = false, elapsedSeconds = 0, isComplete = false, justCompletedLap = false,
+            sessionReady = false,
         )
     }
 }

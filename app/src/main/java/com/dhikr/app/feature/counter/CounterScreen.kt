@@ -172,9 +172,11 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    // The lock toggle itself is always enabled — it is the only way
-                    // back out of the locked state.
-                    .clickable { viewModel.onToggleLock() },
+                    // The lock toggle is otherwise always enabled — it is the only
+                    // way back out of the locked state — but is still gated on
+                    // sessionReady (finding #2): Room's seed data may not have
+                    // loaded yet, and there is nothing to lock/unlock before then.
+                    .clickable(enabled = state.sessionReady) { viewModel.onToggleLock() },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -236,6 +238,10 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 .clickable(
                     interactionSource = tapInteractionSource,
                     indication = null,
+                    // Room's seed data may not have loaded yet (finding #2) —
+                    // disable the tap target rather than let it silently do
+                    // nothing (or, pre-fix, crash the ViewModel).
+                    enabled = state.sessionReady,
                 ) {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     viewModel.onTap()
@@ -392,7 +398,7 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.surface)
-                    .clickable(enabled = state.canUndo) { viewModel.onUndo() }
+                    .clickable(enabled = state.sessionReady && state.canUndo) { viewModel.onUndo() }
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Icon(
@@ -414,7 +420,8 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.sage)
-                    .clickable { viewModel.onTogglePause() }
+                    // Room's seed data may not have loaded yet (finding #2).
+                    .clickable(enabled = state.sessionReady) { viewModel.onTogglePause() }
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Text(
@@ -434,8 +441,10 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
                     .clip(CircleShape)
                     .background(colors.surface)
                     // Reset is destructive, so it is blocked while locked and, when
-                    // unlocked, only opens the confirmation dialog.
-                    .clickable(enabled = !state.locked) { showResetDialog = true },
+                    // unlocked, only opens the confirmation dialog. Also gated on
+                    // sessionReady (finding #2) — Room's seed data may not have
+                    // loaded yet.
+                    .clickable(enabled = state.sessionReady && !state.locked) { showResetDialog = true },
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
