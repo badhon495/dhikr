@@ -1,5 +1,6 @@
 package com.dhikr.app.core.database
 
+import com.dhikr.app.core.database.dao.RoutineDao
 import com.dhikr.app.core.database.dao.TasbihDao
 import com.dhikr.app.core.database.entity.TasbihEntity
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +11,10 @@ sealed interface DeleteResult {
     data class BlockedByRoutines(val routineNames: List<String>) : DeleteResult
 }
 
-class TasbihRepository(private val tasbihDao: TasbihDao) {
+class TasbihRepository(
+    private val tasbihDao: TasbihDao,
+    private val routineDao: RoutineDao,
+) {
 
     fun observeAll(): Flow<List<TasbihEntity>> = tasbihDao.observeAll()
 
@@ -29,8 +33,10 @@ class TasbihRepository(private val tasbihDao: TasbihDao) {
     }
 
     suspend fun delete(tasbih: TasbihEntity): DeleteResult {
-        // Task 9 replaces this body with a real routine-reference check once
-        // RoutineDao exists. For now, plain delete.
+        val blockingRoutineNames = routineDao.routineNamesUsingTasbih(tasbih.id)
+        if (blockingRoutineNames.isNotEmpty()) {
+            return DeleteResult.BlockedByRoutines(blockingRoutineNames)
+        }
         tasbihDao.delete(tasbih)
         return DeleteResult.Success
     }

@@ -39,7 +39,8 @@ fun DhikrApp() {
             SessionRepository(context.applicationContext)
         }
         val tasbihRepository = remember(context) {
-            TasbihRepository((context.applicationContext as DhikrApplication).database.tasbihDao())
+            val database = (context.applicationContext as DhikrApplication).database
+            TasbihRepository(database.tasbihDao(), database.routineDao())
         }
 
         NavHost(navController = navController, startDestination = ROUTE_HOME) {
