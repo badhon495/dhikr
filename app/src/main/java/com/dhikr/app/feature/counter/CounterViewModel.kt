@@ -32,6 +32,15 @@ class CounterViewModel(
     private var locked = false
     private var elapsedSeconds = 0
 
+    // True once initializeSession() has actually loaded a Tasbih and assigned
+    // dhikr/engine. Every method that touches those lateinit properties from
+    // outside the initializeSession() call chain (startTimer()'s recurring
+    // loop, persist() reachable via ON_STOP-triggered flushSession()) must
+    // check this first — Room can be empty at cold start (DhikrApplication
+    // seeds it asynchronously, decoupled from Compose navigation), in which
+    // case dhikr/engine are never assigned and _uiState stays at Empty.
+    private var sessionReady = false
+
     private val _uiState = MutableStateFlow(CounterUiState.Empty)
     val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
 
@@ -83,6 +92,7 @@ class CounterViewModel(
             elapsedSeconds = savedSession.elapsedSeconds
             if (!savedSession.running) engine.pause()
         }
+        sessionReady = true
         _uiState.value = buildState()
     }
 
@@ -90,7 +100,7 @@ class CounterViewModel(
         viewModelScope.launch {
             while (true) {
                 delay(1000)
-                if (engine.isRunning()) {
+                if (sessionReady && engine.isRunning()) {
                     elapsedSeconds += 1
                     _uiState.value = buildState()
                 }
@@ -161,9 +171,10 @@ class CounterViewModel(
         // flushSession() can be triggered by ON_STOP (see CounterScreen's
         // DisposableEffect) before initializeSession() has finished its Room
         // read — e.g. the user backgrounds the app within the same sub-frame
-        // window. engine/dhikr are lateinit at that point, so guard rather
-        // than let this crash: there is nothing meaningful to persist yet.
-        if (!::engine.isInitialized || !::dhikr.isInitialized) return
+        // window, or Room's tasbih table was still empty at cold start.
+        // engine/dhikr are lateinit in that case, so guard rather than let
+        // this crash: there is nothing meaningful to persist yet.
+        if (!sessionReady) return
         // Read previousCount/previousLap from the engine's snapshot directly
         // (not from _uiState, which only exposes the derived canUndo boolean) so
         // undo state round-trips correctly across process death.
