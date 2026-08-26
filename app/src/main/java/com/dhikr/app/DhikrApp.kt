@@ -20,8 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.datastore.SessionRepository
-import com.dhikr.app.core.model.BuiltInDhikr
 import com.dhikr.app.feature.counter.CounterScreen
 import com.dhikr.app.feature.counter.CounterViewModel
 import com.dhikr.app.ui.theme.DhikrTheme
@@ -38,6 +38,9 @@ fun DhikrApp() {
         val sessionRepository = remember(context) {
             SessionRepository(context.applicationContext)
         }
+        val tasbihRepository = remember(context) {
+            TasbihRepository((context.applicationContext as DhikrApplication).database.tasbihDao())
+        }
 
         NavHost(navController = navController, startDestination = ROUTE_HOME) {
             composable(ROUTE_HOME) {
@@ -47,7 +50,8 @@ fun DhikrApp() {
                 val viewModel: CounterViewModel = viewModel(
                     factory = CounterViewModel.Factory(
                         sessionRepository = sessionRepository,
-                        startingDhikrId = BuiltInDhikr.all.first().id,
+                        tasbihRepository = tasbihRepository,
+                        startingDhikrId = "subhan",
                     ),
                 )
                 CounterScreen(

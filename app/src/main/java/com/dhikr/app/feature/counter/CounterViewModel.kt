@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.counter.TasbihCounter
+import com.dhikr.app.core.database.TasbihRepository
+import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.SessionRepository
-import com.dhikr.app.core.model.BuiltInDhikr
 import com.dhikr.app.core.model.CounterSessionState
-import com.dhikr.app.core.model.Dhikr
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -22,51 +23,67 @@ import kotlinx.coroutines.launch
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 class CounterViewModel(
     private val sessionRepository: SessionRepository,
+    private val tasbihRepository: TasbihRepository,
     startingDhikrId: String? = null,
 ) : ViewModel() {
 
-    private var dhikr: Dhikr = BuiltInDhikr.byId(startingDhikrId ?: BuiltInDhikr.all.first().id)
-    private var engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
+    private lateinit var dhikr: TasbihEntity
+    private lateinit var engine: TasbihCounter
     private var locked = false
     private var elapsedSeconds = 0
 
-    private val _uiState = MutableStateFlow(buildState())
+    private val _uiState = MutableStateFlow(CounterUiState.Empty)
     val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
 
+    private val requestedStartingId = startingDhikrId
+
     init {
-        restoreSession()
-        _uiState
-            .drop(1) // skip the initial emission — nothing to persist yet
-            .debounce(500)
-            .onEach { persist() }
-            .launchIn(viewModelScope)
-        startTimer()
+        viewModelScope.launch {
+            initializeSession()
+            // debounced persistence + timer only start once the engine exists
+            _uiState
+                .drop(1) // skip the initial emission — nothing to persist yet
+                .debounce(500)
+                .onEach { persist() }
+                .launchIn(viewModelScope)
+            startTimer()
+        }
     }
 
-    private fun restoreSession() {
-        viewModelScope.launch {
-            // Collect just the first emission to restore, then stop — this is a
-            // one-shot read on cold start, not a continuous observer.
-            sessionRepository.sessionFlow.first()?.let { session ->
-                dhikr = BuiltInDhikr.byId(session.activeDhikrId)
-                engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
-                // Engine has no public state setter beyond increment/undo/reset by
-                // design (keeps it a minimal state machine) — for restore we
-                // reconstruct via the package-private restore hook instead of
-                // replaying taps.
-                engine.restore(
-                    count = session.count,
-                    lap = session.lap,
-                    previous = if (session.previousCount != null && session.previousLap != null) {
-                        session.previousCount to session.previousLap
-                    } else null,
-                )
-                locked = session.locked
-                elapsedSeconds = session.elapsedSeconds
-                if (!session.running) engine.pause()
-                _uiState.value = buildState()
-            }
+    private suspend fun initializeSession() {
+        val savedSession = sessionRepository.sessionFlow.first()
+        val idToLoad = savedSession?.activeDhikrId ?: requestedStartingId
+        // Never crash if the requested/saved Tasbih can't be found (deleted
+        // custom Tasbih, corrupted DataStore referencing a stale id, etc.) —
+        // fall back to whatever Tasbih Room actually has, per plan.md §57's
+        // "never crash because of... corrupted data" requirement. An empty
+        // Room table at this point would mean seeding (DhikrApplication)
+        // hasn't completed yet or failed; falling back to CounterUiState.Empty
+        // and leaving `dhikr`/`engine` uninitialized in that one pathological
+        // case is acceptable since the screen has nothing to count without at
+        // least one Tasbih existing.
+        val loaded = idToLoad?.let { tasbihRepository.getById(it) }
+            ?: tasbihRepository.observeAll().first().firstOrNull()
+        if (loaded == null) return // nothing to load; _uiState stays at Empty
+        dhikr = loaded
+        engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
+        if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
+            // Engine has no public state setter beyond increment/undo/reset by
+            // design (keeps it a minimal state machine) — for restore we
+            // reconstruct via the package-private restore hook instead of
+            // replaying taps.
+            engine.restore(
+                count = savedSession.count,
+                lap = savedSession.lap,
+                previous = if (savedSession.previousCount != null && savedSession.previousLap != null) {
+                    savedSession.previousCount to savedSession.previousLap
+                } else null,
+            )
+            locked = savedSession.locked
+            elapsedSeconds = savedSession.elapsedSeconds
+            if (!savedSession.running) engine.pause()
         }
+        _uiState.value = buildState()
     }
 
     private fun startTimer() {
@@ -141,6 +158,12 @@ class CounterViewModel(
     }
 
     private suspend fun persist() {
+        // flushSession() can be triggered by ON_STOP (see CounterScreen's
+        // DisposableEffect) before initializeSession() has finished its Room
+        // read — e.g. the user backgrounds the app within the same sub-frame
+        // window. engine/dhikr are lateinit at that point, so guard rather
+        // than let this crash: there is nothing meaningful to persist yet.
+        if (!::engine.isInitialized || !::dhikr.isInitialized) return
         // Read previousCount/previousLap from the engine's snapshot directly
         // (not from _uiState, which only exposes the derived canUndo boolean) so
         // undo state round-trips correctly across process death.
@@ -172,11 +195,12 @@ class CounterViewModel(
 
     class Factory(
         private val sessionRepository: SessionRepository,
+        private val tasbihRepository: TasbihRepository,
         private val startingDhikrId: String? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CounterViewModel(sessionRepository, startingDhikrId) as T
+            return CounterViewModel(sessionRepository, tasbihRepository, startingDhikrId) as T
         }
     }
 }
