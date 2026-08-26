@@ -540,7 +540,7 @@ val DarkDhikrColors = DhikrColorTokens(
     text = Color(0xFFF6EFE2),
     dim = Color(0xFFC0B6A5),
     faint = Color(0xFF82796A),
-    line = Color(0x1EF6EFE2), // rgba(246,239,226,.12)
+    line = Color(0x1FF6EFE2), // rgba(246,239,226,.12) — round(0.12*255)=31=0x1F
     sage = Color(0xFFAEBF92),
     sageSoft = Color(0xFF3D472B),
     terra = Color(0xFFF6A06B),
