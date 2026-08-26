@@ -1,6 +1,7 @@
 package com.dhikr.app.core.database
 
 import com.dhikr.app.core.database.dao.SessionDao
+import com.dhikr.app.core.database.entity.SessionEntity
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +16,7 @@ class HistoryRepository(
     suspend fun logSession(tasbihId: String, routineId: String?, count: Int, startedAt: Long, endedAt: Long) {
         if (count <= 0) return // nothing to record — matches the spec's "resetting to 0 writes nothing"
         sessionDao.insert(
-            com.dhikr.app.core.database.entity.SessionEntity(
+            SessionEntity(
                 tasbihId = tasbihId,
                 routineId = routineId,
                 count = count,

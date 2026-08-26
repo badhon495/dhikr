@@ -174,11 +174,13 @@ class CounterViewModel(
         if (snap.isComplete) {
             // Goal reached for a plain (non-routine) Tasbih — an unambiguous
             // session-end signal per the spec, so log immediately rather than
-            // waiting for the screen to leave composition.
+            // waiting for the screen to leave composition. The UI update is
+            // synchronous so the tap's visual feedback is never gated behind
+            // the Room write; logging runs in a separate, detached coroutine.
+            _uiState.value = buildState(justCompletedLap = snap.justCompletedLap)
             viewModelScope.launch {
                 logCurrentSessionIfNonZero()
                 sessionStartedAtMillis = System.currentTimeMillis()
-                _uiState.value = buildState(justCompletedLap = snap.justCompletedLap)
             }
             return
         }
@@ -193,15 +195,12 @@ class CounterViewModel(
             // Last step just completed — signal routine completion, no
             // interruption to the current display (the completion overlay is
             // a Compose-level dialog in CounterScreen, not a state reset here).
-            // Logging is now suspend (logCurrentSessionIfNonZero), so this
-            // branch — previously synchronous since it didn't need suspend —
-            // is wrapped in viewModelScope.launch. buildState().copy(...) still
-            // runs after the log call completes, preserving the existing
-            // "state updates once, after routine-complete is decided" behavior.
+            // The UI update is synchronous so it is never gated behind the
+            // Room write; logging runs in a separate, detached coroutine.
+            _uiState.value = buildState().copy(isRoutineComplete = true)
             viewModelScope.launch {
                 logCurrentSessionIfNonZero()
                 sessionStartedAtMillis = System.currentTimeMillis()
-                _uiState.value = buildState().copy(isRoutineComplete = true)
             }
             return
         }
