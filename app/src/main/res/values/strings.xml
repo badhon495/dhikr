@@ -96,4 +96,14 @@
     <string name="insights_empty_body">Counts appear here as soon as you finish your first session.</string>
     <string name="insights_empty_cta">Start counting</string>
     <string name="insights_empty_icon_content_description">No sessions yet</string>
+
+    <!-- Settings stub -->
+    <string name="settings_title">Settings</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_tasbih">Tasbih</string>
+    <string name="nav_count">Count</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_settings">Settings</string>
 </resources>

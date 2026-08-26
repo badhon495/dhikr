@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dhikr.app.R
 import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
@@ -148,7 +150,11 @@ fun DhikrApp() {
 @Composable
 private fun SettingsStub() {
     val colors = DhikrTheme.colors
-    Text("Settings", modifier = Modifier.background(colors.bg).padding(24.dp), color = colors.text)
+    Text(
+        stringResource(R.string.settings_title),
+        modifier = Modifier.background(colors.bg).padding(24.dp),
+        color = colors.text,
+    )
 }
 
 @Composable
@@ -161,16 +167,17 @@ private fun DhikrBottomNav(navController: NavController) {
     // replace these with proper Lucide-style stroke vectors matching
     // CounterIcons.kt's pattern for visual consistency with the rest of the app.
     val items = listOf(
-        Triple(ROUTE_HOME, "Home", android.R.drawable.ic_menu_myplaces),
-        Triple(ROUTE_TASBIH_LIBRARY, "Tasbih", android.R.drawable.ic_menu_agenda),
-        Triple(ROUTE_COUNTER, "Count", android.R.drawable.ic_menu_add),
-        Triple(ROUTE_INSIGHTS, "Insights", android.R.drawable.ic_menu_sort_by_size),
-        Triple(ROUTE_SETTINGS, "Settings", android.R.drawable.ic_menu_preferences),
+        Triple(ROUTE_HOME, R.string.nav_home, android.R.drawable.ic_menu_myplaces),
+        Triple(ROUTE_TASBIH_LIBRARY, R.string.nav_tasbih, android.R.drawable.ic_menu_agenda),
+        Triple(ROUTE_COUNTER, R.string.nav_count, android.R.drawable.ic_menu_add),
+        Triple(ROUTE_INSIGHTS, R.string.nav_insights, android.R.drawable.ic_menu_sort_by_size),
+        Triple(ROUTE_SETTINGS, R.string.nav_settings, android.R.drawable.ic_menu_preferences),
     )
 
     NavigationBar(containerColor = colors.surface) {
-        items.forEach { (route, label, iconRes) ->
+        items.forEach { (route, labelRes, iconRes) ->
             val selected = currentRoute?.startsWith(route.substringBefore("?")) == true
+            val label = stringResource(labelRes)
             NavigationBarItem(
                 selected = selected,
                 onClick = { if (!selected) navController.navigate(route.substringBefore("?")) },
