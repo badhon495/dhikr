@@ -31,6 +31,14 @@
     <string name="home_title">Dhikr</string>
     <string name="home_start_counter">Start SubhanAllah</string>
 
+    <!-- Home screen -->
+    <string name="home_greeting">Assalamu alaikum</string>
+    <string name="home_continue_session_kicker">CONTINUE SESSION</string>
+    <string name="home_favorites_title">Favourites</string>
+    <string name="home_favorites_all">All</string>
+    <string name="home_routines_title">Routines</string>
+    <string name="home_routines_manage">Manage</string>
+
     <!-- Tasbih library screen -->
     <string name="tasbih_library_title">Tasbih</string>
     <string name="tasbih_library_new">+ New</string>
