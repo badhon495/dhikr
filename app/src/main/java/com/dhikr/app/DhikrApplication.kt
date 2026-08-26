@@ -24,6 +24,10 @@ class DhikrApplication : Application() {
             if (database.tasbihDao().count() == 0) {
                 database.tasbihDao().insertAll(SeedData.builtInTasbih)
             }
+            if (database.routineDao().count() == 0) {
+                database.routineDao().insertRoutines(SeedData.presetRoutines)
+                database.routineDao().insertSteps(SeedData.presetRoutineSteps)
+            }
         }
     }
 }

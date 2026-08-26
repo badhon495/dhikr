@@ -1,0 +1,71 @@
+package com.dhikr.app.core.database.dao
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Embedded
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Relation
+import androidx.room.Transaction
+import androidx.room.Update
+import com.dhikr.app.core.database.entity.RoutineEntity
+import com.dhikr.app.core.database.entity.RoutineStepEntity
+import kotlinx.coroutines.flow.Flow
+
+data class RoutineWithSteps(
+    @Embedded val routine: RoutineEntity,
+    @Relation(parentColumn = "id", entityColumn = "routineId")
+    val steps: List<RoutineStepEntity>,
+)
+
+@Dao
+interface RoutineDao {
+
+    @Transaction
+    @Query("SELECT * FROM routine ORDER BY isPreset DESC, name ASC")
+    fun observeAllWithSteps(): Flow<List<RoutineWithSteps>>
+
+    @Transaction
+    @Query("SELECT * FROM routine WHERE id = :id LIMIT 1")
+    suspend fun getWithSteps(id: String): RoutineWithSteps?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertRoutine(routine: RoutineEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertRoutines(routines: List<RoutineEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertSteps(steps: List<RoutineStepEntity>)
+
+    @Query("DELETE FROM routine_step WHERE routineId = :routineId")
+    suspend fun deleteStepsForRoutine(routineId: String)
+
+    @Transaction
+    suspend fun replaceSteps(routineId: String, steps: List<RoutineStepEntity>) {
+        deleteStepsForRoutine(routineId)
+        insertSteps(steps)
+    }
+
+    @Update
+    suspend fun updateRoutine(routine: RoutineEntity)
+
+    @Delete
+    suspend fun deleteRoutine(routine: RoutineEntity)
+
+    @Query("SELECT COUNT(*) FROM routine_step WHERE tasbihId = :tasbihId")
+    suspend fun countStepsUsingTasbih(tasbihId: String): Int
+
+    @Query(
+        """
+        SELECT DISTINCT r.name FROM routine r
+        INNER JOIN routine_step s ON s.routineId = r.id
+        WHERE s.tasbihId = :tasbihId
+        """
+    )
+    suspend fun routineNamesUsingTasbih(tasbihId: String): List<String>
+
+    @Query("SELECT COUNT(*) FROM routine")
+    suspend fun count(): Int
+}

@@ -1,5 +1,7 @@
 package com.dhikr.app.core.database.seed
 
+import com.dhikr.app.core.database.entity.RoutineEntity
+import com.dhikr.app.core.database.entity.RoutineStepEntity
 import com.dhikr.app.core.database.entity.TasbihEntity
 
 object SeedData {
@@ -100,5 +102,36 @@ object SeedData {
             createdAt = SEED_TIMESTAMP,
             updatedAt = SEED_TIMESTAMP,
         ),
+    )
+
+    val presetRoutines: List<RoutineEntity> = listOf(
+        RoutineEntity(id = "morning", name = "Morning Dhikr", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "evening", name = "Evening Dhikr", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "after_salah", name = "After Salah", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "before_sleep", name = "Before Sleep", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+    )
+
+    val presetRoutineSteps: List<RoutineStepEntity> = listOf(
+        // Morning Dhikr: SubhanAllah x33, Alhamdulillah x33, AllahuAkbar x34 (matches
+        // the prototype's ROUTINES array and design README's own example exactly —
+        // design/Dhikr Android App.dc.html's `morning`/`salah` routine definitions)
+        RoutineStepEntity(routineId = "morning", tasbihId = "subhan", stepOrder = 0, targetCount = 33),
+        RoutineStepEntity(routineId = "morning", tasbihId = "hamd", stepOrder = 1, targetCount = 33),
+        RoutineStepEntity(routineId = "morning", tasbihId = "akbar", stepOrder = 2, targetCount = 34),
+        // Evening Dhikr: same three, evening framing — no separate evening-specific
+        // prototype data exists, so this reuses the same structure as Morning per
+        // the plan's own "Evening Dhikr" listing (plan.md §22) which gives no
+        // distinct counts of its own.
+        RoutineStepEntity(routineId = "evening", tasbihId = "subhan", stepOrder = 0, targetCount = 33),
+        RoutineStepEntity(routineId = "evening", tasbihId = "hamd", stepOrder = 1, targetCount = 33),
+        RoutineStepEntity(routineId = "evening", tasbihId = "akbar", stepOrder = 2, targetCount = 34),
+        // After Salah: matches the prototype's `salah` routine exactly (same 3 steps)
+        RoutineStepEntity(routineId = "after_salah", tasbihId = "subhan", stepOrder = 0, targetCount = 33),
+        RoutineStepEntity(routineId = "after_salah", tasbihId = "hamd", stepOrder = 1, targetCount = 33),
+        RoutineStepEntity(routineId = "after_salah", tasbihId = "akbar", stepOrder = 2, targetCount = 34),
+        // Before Sleep: matches the prototype's `sleep` routine exactly —
+        // Astaghfirullah x100, Subhanallahi wa bihamdihi x100
+        RoutineStepEntity(routineId = "before_sleep", tasbihId = "istighfar", stepOrder = 0, targetCount = 100),
+        RoutineStepEntity(routineId = "before_sleep", tasbihId = "bihamdihi", stepOrder = 1, targetCount = 100),
     )
 }
