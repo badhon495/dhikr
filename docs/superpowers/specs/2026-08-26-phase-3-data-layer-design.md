@@ -23,10 +23,13 @@ sharing, AI features, audio, auto-counter, timer, Baseline Profiles/Macrobenchma
 ## Goals
 
 1. A Room database (`AppDatabase`) with `Tasbih`, `Routine`/`RoutineStep`, and
-   `Session` entities, seeded with the 7 built-in Dhikr and 3 preset routines on
-   first launch, replacing `BuiltInDhikr` as the runtime source of truth while
-   preserving existing stable Dhikr IDs so Phase 1+2's persisted
-   `CounterSessionState.activeDhikrId` values keep resolving correctly.
+   `Session` entities, seeded with the 7 built-in Dhikr and 4 preset routines
+   (Morning Dhikr, Evening Dhikr, After Salah, Before Sleep — plan.md §22's list
+   minus "Custom daily routine," which describes user-created routines in
+   general rather than a 5th seeded preset) on first launch, replacing
+   `BuiltInDhikr` as the runtime source of truth while preserving existing
+   stable Dhikr IDs so Phase 1+2's persisted `CounterSessionState.activeDhikrId`
+   values keep resolving correctly.
 2. Tasbih library screen: search (offline, case-insensitive substring across
    name/Arabic/transliteration/translation), favorite toggle, built-in + custom
    Tasbih together.
