@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.counter.TasbihCounter
+import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.dao.RoutineWithSteps
@@ -29,12 +30,20 @@ class CounterViewModel(
     private val routineRepository: RoutineRepository,
     startingDhikrId: String? = null,
     startingRoutineId: String? = null,
+    private val historyRepository: HistoryRepository,
 ) : ViewModel() {
 
     private lateinit var dhikr: TasbihEntity
     private lateinit var engine: TasbihCounter
     private var locked = false
     private var elapsedSeconds = 0
+
+    // Wall-clock start of the current in-progress session, used as the
+    // `startedAt` field of the History row logged when this session ends
+    // (goal reached, routine step advanced, or the screen leaves composition
+    // with count > 0). Reset after each logged session so a later lap/step
+    // within the same screen visit starts its own fresh window.
+    private var sessionStartedAtMillis: Long = System.currentTimeMillis()
 
     // True once initializeSession() has actually loaded a Tasbih and assigned
     // dhikr/engine. Every method that touches those lateinit properties from
@@ -87,6 +96,11 @@ class CounterViewModel(
                     dhikr = stepTasbih
                     engine = TasbihCounter(currentStep.targetCount, 1)
                     applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
+                    sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == currentStep.tasbihId) {
+                        System.currentTimeMillis() - elapsedSeconds * 1000L
+                    } else {
+                        System.currentTimeMillis()
+                    }
                     sessionReady = true
                     _uiState.value = buildState()
                     return
@@ -111,6 +125,11 @@ class CounterViewModel(
         dhikr = loaded
         engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
         applyRestoredCountIfMatching(savedSession, loaded.id)
+        sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
+            System.currentTimeMillis() - elapsedSeconds * 1000L
+        } else {
+            System.currentTimeMillis()
+        }
         sessionReady = true
         _uiState.value = buildState()
     }
@@ -152,6 +171,17 @@ class CounterViewModel(
             advanceRoutineStep()
             return
         }
+        if (snap.isComplete) {
+            // Goal reached for a plain (non-routine) Tasbih — an unambiguous
+            // session-end signal per the spec, so log immediately rather than
+            // waiting for the screen to leave composition.
+            viewModelScope.launch {
+                logCurrentSessionIfNonZero()
+                sessionStartedAtMillis = System.currentTimeMillis()
+                _uiState.value = buildState(justCompletedLap = snap.justCompletedLap)
+            }
+            return
+        }
         _uiState.value = buildState(justCompletedLap = snap.justCompletedLap)
     }
 
@@ -163,10 +193,21 @@ class CounterViewModel(
             // Last step just completed — signal routine completion, no
             // interruption to the current display (the completion overlay is
             // a Compose-level dialog in CounterScreen, not a state reset here).
-            _uiState.value = buildState().copy(isRoutineComplete = true)
+            // Logging is now suspend (logCurrentSessionIfNonZero), so this
+            // branch — previously synchronous since it didn't need suspend —
+            // is wrapped in viewModelScope.launch. buildState().copy(...) still
+            // runs after the log call completes, preserving the existing
+            // "state updates once, after routine-complete is decided" behavior.
+            viewModelScope.launch {
+                logCurrentSessionIfNonZero()
+                sessionStartedAtMillis = System.currentTimeMillis()
+                _uiState.value = buildState().copy(isRoutineComplete = true)
+            }
             return
         }
         viewModelScope.launch {
+            logCurrentSessionIfNonZero()
+            sessionStartedAtMillis = System.currentTimeMillis()
             val nextStep = sortedSteps[nextIndex]
             val nextTasbih = tasbihRepository.getById(nextStep.tasbihId) ?: return@launch
             routineStepIndex = nextIndex
@@ -175,6 +216,35 @@ class CounterViewModel(
             // elapsedSeconds is intentionally left as-is — the session timer
             // runs continuously across routine steps, it does not reset per step.
             _uiState.value = buildState()
+        }
+    }
+
+    private suspend fun logCurrentSessionIfNonZero() {
+        if (!::engine.isInitialized) return
+        val snap = engine.snapshot()
+        if (snap.count > 0) {
+            historyRepository.logSession(
+                tasbihId = dhikr.id,
+                routineId = activeRoutine?.routine?.id,
+                count = snap.count,
+                startedAt = sessionStartedAtMillis,
+                endedAt = System.currentTimeMillis(),
+            )
+        }
+    }
+
+    /**
+     * Called by CounterScreen when the composable leaves composition (back
+     * navigation, navigating elsewhere) — logs whatever count is in progress
+     * (if any) as a completed session, then clears the in-memory session-start
+     * marker so a later session on the same screen instance doesn't double-count.
+     * Distinct from the two completion-triggered log calls above, which fire
+     * mid-session on goal-reached, before any navigation happens.
+     */
+    fun logAndClearOnLeave() {
+        viewModelScope.launch {
+            logCurrentSessionIfNonZero()
+            sessionStartedAtMillis = System.currentTimeMillis()
         }
     }
 
@@ -291,10 +361,18 @@ class CounterViewModel(
         private val routineRepository: RoutineRepository,
         private val startingDhikrId: String? = null,
         private val startingRoutineId: String? = null,
+        private val historyRepository: HistoryRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CounterViewModel(sessionRepository, tasbihRepository, routineRepository, startingDhikrId, startingRoutineId) as T
+            return CounterViewModel(
+                sessionRepository,
+                tasbihRepository,
+                routineRepository,
+                startingDhikrId,
+                startingRoutineId,
+                historyRepository,
+            ) as T
         }
     }
 }

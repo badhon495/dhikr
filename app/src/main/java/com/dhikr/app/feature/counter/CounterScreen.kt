@@ -90,6 +90,18 @@ fun CounterScreen(viewModel: CounterViewModel, onBack: () -> Unit) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Log the in-progress session to permanent History when this composable
+    // actually leaves composition (back navigation, navigating elsewhere) —
+    // a different trigger than ON_STOP above, which also fires on a mere
+    // app-background/foreground cycle (the composable stays in composition
+    // through that). Kept as a separate DisposableEffect so the two triggers
+    // are never conflated.
+    DisposableEffect(viewModel) {
+        onDispose {
+            viewModel.logAndClearOnLeave()
+        }
+    }
+
     val isLongText = state.dhikr.transliteration.length > LONG_TEXT_THRESHOLD
     val ringSize = if (isLongText) 178.dp else 252.dp
     val countStyle = if (isLongText) CounterCountLongTextStyle else CounterCountStyle
