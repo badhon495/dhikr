@@ -49,4 +49,16 @@
     <string name="tasbih_editor_daily_goal_label">Daily goal</string>
     <string name="tasbih_editor_save">Save Tasbih</string>
     <string name="tasbih_editor_footer">Stored on this device only. Nothing is uploaded.</string>
+
+    <!-- Routines screen -->
+    <string name="routines_title">Routines</string>
+    <string name="routines_start">Start</string>
+    <string name="routines_step_count">%1$d steps · %2$d counts</string>
+    <string name="routines_new">+ New routine</string>
+    <string name="routines_delete_confirm_title">Delete this routine?</string>
+    <string name="routines_delete_confirm_body">This cannot be undone.</string>
+    <string name="routines_delete_confirm_action">Delete</string>
+    <string name="routines_delete_cancel_action">Cancel</string>
+    <string name="routines_add_step">+ Add step</string>
+    <string name="routines_drag_handle_content_description">Reorder step</string>
 </resources>
