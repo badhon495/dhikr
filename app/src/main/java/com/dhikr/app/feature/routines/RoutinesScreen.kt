@@ -16,10 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -74,11 +72,18 @@ fun RoutinesScreen(
                 )
             }
             item {
+                // Finding #8: routine creation has no UI yet (deliberately
+                // deferred, see task-14 brief) — this pill is specced in
+                // design/README.md §5 as existing UI, so it stays visible,
+                // but is dimmed via alpha so it reads as "coming soon"
+                // rather than as a dead/broken tap target. No onClick is
+                // wired: it is intentionally inert.
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(top = 4.dp)
+                        .alpha(0.5f)
                         .dashedBorder(color = colors.faint, shape = PillShape)
                         .clip(PillShape),
                     contentAlignment = Alignment.Center,
@@ -158,18 +163,20 @@ private fun RoutineCard(
                     color = colors.text,
                     modifier = Modifier.weight(1f),
                 )
+                // Finding #8: the trailing drag handle icon that used to sit
+                // after this Text was removed — it implied drag-to-reorder
+                // via its content description, but no drag gesture was ever
+                // wired (onReorderSteps exists on the ViewModel and was never
+                // called), so it was a broken-looking affordance rather than
+                // a real one. Reordering steps is out of scope for this fix
+                // (task-14 deliberately deferred routine create/edit UI);
+                // removing the icon is simpler and cleaner than dimming a
+                // control that does nothing at all.
                 Text(
                     "${step.targetCount}",
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.terra,
-                    modifier = Modifier.padding(end = 10.dp),
-                )
-                Icon(
-                    imageVector = Icons.Filled.DragHandle,
-                    contentDescription = stringResource(R.string.routines_drag_handle_content_description),
-                    tint = colors.faint,
-                    modifier = Modifier.size(18.dp),
                 )
             }
         }

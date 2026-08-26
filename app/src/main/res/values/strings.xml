@@ -85,7 +85,6 @@
     <string name="routines_delete_confirm_action">Delete</string>
     <string name="routines_delete_cancel_action">Cancel</string>
     <string name="routines_add_step">+ Add step</string>
-    <string name="routines_drag_handle_content_description">Reorder step</string>
 
     <!-- Insights screen -->
     <string name="insights_title">Insights</string>
