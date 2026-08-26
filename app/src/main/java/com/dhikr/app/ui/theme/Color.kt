@@ -12,6 +12,7 @@ data class DhikrColorTokens(
     val line: Color,
     val sage: Color,
     val sageSoft: Color,
+    val sageMid: Color,
     val terra: Color,
     val terraSoft: Color,
     val track: Color,
@@ -28,6 +29,7 @@ val LightDhikrColors = DhikrColorTokens(
     line = Color(0x21201E1D), // rgba(32,30,29,.13)
     sage = Color(0xFF7A8A5E),
     sageSoft = Color(0xFFE1EECC),
+    sageMid = Color(0xFFAEBF92),
     terra = Color(0xFFC67139),
     terraSoft = Color(0xFFFFE1D0),
     track = Color(0x1A201E1D), // rgba(32,30,29,.10)
@@ -44,6 +46,7 @@ val DarkDhikrColors = DhikrColorTokens(
     line = Color(0x1FF6EFE2), // rgba(246,239,226,.12)
     sage = Color(0xFFAEBF92),
     sageSoft = Color(0xFF3D472B),
+    sageMid = Color(0xFF728157),
     terra = Color(0xFFF6A06B),
     terraSoft = Color(0xFF4D2F18),
     track = Color(0x1AF6EFE2), // rgba(246,239,226,.10)

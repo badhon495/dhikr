@@ -68,4 +68,22 @@
     <string name="routines_delete_cancel_action">Cancel</string>
     <string name="routines_add_step">+ Add step</string>
     <string name="routines_drag_handle_content_description">Reorder step</string>
+
+    <!-- Insights screen -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_today">Today</string>
+    <string name="insights_this_week">This week</string>
+    <string name="insights_this_month">This month</string>
+    <string name="insights_all_time">All time</string>
+    <string name="insights_last_7_days">Last 7 days</string>
+    <string name="insights_consistency">Consistency</string>
+    <string name="insights_consistency_meta">%1$d days this month</string>
+    <string name="insights_legend_less">less</string>
+    <string name="insights_legend_more">more</string>
+    <string name="insights_history_title">History</string>
+    <string name="insights_history_grouped">grouped by Dhikr</string>
+    <string name="insights_empty_title">No sessions yet</string>
+    <string name="insights_empty_body">Counts appear here as soon as you finish your first session.</string>
+    <string name="insights_empty_cta">Start counting</string>
+    <string name="insights_empty_icon_content_description">No sessions yet</string>
 </resources>
