@@ -1,0 +1,287 @@
+package com.dhikr.app.feature.tasbih
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.dhikr.app.R
+import com.dhikr.app.ui.theme.DhikrTheme
+import com.dhikr.app.ui.theme.ListRowShape
+import com.dhikr.app.ui.theme.NotoNaskhArabic
+import com.dhikr.app.ui.theme.PillShape
+
+@Composable
+fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
+    val state by viewModel.uiState.collectAsState()
+    val colors = DhikrTheme.colors
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.bg)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+    ) {
+        // ---- Header: back chevron + title ----
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 20.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable { onBack() }
+                    .padding(6.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = null,
+                    tint = colors.text,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Text(
+                text = stringResource(
+                    if (state.isEditingExisting) R.string.tasbih_editor_title_edit
+                    else R.string.tasbih_editor_title_new,
+                ),
+                fontSize = 23.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.text,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_name_label)) {
+            PillTextField(
+                value = state.name,
+                onValueChange = viewModel::onNameChange,
+                placeholder = stringResource(R.string.tasbih_editor_name_placeholder),
+            )
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_arabic_label)) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                PillTextField(
+                    value = state.arabic,
+                    onValueChange = viewModel::onArabicChange,
+                    placeholder = stringResource(R.string.tasbih_editor_arabic_placeholder),
+                    textStyle = TextStyle(
+                        fontFamily = NotoNaskhArabic,
+                        fontSize = 18.sp,
+                        color = colors.text,
+                    ),
+                )
+            }
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_translation_label)) {
+            PillTextField(
+                value = state.translation,
+                onValueChange = viewModel::onTranslationChange,
+                placeholder = stringResource(R.string.tasbih_editor_translation_placeholder),
+            )
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_note_label)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(ListRowShape)
+                    .background(colors.card)
+                    .border(1.dp, colors.line, ListRowShape)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                if (state.note.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.tasbih_editor_note_placeholder),
+                        fontSize = 14.sp,
+                        color = colors.faint,
+                    )
+                }
+                BasicTextField(
+                    value = state.note,
+                    onValueChange = viewModel::onNoteChange,
+                    minLines = 3,
+                    textStyle = TextStyle(fontSize = 14.sp, color = colors.text),
+                    cursorBrush = SolidColor(colors.text),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_lap_target_label)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = state.lapTarget.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.text,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StepperButton(
+                        label = "−",
+                        bg = colors.surface,
+                        fg = colors.text,
+                        onClick = { viewModel.onLapTargetChange(state.lapTarget - 1) },
+                    )
+                    StepperButton(
+                        label = "+",
+                        bg = colors.sage,
+                        fg = colors.onSage,
+                        onClick = { viewModel.onLapTargetChange(state.lapTarget + 1) },
+                    )
+                }
+            }
+        }
+
+        LabeledField(stringResource(R.string.tasbih_editor_daily_goal_label)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(33, 100, 500).forEach { option ->
+                    val selected = state.dailyGoal == option
+                    Box(
+                        modifier = Modifier
+                            .clip(PillShape)
+                            .background(if (selected) colors.sage else colors.surface)
+                            .clickable { viewModel.onDailyGoalChange(if (selected) null else option) }
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                    ) {
+                        Text(
+                            text = option.toString(),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (selected) colors.onSage else colors.text,
+                        )
+                    }
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp)
+                .height(52.dp)
+                .clip(PillShape)
+                .background(if (state.canSave) colors.terra else colors.track)
+                .clickable(enabled = state.canSave) { viewModel.onSave(onBack) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = stringResource(R.string.tasbih_editor_save),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.card,
+            )
+        }
+        Text(
+            text = stringResource(R.string.tasbih_editor_footer),
+            fontSize = 11.5.sp,
+            color = colors.faint,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, bottom = 16.dp),
+        )
+    }
+}
+
+@Composable
+private fun LabeledField(label: String, content: @Composable () -> Unit) {
+    val colors = DhikrTheme.colors
+    Column(modifier = Modifier.padding(bottom = 15.dp)) {
+        Text(
+            text = label.uppercase(),
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.dim,
+            modifier = Modifier.padding(bottom = 4.dp),
+        )
+        content()
+    }
+}
+
+/** 48dp pill input: `card` background, 1px `line` border, manual placeholder. */
+@Composable
+private fun PillTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    textStyle: TextStyle? = null,
+) {
+    val colors = DhikrTheme.colors
+    val style = textStyle ?: TextStyle(fontSize = 14.sp, color = colors.text)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(PillShape)
+            .background(colors.card)
+            .border(1.dp, colors.line, PillShape)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        if (value.isEmpty()) {
+            Text(text = placeholder, fontSize = 14.sp, color = colors.faint)
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = style,
+            cursorBrush = SolidColor(colors.text),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun StepperButton(label: String, bg: Color, fg: Color, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(bg)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = fg)
+    }
+}

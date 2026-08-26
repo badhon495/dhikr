@@ -35,4 +35,18 @@
     <string name="tasbih_library_favorite_content_description">Favorite</string>
     <string name="tasbih_library_meta_laps">%1$d × %2$d laps</string>
     <string name="tasbih_library_meta_per_lap">%1$d per lap</string>
+    <string name="tasbih_editor_title_new">New Tasbih</string>
+    <string name="tasbih_editor_title_edit">Edit Tasbih</string>
+    <string name="tasbih_editor_name_label">Name</string>
+    <string name="tasbih_editor_name_placeholder">e.g. Evening Tasbih</string>
+    <string name="tasbih_editor_arabic_label">Arabic text</string>
+    <string name="tasbih_editor_arabic_placeholder">اكتب الذكر</string>
+    <string name="tasbih_editor_translation_label">Translation</string>
+    <string name="tasbih_editor_translation_placeholder">What it means</string>
+    <string name="tasbih_editor_note_label">Personal note</string>
+    <string name="tasbih_editor_note_placeholder">Why you are reciting it</string>
+    <string name="tasbih_editor_lap_target_label">Lap target</string>
+    <string name="tasbih_editor_daily_goal_label">Daily goal</string>
+    <string name="tasbih_editor_save">Save Tasbih</string>
+    <string name="tasbih_editor_footer">Stored on this device only. Nothing is uploaded.</string>
 </resources>
