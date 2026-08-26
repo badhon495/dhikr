@@ -34,10 +34,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.theme.Caprasimo
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.PillShape
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -195,7 +197,17 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
         }
 
         // History grouped by Dhikr
-        Text(stringResource(R.string.insights_history_title), fontSize = 11.5.sp, color = colors.dim, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+        val todayLabel = stringResource(R.string.insights_day_today)
+        val yesterdayLabel = stringResource(R.string.insights_day_yesterday)
+        Row(modifier = Modifier.padding(top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
+            Text(stringResource(R.string.insights_history_title), fontSize = 11.5.sp, color = colors.dim)
+            Text(
+                stringResource(R.string.insights_history_grouped),
+                fontSize = 10.5.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+        }
         state.historyByTasbih.forEach { group ->
             Column(
                 modifier = Modifier
@@ -209,8 +221,14 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
                     Text(group.tasbihName, fontSize = 14.5.sp, color = colors.text)
                     Text(group.lifetimeTotal.toString(), fontSize = 14.5.sp, color = colors.terra)
                 }
-                group.dailyTotals.forEach { (_, count) ->
+                group.dailyTotals.forEach { (dayStartMillis, count) ->
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                        Text(
+                            formatDayLabel(dayStartMillis, todayLabel, yesterdayLabel),
+                            fontSize = 11.sp,
+                            color = colors.faint,
+                            modifier = Modifier.width(72.dp),
+                        )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -234,6 +252,21 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
     }
 }
 
+private fun formatDayLabel(dayStartMillis: Long, todayLabel: String, yesterdayLabel: String): String {
+    val target = Calendar.getInstance().apply { timeInMillis = dayStartMillis }
+    val today = Calendar.getInstance()
+    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    return when {
+        isSameDay(target, today) -> todayLabel
+        isSameDay(target, yesterday) -> yesterdayLabel
+        else -> SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date(dayStartMillis))
+    }
+}
+
+private fun isSameDay(a: Calendar, b: Calendar): Boolean =
+    a.get(Calendar.YEAR) == b.get(Calendar.YEAR) &&
+        a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
+
 @Composable
 private fun TotalTile(label: String, value: Int, modifier: Modifier = Modifier) {
     val colors = DhikrTheme.colors
@@ -244,6 +277,12 @@ private fun TotalTile(label: String, value: Int, modifier: Modifier = Modifier) 
             .padding(14.dp),
     ) {
         Text(label.uppercase(), fontSize = 10.5.sp, color = colors.dim)
-        Text(value.toString(), fontSize = 24.sp, color = colors.text, modifier = Modifier.padding(top = 4.dp))
+        Text(
+            value.toString(),
+            fontSize = 24.sp,
+            fontFamily = Caprasimo,
+            color = colors.text,
+            modifier = Modifier.padding(top = 4.dp),
+        )
     }
 }
