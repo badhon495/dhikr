@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.entity.TasbihEntity
-import com.dhikr.app.ui.theme.CardShape
 import com.dhikr.app.ui.theme.DhikrTheme
+import com.dhikr.app.ui.theme.ListRowShape
 import com.dhikr.app.ui.theme.PillShape
 
 @Composable
@@ -193,7 +193,7 @@ private fun TasbihRow(
         // favorite WITHOUT also firing this row's onClick/opening the Dhikr.
         modifier = Modifier
             .fillMaxWidth()
-            .clip(CardShape)
+            .clip(ListRowShape)
             .background(colors.card)
             .clickable { onClick() }
             .padding(14.dp),
@@ -219,7 +219,7 @@ private fun TasbihRow(
                 text = tasbih.transliteration,
                 fontSize = 12.sp,
                 color = colors.faint,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 2.dp),
             )
