@@ -55,8 +55,6 @@ import com.dhikr.app.ui.theme.PillShape
 fun RoutinesScreen(
     viewModel: RoutinesViewModel,
     onStartRoutine: (String) -> Unit,
-    onEditRoutine: (String) -> Unit,
-    onNewRoutine: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
@@ -72,7 +70,6 @@ fun RoutinesScreen(
                     routineWithSteps = routineWithSteps,
                     tasbihNamesById = state.tasbihNamesById,
                     onStart = { onStartRoutine(routineWithSteps.routine.id) },
-                    onEdit = { onEditRoutine(routineWithSteps.routine.id) },
                     onDelete = { viewModel.onDeleteRoutine(routineWithSteps.routine) },
                 )
             }
@@ -83,8 +80,7 @@ fun RoutinesScreen(
                         .height(50.dp)
                         .padding(top = 4.dp)
                         .dashedBorder(color = colors.faint, shape = PillShape)
-                        .clip(PillShape)
-                        .clickable { onNewRoutine() },
+                        .clip(PillShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(stringResource(R.string.routines_new), color = colors.dim)
@@ -100,7 +96,6 @@ private fun RoutineCard(
     routineWithSteps: RoutineWithSteps,
     tasbihNamesById: Map<String, String>,
     onStart: () -> Unit,
-    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val colors = DhikrTheme.colors
@@ -114,7 +109,10 @@ private fun RoutineCard(
             .clip(RoundedCornerShape(26.dp))
             .background(colors.card)
             .combinedClickable(
-                onClick = { onEdit() },
+                // Card body tap has no destination — editing a routine is a
+                // known, intentionally deferred gap (no editor screen exists
+                // yet). Long-press-to-delete is the only whole-card gesture.
+                onClick = {},
                 onLongClick = { showDeleteDialog = true },
             )
             .padding(16.dp),
