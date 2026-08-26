@@ -2190,10 +2190,12 @@ git commit -m "Add Routines screen (list, start, delete, step display)"
 - Produces: `CounterViewModel` constructor gains `routineRepository:
   RoutineRepository` and a `startingRoutineId: String? = null` parameter.
   `CounterUiState` gains `routineSteps: List<RoutineStepDisplay> = emptyList()`,
-  `currentRoutineStepIndex: Int = -1`, and `isRoutineComplete: Boolean = false`
-  (where `RoutineStepDisplay(tasbihName: String, targetCount: Int)`). Consumed by
-  `CounterScreen.kt` (this task, renders the chips row and — per Step 4 —
-  branches to the "Routine complete" overlay) and `DhikrApp.kt` (Task 12, passes
+  `currentRoutineStepIndex: Int = -1`, `isRoutineComplete: Boolean = false`, and
+  `routineName: String? = null` (where `RoutineStepDisplay(tasbihName: String,
+  targetCount: Int)`) — all four added in this task (the first three in Step 2,
+  `routineName` in Step 5 alongside the "Routine complete" overlay). Consumed by
+  `CounterScreen.kt` (this task, renders the chips row and — per Step 5 —
+  branches to the "Routine complete" overlay) and `DhikrApp.kt` (Task 14, passes
   `startingRoutineId` when starting a routine).
 
 This task makes the `routineId`/`routineStep` fields on `CounterSessionState`
@@ -2209,18 +2211,31 @@ composable tree but not rendered").
 <string name="routine_complete_body">%1$s finished — %2$d counts in %3$s.</string>
 ```
 
-- [ ] **Step 2: Add `RoutineStepDisplay` and the two new fields to
+- [ ] **Step 2: Add `RoutineStepDisplay` and three new fields to
       `CounterUiState.kt`**
 
 ```kotlin
 data class RoutineStepDisplay(val tasbihName: String, val targetCount: Int)
 ```
 
-Add `routineSteps: List<RoutineStepDisplay> = emptyList()` and
-`currentRoutineStepIndex: Int = -1` to `CounterUiState`. `-1` means "not running a
-routine" — `CounterScreen` checks `state.routineSteps.isNotEmpty()` (not the
-index) to decide whether to render the chips row at all, so an empty list is the
-real "no routine" signal and the index default is just a safe non-matching value.
+Add to `CounterUiState`:
+- `routineSteps: List<RoutineStepDisplay> = emptyList()`
+- `currentRoutineStepIndex: Int = -1`
+- `isRoutineComplete: Boolean = false`
+
+`-1` means "not running a routine" — `CounterScreen` checks
+`state.routineSteps.isNotEmpty()` (not the index) to decide whether to render the
+chips row at all, so an empty list is the real "no routine" signal and the index
+default is just a safe non-matching value. `isRoutineComplete` is added here
+(not deferred to a later step) because Step 3's `advanceRoutineStep()` code
+constructs `buildState().copy(isRoutineComplete = true)`, which requires the
+field to already exist on the data class — Step 5 (the "Routine complete"
+overlay) only *reads* `state.isRoutineComplete`, it doesn't declare the field.
+
+A fourth field, `routineName: String? = null`, is added later in Step 5 of this
+same task, once the overlay's need for the routine's own name (as opposed to the
+current step's Tasbih name) becomes concrete — not added here to avoid declaring
+a field before its consumer exists.
 
 - [ ] **Step 3: Extend `CounterViewModel.kt` for routine awareness**
 
@@ -2360,9 +2375,8 @@ here with all 5 constructor parameters now that `routineRepository` and
 `startingRoutineId` exist. (Task 11, below, extends this `Factory` once more to
 add `historyRepository` — see that task's own note.)
 
-Add `routineSteps`/`currentRoutineStepIndex`/`isRoutineComplete` to
-`buildState()`'s `CounterUiState(...)` construction (all three added to
-`CounterUiState` in Step 2 above), sourcing them from
+Add `routineSteps` and `currentRoutineStepIndex` to `buildState()`'s
+`CounterUiState(...)` construction, sourcing them from
 `routineStepNames.mapIndexed { i, name -> RoutineStepDisplay(name,
 sortedSteps[i].targetCount) }` (only when `activeRoutine != null`, else the empty
 default) and `routineStepIndex`. Since `sortedSteps` is recomputed from
@@ -2370,6 +2384,14 @@ default) and `routineStepIndex`. Since `sortedSteps` is recomputed from
 consider hoisting it to a small private property/function if the duplication
 feels awkward — use your judgment, this is a minor internal-organization choice
 that doesn't affect the public interface.
+
+`isRoutineComplete` is deliberately NOT sourced from anything in `buildState()` —
+leave it at its default (`false`) in every `buildState()` call. It is set to
+`true` only via the explicit `.copy(isRoutineComplete = true)` in
+`advanceRoutineStep()`'s last-step branch above, and reset to `false` by
+`onRoutineCompleteAcknowledged()` (added in Step 5) — treating it as a one-shot
+signal rather than a value `buildState()` recomputes keeps its meaning
+unambiguous (it means exactly "the dialog should be showing right now").
 
 Each step's completion (both a normal `advanceRoutineStep()` call and the final
 `isRoutineComplete = true` case) should also log a `SessionEntity` for that
