@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy Auto Backup rules (Android 11 and below). The Room database holds only
+  seeded/derived data and its schema evolves without migrations, so a restored
+  copy from an older app version cannot be opened. Exclude it; back up only the
+  user's real preferences.
+-->
+<full-backup-content>
+    <exclude domain="database" path="dhikr.db" />
+    <exclude domain="database" path="dhikr.db-shm" />
+    <exclude domain="database" path="dhikr.db-wal" />
+</full-backup-content>

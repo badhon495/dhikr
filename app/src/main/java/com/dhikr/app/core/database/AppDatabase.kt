@@ -12,7 +12,12 @@ import com.dhikr.app.core.database.entity.TasbihEntity
 
 @Database(
     entities = [TasbihEntity::class, RoutineEntity::class, RoutineStepEntity::class, SessionEntity::class],
-    version = 1,
+    // v2: no schema change from v1, but the version had been left at 1 across
+    // several real schema edits (session/routine tables added without a bump).
+    // Bumping now gives Room a version delta so an older on-device database
+    // hits fallbackToDestructiveMigration (below) and is rebuilt+reseeded
+    // instead of crashing the app on launch with an identity-hash mismatch.
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

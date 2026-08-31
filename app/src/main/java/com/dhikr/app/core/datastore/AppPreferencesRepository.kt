@@ -13,10 +13,19 @@ private val Context.preferencesDataStore by preferencesDataStore(name = "prefere
 /** User's app-theme choice. SYSTEM defers to the device dark/light setting. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/**
+ * When the counter vibrates.
+ *  - OFF: never
+ *  - EVERY_TAP: on every registered count
+ *  - LAP_ONLY: only when a lap completes
+ */
+enum class HapticMode { OFF, EVERY_TAP, LAP_ONLY }
+
 class AppPreferencesRepository(private val context: Context) {
     private val dailyGoalKey = intPreferencesKey("daily_goal_target")
     private val themeModeKey = stringPreferencesKey("theme_mode")
     private val hapticsEnabledKey = booleanPreferencesKey("haptics_enabled")
+    private val hapticModeKey = stringPreferencesKey("haptic_mode")
     private val reducedMotionKey = booleanPreferencesKey("reduced_motion")
     private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
 
@@ -40,10 +49,23 @@ class AppPreferencesRepository(private val context: Context) {
         context.preferencesDataStore.edit { it[themeModeKey] = value.name }
     }
 
-    val hapticsEnabled = context.preferencesDataStore.data.map { it[hapticsEnabledKey] ?: true }
+    /**
+     * When the counter vibrates. Falls back to the pre-3.x boolean
+     * `haptics_enabled` so an existing user's choice carries over: absent →
+     * EVERY_TAP, false → OFF, true → EVERY_TAP. An unknown stored string also
+     * falls back to EVERY_TAP rather than crashing on a hand-edited store.
+     */
+    val hapticMode = context.preferencesDataStore.data.map { prefs ->
+        when (prefs[hapticModeKey]) {
+            HapticMode.OFF.name -> HapticMode.OFF
+            HapticMode.EVERY_TAP.name -> HapticMode.EVERY_TAP
+            HapticMode.LAP_ONLY.name -> HapticMode.LAP_ONLY
+            else -> if (prefs[hapticsEnabledKey] == false) HapticMode.OFF else HapticMode.EVERY_TAP
+        }
+    }
 
-    suspend fun setHapticsEnabled(value: Boolean) {
-        context.preferencesDataStore.edit { it[hapticsEnabledKey] = value }
+    suspend fun setHapticMode(value: HapticMode) {
+        context.preferencesDataStore.edit { it[hapticModeKey] = value.name }
     }
 
     val reducedMotion = context.preferencesDataStore.data.map { it[reducedMotionKey] ?: false }

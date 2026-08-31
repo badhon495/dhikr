@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup / device-transfer rules (Android 12+). The Room database is
+  seeded/derived data on a migration-less schema, so a copy restored from an
+  older app version cannot be opened. Exclude it from both cloud backup and
+  device-to-device transfer.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="dhikr.db" />
+        <exclude domain="database" path="dhikr.db-shm" />
+        <exclude domain="database" path="dhikr.db-wal" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="dhikr.db" />
+        <exclude domain="database" path="dhikr.db-shm" />
+        <exclude domain="database" path="dhikr.db-wal" />
+    </device-transfer>
+</data-extraction-rules>

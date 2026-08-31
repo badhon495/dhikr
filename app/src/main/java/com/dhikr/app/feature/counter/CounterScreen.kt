@@ -46,8 +46,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -65,6 +63,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhikr.app.R
+import com.dhikr.app.core.datastore.HapticMode
+import com.dhikr.app.core.haptics.rememberHaptics
 import com.dhikr.app.ui.ClampedFontScale
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
@@ -84,9 +84,10 @@ private const val LONG_TEXT_THRESHOLD = 90
 @Composable
 fun CounterScreen(
     viewModel: CounterViewModel,
-    // From the Haptics setting (DataStore) — hoisted in DhikrApp and passed in
-    // so the tap handler can skip the vibration when the user turned it off.
-    hapticsEnabled: Boolean = true,
+    // From the Haptics setting (DataStore) — hoisted in DhikrApp and passed in.
+    // OFF: no vibration. EVERY_TAP: buzz on every count. LAP_ONLY: buzz only
+    // when a lap completes.
+    hapticMode: HapticMode = HapticMode.EVERY_TAP,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -94,7 +95,7 @@ fun CounterScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
-    val haptic = LocalHapticFeedback.current
+    val haptics = rememberHaptics()
     val reducedMotion = LocalReducedMotion.current
     var showResetDialog by remember { mutableStateOf(false) }
 
@@ -194,9 +195,18 @@ fun CounterScreen(
     val lapPulse = remember { Animatable(0f) }
     var lastLap by remember { mutableStateOf(state.lap) }
     LaunchedEffect(state.lap) {
-        if (state.lap > lastLap && !reducedMotion) {
-            lapPulse.snapTo(1f)
-            lapPulse.animateTo(0f, animationSpec = tween(Motion.PULSE_MS))
+        // Exactly +1 — a real lap rollover only ever advances by one. A larger
+        // jump is the initial load settling from the Empty-state default (0) to
+        // the restored session's lap when the screen is (re)entered, e.g. via
+        // the "Count" nav tab; that must not buzz or pulse.
+        if (state.lap == lastLap + 1) {
+            // LAP_ONLY: this is the only place the counter vibrates. EVERY_TAP
+            // also gets a stronger buzz here to mark the lap boundary.
+            if (hapticMode != HapticMode.OFF) haptics.lapTick()
+            if (!reducedMotion) {
+                lapPulse.snapTo(1f)
+                lapPulse.animateTo(0f, animationSpec = tween(Motion.PULSE_MS))
+            }
         }
         lastLap = state.lap
     }
@@ -329,8 +339,8 @@ fun CounterScreen(
                     // "double-tap to activate" on this full-screen tap zone.
                     onClickLabel = tapActionLabel,
                 ) {
-                    if (hapticsEnabled) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    if (hapticMode == HapticMode.EVERY_TAP) {
+                        haptics.tick()
                     }
                     viewModel.onTap()
                 },

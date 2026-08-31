@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.ui.theme.supportsDynamicColor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +17,7 @@ import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val hapticsEnabled: Boolean = true,
+    val hapticMode: HapticMode = HapticMode.EVERY_TAP,
     val reducedMotion: Boolean = false,
     val dailyGoalTarget: Int = 100,
     val dynamicColorEnabled: Boolean = false,
@@ -48,14 +49,14 @@ class SettingsViewModel(
     init {
         combine(
             preferencesRepository.themeMode,
-            preferencesRepository.hapticsEnabled,
+            preferencesRepository.hapticMode,
             preferencesRepository.reducedMotion,
             preferencesRepository.dailyGoalTarget,
             preferencesRepository.dynamicColorEnabled,
-        ) { themeMode, hapticsEnabled, reducedMotion, dailyGoal, dynamicColor ->
+        ) { themeMode, hapticMode, reducedMotion, dailyGoal, dynamicColor ->
             SettingsUiState(
                 themeMode = themeMode,
-                hapticsEnabled = hapticsEnabled,
+                hapticMode = hapticMode,
                 reducedMotion = reducedMotion,
                 dailyGoalTarget = dailyGoal,
                 dynamicColorEnabled = dynamicColor,
@@ -70,8 +71,8 @@ class SettingsViewModel(
         viewModelScope.launch { preferencesRepository.setThemeMode(mode) }
     }
 
-    fun onHapticsEnabledChange(enabled: Boolean) {
-        viewModelScope.launch { preferencesRepository.setHapticsEnabled(enabled) }
+    fun onHapticModeChange(mode: HapticMode) {
+        viewModelScope.launch { preferencesRepository.setHapticMode(mode) }
     }
 
     fun onReducedMotionChange(enabled: Boolean) {

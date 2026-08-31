@@ -40,6 +40,7 @@ import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.feature.counter.CounterScreen
@@ -91,7 +92,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         val routineRepository = remember { RoutineRepository(app.database.routineDao()) }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
-        val hapticsEnabled by preferencesRepository.hapticsEnabled.collectAsState(initial = true)
+        val hapticMode by preferencesRepository.hapticMode.collectAsState(initial = HapticMode.EVERY_TAP)
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
 
         // Hoisted here rather than read off CounterViewModel directly: this
@@ -178,7 +179,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     )
                     CounterScreen(
                         viewModel = viewModel,
-                        hapticsEnabled = hapticsEnabled,
+                        hapticMode = hapticMode,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )

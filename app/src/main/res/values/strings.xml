@@ -155,7 +155,10 @@
     <string name="settings_reduce_motion">Reduce motion</string>
     <string name="settings_reduce_motion_desc">Minimise animations across the app</string>
     <string name="settings_haptics">Haptic feedback</string>
-    <string name="settings_haptics_desc">Vibrate on each count</string>
+    <string name="settings_haptics_desc">When the counter vibrates</string>
+    <string name="settings_haptics_off">Off</string>
+    <string name="settings_haptics_every_tap">Every count</string>
+    <string name="settings_haptics_lap_only">Lap complete</string>
     <string name="settings_daily_goal">Daily goal</string>
     <string name="settings_daily_goal_desc">Target shown on the Home ring</string>
     <string name="settings_daily_goal_custom">Custom</string>

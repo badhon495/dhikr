@@ -38,6 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
@@ -90,11 +91,25 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
         // ---- Counting ----
         SettingsSection(stringResource(R.string.settings_counting)) {
-            SwitchRow(
-                title = stringResource(R.string.settings_haptics),
-                description = stringResource(R.string.settings_haptics_desc),
-                checked = state.hapticsEnabled,
-                onCheckedChange = viewModel::onHapticsEnabledChange,
+            Text(
+                stringResource(R.string.settings_haptics),
+                fontSize = 14.sp,
+                color = colors.text,
+            )
+            Text(
+                stringResource(R.string.settings_haptics_desc),
+                fontSize = 12.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+            )
+            ChoiceRow(
+                options = listOf(
+                    HapticMode.OFF to stringResource(R.string.settings_haptics_off),
+                    HapticMode.EVERY_TAP to stringResource(R.string.settings_haptics_every_tap),
+                    HapticMode.LAP_ONLY to stringResource(R.string.settings_haptics_lap_only),
+                ),
+                selected = state.hapticMode,
+                onSelect = viewModel::onHapticModeChange,
             )
             Column(modifier = Modifier.padding(top = 14.dp)) {
                 Text(
