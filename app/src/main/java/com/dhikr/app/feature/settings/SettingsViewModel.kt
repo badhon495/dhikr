@@ -28,7 +28,7 @@ data class SettingsUiState(
     val isCustomGoal: Boolean get() = dailyGoalTarget !in DAILY_GOAL_OPTIONS
 
     companion object {
-        val DAILY_GOAL_OPTIONS = listOf(33, 100, 300, 500, 1000)
+        val DAILY_GOAL_OPTIONS = listOf(500, 1000)
         const val DAILY_GOAL_MIN = 1
         const val DAILY_GOAL_MAX = 99_999
     }

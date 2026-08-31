@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -192,28 +190,28 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
                 .padding(12.dp),
         ) {
             val sortedEntries = state.calendarIntensity.entries.sortedBy { it.key }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(7),
-                modifier = Modifier.height(160.dp),
-            ) {
-                items(sortedEntries.size) { index ->
-                    val (day, count) = sortedEntries[index]
-                    val intensity = when {
-                        count == 0 -> colors.track
-                        count < 33 -> colors.sageSoft
-                        count < 100 -> colors.sageMid
-                        else -> colors.sage
+            sortedEntries.chunked(7).forEach { week ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    week.forEach { (day, count) ->
+                        val intensity = when {
+                            count == 0 -> colors.track
+                            count < 33 -> colors.sageSoft
+                            count < 100 -> colors.sageMid
+                            else -> colors.sage
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .padding(3.dp)
+                                .clip(RoundedCornerShape(9.dp))
+                                .background(intensity),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(day.toString(), fontSize = 12.sp, color = colors.text)
+                        }
                     }
-                    Box(
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .padding(2.dp)
-                            .clip(RoundedCornerShape(9.dp))
-                            .background(intensity),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(day.toString(), fontSize = 10.sp, color = colors.text)
-                    }
+                    repeat(7 - week.size) { Box(modifier = Modifier.weight(1f)) }
                 }
             }
             Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
