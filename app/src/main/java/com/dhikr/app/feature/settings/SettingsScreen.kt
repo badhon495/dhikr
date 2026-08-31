@@ -191,7 +191,12 @@ private fun SwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(ListRowShape)
+            // No .clip(ListRowShape) here: this Row is shorter than twice the
+            // shape's 22dp corner radius, so the clamped corner curve bit into
+            // the top-left of the title text ("Haptic feedback" rendered as
+            // "|aptic feedback"). The Row has no background/border of its own —
+            // the only thing the clip bounded was the click ripple, and a
+            // rectangular ripple inside the section card is fine.
             .clickable(role = Role.Switch) { onCheckedChange(!checked) },
     ) {
         Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {

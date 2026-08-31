@@ -322,12 +322,23 @@ private fun DhikrBottomNav(navController: NavController) {
                         // so repeated taps on the same tab don't stack
                         // duplicate entries, and restoreState so returning to
                         // a previously-visited tab resumes where it left off.
+                        //
+                        // saveState/restoreState are skipped when the target IS
+                        // the graph's start destination (Home): saveState keys
+                        // the popped stack by the popUpTo target's id (the start
+                        // destination), and restoreState on a navigate to that
+                        // same id then immediately restores it — so tapping Home
+                        // while anything is stacked above it (e.g. a Counter
+                        // opened from a Home favourite) would just bounce back to
+                        // that screen instead of going Home.
+                        val startRoute = navController.graph.findStartDestination().route
+                        val keepBackStack = baseRoute != startRoute
                         navController.navigate(baseRoute) {
                             popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
+                                saveState = keepBackStack
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState = keepBackStack
                         }
                     }
                 },
