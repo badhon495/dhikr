@@ -95,6 +95,7 @@
     <string name="routines_delete_cancel_action">Cancel</string>
     <string name="routines_add_step">+ Add step</string>
     <string name="routine_editor_title_new">New routine</string>
+    <string name="routine_editor_title_edit">Edit routine</string>
     <string name="routine_editor_name_label">Name</string>
     <string name="routine_editor_name_placeholder">e.g. Morning Dhikr</string>
     <string name="routine_editor_steps_label">Steps</string>

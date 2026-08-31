@@ -87,7 +87,10 @@ fun RoutineEditorScreen(
                 )
             }
             Text(
-                text = stringResource(R.string.routine_editor_title_new),
+                text = stringResource(
+                    if (state.isEditing) R.string.routine_editor_title_edit
+                    else R.string.routine_editor_title_new,
+                ),
                 fontSize = 23.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.text,

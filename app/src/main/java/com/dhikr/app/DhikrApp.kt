@@ -73,7 +73,7 @@ private const val ROUTE_TASBIH_EDITOR = "tasbih/editor?id={id}"
 private const val ROUTE_COUNTER = "counter?dhikrId={dhikrId}&routineId={routineId}"
 private const val ROUTE_INSIGHTS = "insights"
 private const val ROUTE_ROUTINES = "routines"
-private const val ROUTE_ROUTINE_EDITOR = "routines/editor"
+private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
@@ -193,12 +193,17 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                     RoutinesScreen(
                         viewModel = viewModel,
                         onStartRoutine = { id -> navController.navigate("counter?routineId=$id") },
-                        onNewRoutine = { navController.navigate(ROUTE_ROUTINE_EDITOR) },
+                        onNewRoutine = { navController.navigate("routines/editor") },
+                        onEditRoutine = { id -> navController.navigate("routines/editor?id=$id") },
                     )
                 }
-                composable(ROUTE_ROUTINE_EDITOR) {
+                composable(
+                    ROUTE_ROUTINE_EDITOR,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) { backStackEntry ->
+                    val editingId = backStackEntry.arguments?.getString("id")
                     val viewModel: RoutineEditorViewModel = viewModel(
-                        factory = RoutineEditorViewModel.Factory(routineRepository, tasbihRepository),
+                        factory = RoutineEditorViewModel.Factory(routineRepository, tasbihRepository, editingId),
                     )
                     RoutineEditorScreen(
                         viewModel = viewModel,

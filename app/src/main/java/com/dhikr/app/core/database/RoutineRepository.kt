@@ -37,6 +37,13 @@ class RoutineRepository(private val routineDao: RoutineDao) {
         routineDao.updateRoutine(current.copy(name = name, updatedAt = System.currentTimeMillis()))
     }
 
+    /** Rename a routine and replace its whole step list in one shot (routine editor, edit mode). */
+    suspend fun updateRoutine(routineId: String, name: String, steps: List<Pair<String, Int>>) {
+        val current = routineDao.getWithSteps(routineId)?.routine ?: return
+        routineDao.updateRoutine(current.copy(name = name, updatedAt = System.currentTimeMillis()))
+        updateSteps(routineId, steps)
+    }
+
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.deleteRoutine(routine)
 
     fun newId(): String = UUID.randomUUID().toString()

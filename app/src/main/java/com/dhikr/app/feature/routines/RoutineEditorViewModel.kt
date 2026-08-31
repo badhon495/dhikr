@@ -22,18 +22,21 @@ data class RoutineEditorUiState(
     val availableTasbih: List<TasbihEntity> = emptyList(),
     val tasbihNamesById: Map<String, String> = emptyMap(),
     val canSave: Boolean = false,
+    // True when editing an existing routine (preset or custom) rather than creating one.
+    val isEditing: Boolean = false,
 )
 
 /**
- * Backs the "New routine" screen. Routine creation was specced in plan.md §21
- * but had no UI — `RoutineRepository.createRoutine()` already existed, this
- * just drives it. Kept deliberately small: name + an ordered list of steps,
- * each a (Tasbih, count) pair, with add / remove / reorder / set-count. Editing
- * an existing routine is a separate follow-up.
+ * Backs the routine editor screen. Kept deliberately small: name + an ordered
+ * list of steps, each a (Tasbih, count) pair, with add / remove / reorder /
+ * set-count. When [editingRoutineId] is non-null the screen loads that routine
+ * (preset or custom) and saving replaces it in place; otherwise it creates a
+ * new one.
  */
 class RoutineEditorViewModel(
     private val routineRepository: RoutineRepository,
     private val tasbihRepository: TasbihRepository,
+    private val editingRoutineId: String? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutineEditorUiState())
@@ -47,6 +50,20 @@ class RoutineEditorViewModel(
                     availableTasbih = all,
                     tasbihNamesById = all.associate { t -> t.id to t.name },
                 )
+            }
+            if (editingRoutineId != null) {
+                val existing = routineRepository.getWithSteps(editingRoutineId)
+                if (existing != null) {
+                    update { state ->
+                        state.copy(
+                            name = existing.routine.name,
+                            steps = existing.steps
+                                .sortedBy { s -> s.stepOrder }
+                                .map { s -> StepDraft(s.tasbihId, s.targetCount) },
+                            isEditing = true,
+                        ).withCanSave()
+                    }
+                }
             }
         }
     }
@@ -83,10 +100,13 @@ class RoutineEditorViewModel(
         val s = _uiState.value
         if (!s.canSave) return
         viewModelScope.launch {
-            val id = routineRepository.createRoutine(
-                name = s.name.trim(),
-                steps = s.steps.map { it.tasbihId to it.targetCount },
-            )
+            val steps = s.steps.map { it.tasbihId to it.targetCount }
+            val id = if (editingRoutineId != null) {
+                routineRepository.updateRoutine(editingRoutineId, s.name.trim(), steps)
+                editingRoutineId
+            } else {
+                routineRepository.createRoutine(name = s.name.trim(), steps = steps)
+            }
             onSaved(id)
         }
     }
@@ -101,9 +121,10 @@ class RoutineEditorViewModel(
     class Factory(
         private val routineRepository: RoutineRepository,
         private val tasbihRepository: TasbihRepository,
+        private val editingRoutineId: String? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RoutineEditorViewModel(routineRepository, tasbihRepository) as T
+            RoutineEditorViewModel(routineRepository, tasbihRepository, editingRoutineId) as T
     }
 }

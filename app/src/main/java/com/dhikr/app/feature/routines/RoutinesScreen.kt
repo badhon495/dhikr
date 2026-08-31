@@ -55,6 +55,7 @@ fun RoutinesScreen(
     viewModel: RoutinesViewModel,
     onStartRoutine: (String) -> Unit,
     onNewRoutine: () -> Unit,
+    onEditRoutine: (String) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
@@ -75,6 +76,7 @@ fun RoutinesScreen(
                     routineWithSteps = routineWithSteps,
                     tasbihNamesById = state.tasbihNamesById,
                     onStart = { onStartRoutine(routineWithSteps.routine.id) },
+                    onEdit = { onEditRoutine(routineWithSteps.routine.id) },
                     onDelete = { viewModel.onDeleteRoutine(routineWithSteps.routine) },
                 )
             }
@@ -103,6 +105,7 @@ private fun RoutineCard(
     routineWithSteps: RoutineWithSteps,
     tasbihNamesById: Map<String, String>,
     onStart: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val colors = DhikrTheme.colors
@@ -116,10 +119,9 @@ private fun RoutineCard(
             .clip(RoundedCornerShape(26.dp))
             .background(colors.card)
             .combinedClickable(
-                // Card body tap has no destination — editing a routine is a
-                // known, intentionally deferred gap (no editor screen exists
-                // yet). Long-press-to-delete is the only whole-card gesture.
-                onClick = {},
+                // Card body tap opens the routine editor (works for presets
+                // and custom routines alike). Long-press deletes.
+                onClick = onEdit,
                 onLongClick = { showDeleteDialog = true },
             )
             .padding(16.dp),
