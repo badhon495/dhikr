@@ -136,6 +136,11 @@
     <string name="insights_empty_body">Counts appear here as soon as you finish your first session.</string>
     <string name="insights_empty_cta">Start counting</string>
     <string name="insights_empty_icon_content_description">No sessions yet</string>
+    <string name="insights_last_month">Last month</string>
+    <string name="insights_month_active_days">%1$d of %2$d days active</string>
+    <string name="insights_see_all_months">See all months</string>
+    <string name="insights_all_months_title">Monthly history</string>
+    <string name="insights_all_months_empty">No months to show yet.</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>

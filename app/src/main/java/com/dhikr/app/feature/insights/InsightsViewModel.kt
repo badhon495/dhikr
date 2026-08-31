@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.database.HistoryRepository
+import com.dhikr.app.core.database.MonthSummary
 import com.dhikr.app.core.database.TasbihHistoryGroup
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ data class InsightsUiState(
     val last7Days: List<Pair<String, Int>> = emptyList(),
     val calendarIntensity: Map<Int, Int> = emptyMap(),
     val historyByTasbih: List<TasbihHistoryGroup> = emptyList(),
+    val previousMonth: MonthSummary? = null,
     val isEmpty: Boolean = true,
 )
 
@@ -55,6 +57,10 @@ class InsightsViewModel(private val repository: HistoryRepository) : ViewModel()
                 val last7Days = repository.last7DaysTotals()
                 val calendar = repository.calendarIntensity(now.get(Calendar.YEAR), now.get(Calendar.MONTH))
                 val history = repository.historyByTasbih()
+                val lastMonth = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
+                val previousMonth = repository.monthlySummaries().firstOrNull {
+                    it.year == lastMonth.get(Calendar.YEAR) && it.month == lastMonth.get(Calendar.MONTH)
+                }
                 InsightsUiState(
                     today = totals.today,
                     week = totals.week,
@@ -63,6 +69,7 @@ class InsightsViewModel(private val repository: HistoryRepository) : ViewModel()
                     last7Days = last7Days,
                     calendarIntensity = calendar,
                     historyByTasbih = history,
+                    previousMonth = previousMonth,
                     isEmpty = totals.allTime == 0,
                 )
             }

@@ -48,6 +48,8 @@ import com.dhikr.app.feature.home.HomeScreen
 import com.dhikr.app.feature.home.HomeViewModel
 import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
+import com.dhikr.app.feature.insights.MonthlyHistoryScreen
+import com.dhikr.app.feature.insights.MonthlyHistoryViewModel
 import com.dhikr.app.feature.routines.RoutineEditorScreen
 import com.dhikr.app.feature.routines.RoutineEditorViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
@@ -72,6 +74,7 @@ private const val ROUTE_TASBIH_LIBRARY = "tasbih"
 private const val ROUTE_TASBIH_EDITOR = "tasbih/editor?id={id}"
 private const val ROUTE_COUNTER = "counter?dhikrId={dhikrId}&routineId={routineId}"
 private const val ROUTE_INSIGHTS = "insights"
+private const val ROUTE_MONTHLY_HISTORY = "insights/months"
 private const val ROUTE_ROUTINES = "routines"
 private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
@@ -184,7 +187,17 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                     val viewModel: InsightsViewModel = viewModel(
                         factory = InsightsViewModel.Factory(historyRepository),
                     )
-                    InsightsScreen(viewModel = viewModel, onStartCounting = { navController.navigate("counter") })
+                    InsightsScreen(
+                        viewModel = viewModel,
+                        onStartCounting = { navController.navigate("counter") },
+                        onSeeAllMonths = { navController.navigate(ROUTE_MONTHLY_HISTORY) },
+                    )
+                }
+                composable(ROUTE_MONTHLY_HISTORY) {
+                    val viewModel: MonthlyHistoryViewModel = viewModel(
+                        factory = MonthlyHistoryViewModel.Factory(historyRepository),
+                    )
+                    MonthlyHistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
                 composable(ROUTE_ROUTINES) {
                     val viewModel: RoutinesViewModel = viewModel(

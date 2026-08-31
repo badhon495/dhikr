@@ -9,6 +9,20 @@ import java.util.concurrent.TimeUnit
 
 data class TasbihHistoryGroup(val tasbihId: String, val tasbihName: String, val lifetimeTotal: Int, val dailyTotals: List<Pair<Long, Int>>)
 
+/**
+ * Summary of one calendar month. `consistentDays` is the number of days that
+ * had any activity (count > 0); it is not tied to the daily goal. `daysInMonth`
+ * lets the UI render "X of Y days" without recomputing the month length.
+ */
+data class MonthSummary(
+    val year: Int,
+    val month: Int, // 0-based, matches Calendar.MONTH
+    val monthStartMillis: Long,
+    val total: Int,
+    val consistentDays: Int,
+    val daysInMonth: Int,
+)
+
 class HistoryRepository(
     private val sessionDao: SessionDao,
     private val tasbihRepository: TasbihRepository,
@@ -88,6 +102,38 @@ class HistoryRepository(
                 .map { it.dayStartMillis to it.total }
             TasbihHistoryGroup(tasbihId = id, tasbihName = tasbih.name, lifetimeTotal = lifetimeTotal, dailyTotals = daily)
         }
+    }
+
+    /**
+     * One summary per calendar month that had at least one session, newest
+     * first. Months with no activity are omitted — there is no stored install
+     * date, so the list simply starts at the first-ever session's month.
+     */
+    suspend fun monthlySummaries(): List<MonthSummary> {
+        val dayBuckets = sessionDao.allDailyTotals(dayMillis, localOffsetMillis())
+        if (dayBuckets.isEmpty()) return emptyList()
+        val calendar = Calendar.getInstance()
+        return dayBuckets
+            .groupBy { bucket ->
+                calendar.timeInMillis = bucket.dayStartMillis
+                calendar.get(Calendar.YEAR) to calendar.get(Calendar.MONTH)
+            }
+            .map { (yearMonth, buckets) ->
+                val (year, month) = yearMonth
+                val monthCalendar = Calendar.getInstance().apply {
+                    clear()
+                    set(year, month, 1, 0, 0, 0)
+                }
+                MonthSummary(
+                    year = year,
+                    month = month,
+                    monthStartMillis = monthCalendar.timeInMillis,
+                    total = buckets.sumOf { it.total },
+                    consistentDays = buckets.count { it.total > 0 },
+                    daysInMonth = monthCalendar.getActualMaximum(Calendar.DAY_OF_MONTH),
+                )
+            }
+            .sortedByDescending { it.monthStartMillis }
     }
 
     private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {

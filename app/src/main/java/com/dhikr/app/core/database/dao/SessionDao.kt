@@ -57,6 +57,19 @@ interface SessionDao {
 
     @Query("SELECT DISTINCT tasbihId FROM session")
     suspend fun distinctTasbihIds(): List<String>
+
+    // Every day-bucket across all of history (no `since` filter), local-time
+    // bucketed the same way as dailyTotalsSince(). HistoryRepository folds
+    // these into per-calendar-month summaries for the monthly history screen.
+    @Query(
+        """
+        SELECT ((startedAt + :offsetMillis) / :dayMillis) * :dayMillis - :offsetMillis AS dayStartMillis, SUM(count) AS total
+        FROM session
+        GROUP BY dayStartMillis
+        ORDER BY dayStartMillis
+        """
+    )
+    suspend fun allDailyTotals(dayMillis: Long, offsetMillis: Long): List<DayTotal>
 }
 
 data class DayTotal(val dayStartMillis: Long, val total: Int)

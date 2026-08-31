@@ -46,7 +46,11 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
+fun InsightsScreen(
+    viewModel: InsightsViewModel,
+    onStartCounting: () -> Unit,
+    onSeeAllMonths: () -> Unit,
+) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
 
@@ -223,6 +227,67 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
                 }
                 Text(stringResource(R.string.insights_legend_more), fontSize = 10.sp, color = colors.faint)
             }
+        }
+
+        // Previous month summary + link to the full month-by-month history
+        val previousMonth = state.previousMonth
+        if (previousMonth != null && previousMonth.total > 0) {
+            val prevMonthName = remember(previousMonth.monthStartMillis) {
+                SimpleDateFormat("MMMM", Locale.getDefault()).format(Date(previousMonth.monthStartMillis))
+            }
+            Text(
+                stringResource(R.string.insights_last_month),
+                fontSize = 11.5.sp,
+                color = colors.dim,
+                modifier = Modifier
+                    .padding(top = 20.dp, bottom = 8.dp)
+                    .headingSemantics(),
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.card)
+                    .padding(16.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(prevMonthName, fontSize = 14.5.sp, color = colors.text)
+                    Text(
+                        previousMonth.total.toString(),
+                        fontSize = 20.sp,
+                        fontFamily = Caprasimo,
+                        color = colors.terra,
+                    )
+                }
+                Text(
+                    stringResource(
+                        R.string.insights_month_active_days,
+                        previousMonth.consistentDays,
+                        previousMonth.daysInMonth,
+                    ),
+                    fontSize = 11.sp,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .clip(PillShape)
+                .clickable(role = Role.Button) { onSeeAllMonths() }
+                .minTapTarget()
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+        ) {
+            Text(
+                stringResource(R.string.insights_see_all_months),
+                fontSize = 12.sp,
+                color = colors.sage,
+            )
         }
 
         // History grouped by Dhikr
