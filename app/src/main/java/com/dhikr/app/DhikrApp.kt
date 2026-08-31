@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +48,11 @@ import com.dhikr.app.feature.tasbih.TasbihEditorScreen
 import com.dhikr.app.feature.tasbih.TasbihEditorViewModel
 import com.dhikr.app.feature.tasbih.TasbihLibraryScreen
 import com.dhikr.app.feature.tasbih.TasbihLibraryViewModel
+import com.dhikr.app.ui.NavCountIcon
+import com.dhikr.app.ui.NavHomeIcon
+import com.dhikr.app.ui.NavInsightsIcon
+import com.dhikr.app.ui.NavSettingsIcon
+import com.dhikr.app.ui.NavTasbihIcon
 import com.dhikr.app.ui.theme.DhikrTheme
 
 private const val ROUTE_HOME = "home"
@@ -196,19 +200,19 @@ private fun DhikrBottomNav(navController: NavController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Placeholder system icons — see task-14 brief: a future pass should
-    // replace these with proper Lucide-style stroke vectors matching
-    // CounterIcons.kt's pattern for visual consistency with the rest of the app.
+    // Stroke vectors ported from the prototype's NAV table, sharing
+    // CounterIcons.kt's treatment (24x24, 2.75 stroke, round caps) — see
+    // ui/NavIcons.kt.
     val items = listOf(
-        Triple(ROUTE_HOME, R.string.nav_home, android.R.drawable.ic_menu_myplaces),
-        Triple(ROUTE_TASBIH_LIBRARY, R.string.nav_tasbih, android.R.drawable.ic_menu_agenda),
-        Triple(ROUTE_COUNTER, R.string.nav_count, android.R.drawable.ic_menu_add),
-        Triple(ROUTE_INSIGHTS, R.string.nav_insights, android.R.drawable.ic_menu_sort_by_size),
-        Triple(ROUTE_SETTINGS, R.string.nav_settings, android.R.drawable.ic_menu_preferences),
+        Triple(ROUTE_HOME, R.string.nav_home, NavHomeIcon),
+        Triple(ROUTE_TASBIH_LIBRARY, R.string.nav_tasbih, NavTasbihIcon),
+        Triple(ROUTE_COUNTER, R.string.nav_count, NavCountIcon),
+        Triple(ROUTE_INSIGHTS, R.string.nav_insights, NavInsightsIcon),
+        Triple(ROUTE_SETTINGS, R.string.nav_settings, NavSettingsIcon),
     )
 
     NavigationBar(containerColor = colors.surface) {
-        items.forEach { (route, labelRes, iconRes) ->
+        items.forEach { (route, labelRes, icon) ->
             val baseRoute = route.substringBefore("?")
             // Finding #7: an exact match against the route's own base path
             // (not startsWith) so a sub-route sharing the same prefix — e.g.
@@ -241,7 +245,7 @@ private fun DhikrBottomNav(navController: NavController) {
                         }
                     }
                 },
-                icon = { Icon(painterResource(iconRes), contentDescription = label) },
+                icon = { Icon(imageVector = icon, contentDescription = label) },
                 label = { Text(label, fontSize = 10.5.sp) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = colors.text,
