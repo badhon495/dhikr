@@ -314,31 +314,25 @@ private fun DhikrBottomNav(navController: NavController) {
                 selected = selected,
                 onClick = {
                     if (!selected) {
-                        // Finding #7: standard Compose Navigation bottom-nav
-                        // pattern — popUpTo the graph's start destination with
-                        // saveState so switching tabs doesn't grow the back
-                        // stack unbounded (and the system back button doesn't
-                        // walk the whole tab-switch history), launchSingleTop
-                        // so repeated taps on the same tab don't stack
-                        // duplicate entries, and restoreState so returning to
-                        // a previously-visited tab resumes where it left off.
+                        // Finding #7: popUpTo the graph's start destination so
+                        // switching tabs doesn't grow the back stack unbounded
+                        // (and the system back button doesn't walk the whole
+                        // tab-switch history), launchSingleTop so repeated taps
+                        // on the same tab don't stack duplicate entries.
                         //
-                        // saveState/restoreState are skipped when the target IS
-                        // the graph's start destination (Home): saveState keys
-                        // the popped stack by the popUpTo target's id (the start
-                        // destination), and restoreState on a navigate to that
-                        // same id then immediately restores it — so tapping Home
-                        // while anything is stacked above it (e.g. a Counter
-                        // opened from a Home favourite) would just bounce back to
-                        // that screen instead of going Home.
-                        val startRoute = navController.graph.findStartDestination().route
-                        val keepBackStack = baseRoute != startRoute
+                        // No saveState/restoreState: saveState keys the popped
+                        // stack both by the popUpTo target (the start
+                        // destination) and by the tab's own destination id, so
+                        // restoreState on the very next tab tap re-inflates
+                        // whatever was stacked above it — tapping a tab while a
+                        // Counter (or editor) is open on top of it would bounce
+                        // straight back to that screen instead of the tab root.
+                        // These tabs are single-level roots with transient
+                        // detail screens pushed on top; "resume where left off"
+                        // isn't worth that.
                         navController.navigate(baseRoute) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = keepBackStack
-                            }
+                            popUpTo(navController.graph.findStartDestination().id)
                             launchSingleTop = true
-                            restoreState = keepBackStack
                         }
                     }
                 },
