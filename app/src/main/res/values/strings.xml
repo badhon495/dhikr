@@ -86,9 +86,17 @@
 
     <!-- Routines screen -->
     <string name="routines_title">Routines</string>
-    <string name="routines_start">Start</string>
+    <string name="routines_new_short">+ New</string>
     <string name="routines_step_count">%1$d steps · %2$d counts</string>
     <string name="routines_new">+ New routine</string>
+    <string name="routines_search_placeholder">Search routines</string>
+    <string name="routines_search_content_description">Search routines</string>
+    <string name="routines_result_count_all">%1$d built-in · %2$d custom</string>
+    <string name="routines_result_count_filtered">%1$d of %2$d match \"%3$s\"</string>
+    <string name="routines_empty">No routine matches that.</string>
+    <string name="routines_actions_title">%1$s</string>
+    <string name="routines_actions_edit">Edit</string>
+    <string name="routines_actions_delete">Delete</string>
     <string name="routines_delete_confirm_title">Delete this routine?</string>
     <string name="routines_delete_confirm_body">This cannot be undone.</string>
     <string name="routines_delete_confirm_action">Delete</string>

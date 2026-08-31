@@ -7,6 +7,7 @@ import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.dao.RoutineWithSteps
 import com.dhikr.app.core.database.entity.RoutineEntity
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -14,7 +15,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class RoutinesUiState(
+    val query: String = "",
+    // The full routine list is small, so search filters it in memory by name
+    // rather than re-querying the DAO the way the Tasbih library does.
     val routines: List<RoutineWithSteps> = emptyList(),
+    val totalCount: Int = 0,
+    val builtInCount: Int = 0,
+    val customCount: Int = 0,
     // tasbihId -> display name, so step rows can show the real Tasbih name
     // instead of the raw id RoutineStepEntity stores.
     val tasbihNamesById: Map<String, String> = emptyMap(),
@@ -25,15 +32,31 @@ class RoutinesViewModel(
     private val tasbihRepository: TasbihRepository,
 ) : ViewModel() {
 
+    private val query = MutableStateFlow("")
+
     val uiState: StateFlow<RoutinesUiState> = combine(
+        query,
         repository.observeAllWithSteps(),
         tasbihRepository.observeAll(),
-    ) { routines, tasbihs ->
+    ) { q, routines, tasbihs ->
+        val filtered = if (q.isBlank()) {
+            routines
+        } else {
+            routines.filter { it.routine.name.contains(q.trim(), ignoreCase = true) }
+        }
         RoutinesUiState(
-            routines = routines,
+            query = q,
+            routines = filtered,
+            totalCount = routines.size,
+            builtInCount = routines.count { it.routine.isPreset },
+            customCount = routines.count { !it.routine.isPreset },
             tasbihNamesById = tasbihs.associate { it.id to it.name },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
+
+    fun onQueryChange(newQuery: String) {
+        query.value = newQuery
+    }
 
     fun onDeleteRoutine(routine: RoutineEntity) {
         viewModelScope.launch { repository.deleteRoutine(routine) }
