@@ -1,6 +1,5 @@
 package com.dhikr.app
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -9,6 +8,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +34,7 @@ import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.SessionRepository
+import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.feature.counter.CounterScreen
 import com.dhikr.app.feature.counter.CounterViewModel
 import com.dhikr.app.feature.home.HomeScreen
@@ -42,6 +43,8 @@ import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
 import com.dhikr.app.feature.routines.RoutinesViewModel
+import com.dhikr.app.feature.settings.SettingsScreen
+import com.dhikr.app.feature.settings.SettingsViewModel
 import com.dhikr.app.feature.tasbih.TasbihEditorScreen
 import com.dhikr.app.feature.tasbih.TasbihEditorViewModel
 import com.dhikr.app.feature.tasbih.TasbihLibraryScreen
@@ -57,8 +60,8 @@ private const val ROUTE_ROUTINES = "routines"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
-fun DhikrApp() {
-    DhikrTheme {
+fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
+    DhikrTheme(themeMode = themeMode) {
         val navController = rememberNavController()
         val context = LocalContext.current
         val app = context.applicationContext as DhikrApplication
@@ -68,6 +71,7 @@ fun DhikrApp() {
         val routineRepository = remember { RoutineRepository(app.database.routineDao()) }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
+        val hapticsEnabled by preferencesRepository.hapticsEnabled.collectAsState(initial = true)
 
         // Hoisted here rather than read off CounterViewModel directly: this
         // Scaffold — and the bottom nav bar it owns — sits outside the
@@ -148,6 +152,7 @@ fun DhikrApp() {
                     )
                     CounterScreen(
                         viewModel = viewModel,
+                        hapticsEnabled = hapticsEnabled,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )
@@ -168,21 +173,21 @@ fun DhikrApp() {
                     )
                 }
                 composable(ROUTE_SETTINGS) {
-                    SettingsStub()
+                    val appVersion = remember {
+                        runCatching {
+                            context.packageManager
+                                .getPackageInfo(context.packageName, 0)
+                                .versionName
+                        }.getOrNull().orEmpty()
+                    }
+                    val viewModel: SettingsViewModel = viewModel(
+                        factory = SettingsViewModel.Factory(preferencesRepository, appVersion),
+                    )
+                    SettingsScreen(viewModel = viewModel)
                 }
             }
         }
     }
-}
-
-@Composable
-private fun SettingsStub() {
-    val colors = DhikrTheme.colors
-    Text(
-        stringResource(R.string.settings_title),
-        modifier = Modifier.background(colors.bg).padding(24.dp),
-        color = colors.text,
-    )
 }
 
 @Composable

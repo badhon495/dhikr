@@ -78,6 +78,9 @@ private const val LONG_TEXT_THRESHOLD = 90
 @Composable
 fun CounterScreen(
     viewModel: CounterViewModel,
+    // From the Haptics setting (DataStore) — hoisted in DhikrApp and passed in
+    // so the tap handler can skip the vibration when the user turned it off.
+    hapticsEnabled: Boolean = true,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -293,7 +296,9 @@ fun CounterScreen(
                     // nothing (or, pre-fix, crash the ViewModel).
                     enabled = state.sessionReady,
                 ) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    if (hapticsEnabled) {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    }
                     viewModel.onTap()
                 },
         ) {

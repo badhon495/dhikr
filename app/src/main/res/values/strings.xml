@@ -106,8 +106,22 @@
     <string name="insights_empty_cta">Start counting</string>
     <string name="insights_empty_icon_content_description">No sessions yet</string>
 
-    <!-- Settings stub -->
+    <!-- Settings screen -->
     <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_counting">Counting</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_desc">Vibrate on each count</string>
+    <string name="settings_daily_goal">Daily goal</string>
+    <string name="settings_daily_goal_desc">Target shown on the Home ring</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_offline">Works fully offline.</string>
+    <string name="settings_about_no_account">No account needed.</string>
+    <string name="settings_about_no_upload">Nothing is uploaded. Your counts stay on this device.</string>
+    <string name="settings_version">Version %1$s</string>
 
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>
