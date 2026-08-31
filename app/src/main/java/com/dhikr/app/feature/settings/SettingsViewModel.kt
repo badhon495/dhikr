@@ -23,8 +23,14 @@ data class SettingsUiState(
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
     val dailyGoalOptions: List<Int> get() = DAILY_GOAL_OPTIONS
 
+    /** True when the current target isn't one of the quick-pick presets, i.e.
+     *  it was set through the custom number field. */
+    val isCustomGoal: Boolean get() = dailyGoalTarget !in DAILY_GOAL_OPTIONS
+
     companion object {
         val DAILY_GOAL_OPTIONS = listOf(33, 100, 300, 500, 1000)
+        const val DAILY_GOAL_MIN = 1
+        const val DAILY_GOAL_MAX = 99_999
     }
 }
 
@@ -69,7 +75,9 @@ class SettingsViewModel(
 
     fun onDailyGoalChange(value: Int) {
         viewModelScope.launch {
-            preferencesRepository.setDailyGoalTarget(value.coerceAtLeast(1))
+            preferencesRepository.setDailyGoalTarget(
+                value.coerceIn(SettingsUiState.DAILY_GOAL_MIN, SettingsUiState.DAILY_GOAL_MAX),
+            )
         }
     }
 

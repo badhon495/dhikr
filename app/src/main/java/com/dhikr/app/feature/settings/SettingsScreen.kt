@@ -10,21 +10,31 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
@@ -88,9 +98,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     color = colors.faint,
                     modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
                 )
-                ChoiceRow(
-                    options = state.dailyGoalOptions.map { it to it.toString() },
-                    selected = state.dailyGoalTarget,
+                DailyGoalPicker(
+                    presets = state.dailyGoalOptions,
+                    target = state.dailyGoalTarget,
+                    isCustom = state.isCustomGoal,
                     onSelect = viewModel::onDailyGoalChange,
                 )
             }
@@ -176,6 +187,113 @@ private fun <T> ChoiceRow(
                 )
             }
         }
+    }
+}
+
+/**
+ * Preset daily-goal pills plus a "Custom" pill that reveals an inline number
+ * field. The field commits every valid (digits-only, coerced) value straight
+ * through [onSelect]; a blank field commits nothing so the last value stands.
+ */
+@Composable
+private fun DailyGoalPicker(
+    presets: List<Int>,
+    target: Int,
+    isCustom: Boolean,
+    onSelect: (Int) -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    var customActive by rememberSaveable { mutableStateOf(false) }
+    var customText by rememberSaveable { mutableStateOf("") }
+
+    // Open (and seed) the custom field when the persisted target isn't a preset
+    // — including the async first load where the real value arrives after the
+    // default. Never force it closed: typing "1000" passes through "100", and a
+    // momentary preset match shouldn't collapse the field mid-edit.
+    LaunchedEffect(isCustom) {
+        if (isCustom && !customActive) {
+            customActive = true
+            customText = target.toString()
+        }
+    }
+
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        presets.forEach { option ->
+            GoalPill(
+                label = option.toString(),
+                selected = !customActive && target == option,
+                onClick = {
+                    customActive = false
+                    onSelect(option)
+                },
+            )
+        }
+        GoalPill(
+            label = stringResource(R.string.settings_daily_goal_custom),
+            selected = customActive,
+            onClick = {
+                if (!customActive) {
+                    customActive = true
+                    customText = target.toString()
+                }
+            },
+        )
+    }
+
+    if (customActive) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .heightIn(min = 48.dp)
+                .clip(PillShape)
+                .background(colors.card)
+                .border(1.dp, colors.line, PillShape)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (customText.isEmpty()) {
+                Text(
+                    stringResource(R.string.settings_daily_goal_custom_placeholder),
+                    fontSize = 14.sp,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = customText,
+                onValueChange = { raw ->
+                    val digits = raw.filter { it.isDigit() }.take(5)
+                    customText = digits
+                    digits.toIntOrNull()?.let(onSelect)
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                textStyle = TextStyle(fontSize = 14.sp, color = colors.text),
+                cursorBrush = SolidColor(colors.text),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoalPill(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = DhikrTheme.colors
+    Box(
+        modifier = Modifier
+            .clip(PillShape)
+            .background(if (selected) colors.sage else colors.surface)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .minTapTarget()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (selected) colors.onSage else colors.text,
+        )
     }
 }
 
