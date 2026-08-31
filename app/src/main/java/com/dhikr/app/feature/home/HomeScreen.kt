@@ -29,9 +29,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.headingSemantics
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.Caprasimo
 import com.dhikr.app.ui.theme.DhikrTheme
 import kotlin.math.min
@@ -67,11 +73,24 @@ fun HomeScreen(
                 )
                 Text(state.dateLabel, fontSize = 12.5.sp, color = colors.dim)
             }
-            GoalRing(progress = if (state.dailyGoalTarget > 0) state.todayTotal.toFloat() / state.dailyGoalTarget else 0f)
+            GoalRing(
+                progress = if (state.dailyGoalTarget > 0) state.todayTotal.toFloat() / state.dailyGoalTarget else 0f,
+                contentDescription = stringResource(
+                    R.string.home_goal_ring_description,
+                    state.todayTotal,
+                    state.dailyGoalTarget,
+                ),
+            )
         }
 
         // Continue session
         state.continueSession?.let { info ->
+            val continueDescription = stringResource(
+                R.string.home_continue_session_description,
+                info.tasbihName,
+                info.count,
+                info.target,
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -80,6 +99,7 @@ fun HomeScreen(
                     .background(colors.sageSoft)
                     .border(1.dp, colors.line, RoundedCornerShape(28.dp))
                     .clickable { onContinueSession() }
+                    .semantics(mergeDescendants = true) { contentDescription = continueDescription }
                     .padding(16.dp),
             ) {
                 Box(
@@ -103,13 +123,26 @@ fun HomeScreen(
 
         // Favourites
         Column {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.home_favorites_title), fontSize = 11.5.sp, color = colors.dim)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.home_favorites_title),
+                    fontSize = 11.5.sp,
+                    color = colors.dim,
+                    modifier = Modifier.headingSemantics(),
+                )
                 Text(
                     stringResource(R.string.home_favorites_all),
                     fontSize = 11.5.sp,
                     color = colors.terra,
-                    modifier = Modifier.clickable { onOpenLibrary() },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .clickable(role = Role.Button) { onOpenLibrary() }
+                        .minTapTarget()
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
                 )
             }
             state.favorites.forEach { tasbih ->
@@ -134,13 +167,26 @@ fun HomeScreen(
 
         // Routines
         Column {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.home_routines_title), fontSize = 11.5.sp, color = colors.dim)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.home_routines_title),
+                    fontSize = 11.5.sp,
+                    color = colors.dim,
+                    modifier = Modifier.headingSemantics(),
+                )
                 Text(
                     stringResource(R.string.home_routines_manage),
                     fontSize = 11.5.sp,
                     color = colors.terra,
-                    modifier = Modifier.clickable { onOpenRoutines() },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .clickable(role = Role.Button) { onOpenRoutines() }
+                        .minTapTarget()
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
                 )
             }
             Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -170,9 +216,14 @@ fun HomeScreen(
 }
 
 @Composable
-private fun GoalRing(progress: Float) {
+private fun GoalRing(progress: Float, contentDescription: String) {
     val colors = DhikrTheme.colors
-    Box(modifier = Modifier.size(74.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .size(74.dp)
+            .clearAndSetSemantics { this.contentDescription = contentDescription },
+        contentAlignment = Alignment.Center,
+    ) {
         androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
             val strokeWidth = 7.dp.toPx()
             val inset = strokeWidth / 2

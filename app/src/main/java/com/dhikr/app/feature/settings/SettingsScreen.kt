@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.datastore.ThemeMode
+import com.dhikr.app.ui.headingSemantics
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.ListRowShape
 import com.dhikr.app.ui.theme.PillShape
@@ -94,6 +96,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             }
         }
 
+        // ---- Accessibility ----
+        SettingsSection(stringResource(R.string.settings_accessibility)) {
+            SwitchRow(
+                title = stringResource(R.string.settings_reduce_motion),
+                description = stringResource(R.string.settings_reduce_motion_desc),
+                checked = state.reducedMotion,
+                onCheckedChange = viewModel::onReducedMotionChange,
+            )
+        }
+
         // ---- About ----
         SettingsSection(stringResource(R.string.settings_about)) {
             AboutLine(stringResource(R.string.settings_about_offline))
@@ -120,7 +132,9 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
             fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
             color = colors.dim,
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .headingSemantics(),
         )
         Column(
             modifier = Modifier
@@ -150,7 +164,9 @@ private fun <T> ChoiceRow(
                     .clip(PillShape)
                     .background(if (isSelected) colors.sage else colors.surface)
                     .clickable(role = Role.RadioButton) { if (!isSelected) onSelect(value) }
+                    .minTapTarget()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = label,

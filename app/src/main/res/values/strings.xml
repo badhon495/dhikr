@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">Dhikr</string>
 
+    <!-- Shared -->
+    <string name="action_back">Back</string>
+
     <!-- Counter screen -->
     <string name="counter_back_content_description">Back to Home</string>
     <string name="counter_lock_content_description">Counter lock</string>
@@ -13,6 +16,8 @@
     <string name="counter_lap_label">Lap %1$d of %2$d · %3$d of %4$d</string>
     <string name="counter_tap_hint">Tap anywhere to count</string>
     <string name="counter_tap_hint_locked">Locked — counting still works</string>
+    <string name="counter_tap_action_label">Count</string>
+    <string name="counter_count_description">%1$d of %2$d</string>
 
     <!-- Reset confirmation dialog -->
     <string name="reset_dialog_title">Reset this session?</string>
@@ -33,7 +38,9 @@
 
     <!-- Home screen -->
     <string name="home_greeting">Assalamu alaikum</string>
+    <string name="home_goal_ring_description">Daily goal: %1$d of %2$d</string>
     <string name="home_continue_session_kicker">CONTINUE SESSION</string>
+    <string name="home_continue_session_description">Continue %1$s, %2$d of %3$d</string>
     <string name="home_favorites_title">Favourites</string>
     <string name="home_favorites_all">All</string>
     <string name="home_routines_title">Routines</string>
@@ -48,6 +55,8 @@
     <string name="tasbih_library_result_count_filtered">%1$d of %2$d match \"%3$s\"</string>
     <string name="tasbih_library_empty">Nothing matches that. Create it as a custom Tasbih.</string>
     <string name="tasbih_library_favorite_content_description">Favorite</string>
+    <string name="tasbih_library_favorite_state_on">Favourited</string>
+    <string name="tasbih_library_favorite_state_off">Not favourited</string>
     <string name="tasbih_library_meta_laps">%1$d × %2$d laps</string>
     <string name="tasbih_library_meta_per_lap">%1$d per lap</string>
     <string name="tasbih_library_actions_title">%1$s</string>
@@ -93,6 +102,7 @@
     <string name="insights_this_month">This month</string>
     <string name="insights_all_time">All time</string>
     <string name="insights_last_7_days">Last 7 days</string>
+    <string name="insights_bar_chart_description">Last 7 days: %1$s</string>
     <string name="insights_consistency">Consistency</string>
     <string name="insights_consistency_meta">%1$d days this month</string>
     <string name="insights_legend_less">less</string>
@@ -113,6 +123,9 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_counting">Counting</string>
+    <string name="settings_accessibility">Accessibility</string>
+    <string name="settings_reduce_motion">Reduce motion</string>
+    <string name="settings_reduce_motion_desc">Minimise animations across the app</string>
     <string name="settings_haptics">Haptic feedback</string>
     <string name="settings_haptics_desc">Vibrate on each count</string>
     <string name="settings_daily_goal">Daily goal</string>

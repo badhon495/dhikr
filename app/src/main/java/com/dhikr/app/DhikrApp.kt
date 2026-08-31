@@ -76,6 +76,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
         val hapticsEnabled by preferencesRepository.hapticsEnabled.collectAsState(initial = true)
+        val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
 
         // Hoisted here rather than read off CounterViewModel directly: this
         // Scaffold — and the bottom nav bar it owns — sits outside the
@@ -157,6 +158,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                     CounterScreen(
                         viewModel = viewModel,
                         hapticsEnabled = hapticsEnabled,
+                        reducedMotion = reducedMotion,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )

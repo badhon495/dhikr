@@ -31,9 +31,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.headingSemantics
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.Caprasimo
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.PillShape
@@ -83,8 +88,10 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.sage)
-                    .clickable { onStartCounting() }
+                    .clickable(role = Role.Button) { onStartCounting() }
+                    .minTapTarget()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.insights_empty_cta), color = colors.onSage)
             }
@@ -102,7 +109,12 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
         val monthName = remember {
             SimpleDateFormat("MMMM", Locale.getDefault()).format(Calendar.getInstance().time)
         }
-        Text(stringResource(R.string.insights_title), fontSize = 23.sp, color = colors.text)
+        Text(
+            stringResource(R.string.insights_title),
+            fontSize = 23.sp,
+            color = colors.text,
+            modifier = Modifier.headingSemantics(),
+        )
         Text(monthName, fontSize = 13.sp, color = colors.dim, modifier = Modifier.padding(top = 2.dp))
 
         // Totals 2x2 grid
@@ -116,14 +128,26 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
         }
 
         // Last 7 days
-        Text(stringResource(R.string.insights_last_7_days), fontSize = 11.5.sp, color = colors.dim, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+        Text(
+            stringResource(R.string.insights_last_7_days),
+            fontSize = 11.5.sp,
+            color = colors.dim,
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 8.dp)
+                .headingSemantics(),
+        )
+        val barChartDescription = stringResource(
+            R.string.insights_bar_chart_description,
+            state.last7Days.joinToString(", ") { (label, value) -> "$label $value" },
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(112.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(colors.card)
-                .padding(12.dp),
+                .padding(12.dp)
+                .clearAndSetSemantics { contentDescription = barChartDescription },
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             val maxValue = (state.last7Days.maxOfOrNull { it.second } ?: 1).coerceAtLeast(1)
@@ -145,7 +169,14 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
         }
 
         // Consistency calendar
-        Text(stringResource(R.string.insights_consistency), fontSize = 11.5.sp, color = colors.dim, modifier = Modifier.padding(top = 20.dp, bottom = 2.dp))
+        Text(
+            stringResource(R.string.insights_consistency),
+            fontSize = 11.5.sp,
+            color = colors.dim,
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 2.dp)
+                .headingSemantics(),
+        )
         val activeDaysThisMonth = state.calendarIntensity.values.count { it > 0 }
         Text(
             stringResource(R.string.insights_consistency_meta, activeDaysThisMonth),
@@ -200,7 +231,12 @@ fun InsightsScreen(viewModel: InsightsViewModel, onStartCounting: () -> Unit) {
         val todayLabel = stringResource(R.string.insights_day_today)
         val yesterdayLabel = stringResource(R.string.insights_day_yesterday)
         Row(modifier = Modifier.padding(top = 20.dp, bottom = 8.dp), verticalAlignment = Alignment.Bottom) {
-            Text(stringResource(R.string.insights_history_title), fontSize = 11.5.sp, color = colors.dim)
+            Text(
+                stringResource(R.string.insights_history_title),
+                fontSize = 11.5.sp,
+                color = colors.dim,
+                modifier = Modifier.headingSemantics(),
+            )
             Text(
                 stringResource(R.string.insights_history_grouped),
                 fontSize = 10.5.sp,

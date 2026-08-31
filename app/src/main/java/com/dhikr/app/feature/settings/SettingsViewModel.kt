@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val hapticsEnabled: Boolean = true,
+    val reducedMotion: Boolean = false,
     val dailyGoalTarget: Int = 100,
     val appVersion: String = "",
 ) {
@@ -39,11 +40,13 @@ class SettingsViewModel(
         combine(
             preferencesRepository.themeMode,
             preferencesRepository.hapticsEnabled,
+            preferencesRepository.reducedMotion,
             preferencesRepository.dailyGoalTarget,
-        ) { themeMode, hapticsEnabled, dailyGoal ->
+        ) { themeMode, hapticsEnabled, reducedMotion, dailyGoal ->
             SettingsUiState(
                 themeMode = themeMode,
                 hapticsEnabled = hapticsEnabled,
+                reducedMotion = reducedMotion,
                 dailyGoalTarget = dailyGoal,
                 appVersion = appVersion,
             )
@@ -58,6 +61,10 @@ class SettingsViewModel(
 
     fun onHapticsEnabledChange(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setHapticsEnabled(enabled) }
+    }
+
+    fun onReducedMotionChange(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setReducedMotion(enabled) }
     }
 
     fun onDailyGoalChange(value: Int) {

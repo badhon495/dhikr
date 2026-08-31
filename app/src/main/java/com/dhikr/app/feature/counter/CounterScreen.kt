@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -49,6 +50,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalView
@@ -63,6 +65,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhikr.app.R
+import com.dhikr.app.ui.ClampedFontScale
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.ArabicLineStyle
 import com.dhikr.app.ui.theme.CounterCountLongTextStyle
 import com.dhikr.app.ui.theme.CounterCountStyle
@@ -81,6 +85,9 @@ fun CounterScreen(
     // From the Haptics setting (DataStore) — hoisted in DhikrApp and passed in
     // so the tap handler can skip the vibration when the user turned it off.
     hapticsEnabled: Boolean = true,
+    // From the Reduce-motion setting — when on, the count-pop and ring-progress
+    // animations resolve instantly.
+    reducedMotion: Boolean = false,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -160,16 +167,25 @@ fun CounterScreen(
     val countStyle = if (isLongText) CounterCountLongTextStyle else CounterCountStyle
     val transliterationStyle = if (isLongText) TransliterationLongTextStyle else TransliterationStyle
 
-    // Quick pop of the ring on every registered tap / lap rollover.
+    // Quick pop of the ring on every registered tap / lap rollover — skipped
+    // entirely under Reduce motion.
     val countScale = remember { Animatable(1f) }
-    LaunchedEffect(state.count, state.lap) {
-        countScale.snapTo(1.07f)
-        countScale.animateTo(1f, animationSpec = tween(110))
+    LaunchedEffect(state.count, state.lap, reducedMotion) {
+        if (reducedMotion) {
+            countScale.snapTo(1f)
+        } else {
+            countScale.snapTo(1.07f)
+            countScale.animateTo(1f, animationSpec = tween(110))
+        }
     }
 
     val animatedProgress by animateFloatAsState(
         targetValue = min(1f, state.progressFraction),
-        animationSpec = tween(160, easing = CubicBezierEasing(0.2f, 0.7f, 0.3f, 1f)),
+        animationSpec = if (reducedMotion) {
+            snap()
+        } else {
+            tween(160, easing = CubicBezierEasing(0.2f, 0.7f, 0.3f, 1f))
+        },
         label = "ring-progress",
     )
 
@@ -188,7 +204,7 @@ fun CounterScreen(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     // Back navigation is blocked while the counter is locked, so a
                     // stray pocket-touch can't drop out of an active session.
@@ -223,7 +239,7 @@ fun CounterScreen(
             }
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     // The lock toggle is otherwise always enabled — it is the only
                     // way back out of the locked state — but is still gated on
@@ -284,6 +300,7 @@ fun CounterScreen(
         // hands us the real viewport height and `heightIn(min = ...)` pins the
         // content to it. Longer dhikr text grows past that and scrolls normally.
         val tapInteractionSource = remember { MutableInteractionSource() }
+        val tapActionLabel = stringResource(R.string.counter_tap_action_label)
         BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
@@ -295,6 +312,9 @@ fun CounterScreen(
                     // disable the tap target rather than let it silently do
                     // nothing (or, pre-fix, crash the ViewModel).
                     enabled = state.sessionReady,
+                    // TalkBack: "double-tap to Count" instead of the generic
+                    // "double-tap to activate" on this full-screen tap zone.
+                    onClickLabel = tapActionLabel,
                 ) {
                     if (hapticsEnabled) {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -371,15 +391,27 @@ fun CounterScreen(
                             .clip(CircleShape)
                             .background(colors.card),
                     )
+                    val countDescription = stringResource(
+                        R.string.counter_count_description,
+                        state.count,
+                        state.dhikr.lapTarget,
+                    )
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        // Read as one polite live-region node ("437 of 1000")
+                        // rather than the number and label as separate nodes.
+                        modifier = Modifier.semantics(mergeDescendants = true) {
+                            liveRegion = LiveRegionMode.Polite
+                            contentDescription = countDescription
+                        },
                     ) {
-                        Text(
-                            text = state.count.toString(),
-                            style = countStyle,
-                            color = colors.text,
-                        )
+                        ClampedFontScale {
+                            Text(
+                                text = state.count.toString(),
+                                style = countStyle,
+                                color = colors.text,
+                            )
+                        }
                         Text(
                             text = stringResource(R.string.counter_of_target, state.dhikr.lapTarget),
                             fontSize = 13.sp,
@@ -456,6 +488,7 @@ fun CounterScreen(
                     // Undo is blocked while locked, same as reset — a pocket
                     // touch shouldn't be able to unwind counted taps either.
                     .clickable(enabled = state.sessionReady && state.canUndo && !state.locked) { viewModel.onUndo() }
+                    .minTapTarget()
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Icon(
@@ -482,6 +515,7 @@ fun CounterScreen(
                     // whole point is a session that can't be knocked off
                     // course by a stray touch.
                     .clickable(enabled = state.sessionReady && !state.locked) { viewModel.onTogglePause() }
+                    .minTapTarget()
                     .padding(horizontal = 18.dp, vertical = 11.dp),
             ) {
                 Text(
@@ -497,7 +531,7 @@ fun CounterScreen(
             }
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(colors.surface)
                     // Reset is destructive, so it is blocked while locked and, when

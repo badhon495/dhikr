@@ -17,6 +17,7 @@ class AppPreferencesRepository(private val context: Context) {
     private val dailyGoalKey = intPreferencesKey("daily_goal_target")
     private val themeModeKey = stringPreferencesKey("theme_mode")
     private val hapticsEnabledKey = booleanPreferencesKey("haptics_enabled")
+    private val reducedMotionKey = booleanPreferencesKey("reduced_motion")
 
     val dailyGoalTarget = context.preferencesDataStore.data.map { it[dailyGoalKey] ?: 100 }
 
@@ -42,5 +43,11 @@ class AppPreferencesRepository(private val context: Context) {
 
     suspend fun setHapticsEnabled(value: Boolean) {
         context.preferencesDataStore.edit { it[hapticsEnabledKey] = value }
+    }
+
+    val reducedMotion = context.preferencesDataStore.data.map { it[reducedMotionKey] ?: false }
+
+    suspend fun setReducedMotion(value: Boolean) {
+        context.preferencesDataStore.edit { it[reducedMotionKey] = value }
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -38,6 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.entity.TasbihEntity
+import com.dhikr.app.ui.headingSemantics
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.DialogShape
 import com.dhikr.app.ui.theme.ListRowShape
@@ -90,13 +97,16 @@ fun TasbihLibraryScreen(
                 fontSize = 23.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.text,
+                modifier = Modifier.headingSemantics(),
             )
             Box(
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.sage)
-                    .clickable { onNewTasbih() }
+                    .clickable(role = Role.Button) { onNewTasbih() }
+                    .minTapTarget()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = stringResource(R.string.tasbih_library_new),
@@ -114,7 +124,7 @@ fun TasbihLibraryScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp)
-                .height(46.dp)
+                .heightIn(min = 48.dp)
                 .clip(PillShape)
                 .background(colors.surface)
                 .padding(horizontal = 16.dp),
@@ -292,7 +302,8 @@ private fun TasbihActionMenu(
                     color = colors.text,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onEdit() }
+                        .clickable(role = Role.Button) { onEdit() }
+                        .minTapTarget()
                         .padding(vertical = 12.dp),
                 )
                 Text(
@@ -302,7 +313,8 @@ private fun TasbihActionMenu(
                     color = colors.terra,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onDelete() }
+                        .clickable(role = Role.Button) { onDelete() }
+                        .minTapTarget()
                         .padding(vertical = 12.dp),
                 )
             }
@@ -330,6 +342,10 @@ private fun TasbihRow(
 ) {
     val colors = DhikrTheme.colors
     val favoriteDescription = stringResource(R.string.tasbih_library_favorite_content_description)
+    val favoriteState = stringResource(
+        if (tasbih.isFavorite) R.string.tasbih_library_favorite_state_on
+        else R.string.tasbih_library_favorite_state_off,
+    )
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -389,12 +405,18 @@ private fun TasbihRow(
         Box(
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable(onClickLabel = favoriteDescription) { onToggleFavorite() }
+                .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
+                .minTapTarget()
+                .semantics {
+                    contentDescription = favoriteDescription
+                    stateDescription = favoriteState
+                }
                 .padding(6.dp),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = if (tasbih.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                contentDescription = favoriteDescription,
+                contentDescription = null,
                 tint = if (tasbih.isFavorite) colors.terra else colors.faint,
                 modifier = Modifier.size(20.dp),
             )
