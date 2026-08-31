@@ -1,5 +1,8 @@
 package com.dhikr.app.feature.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +39,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.LocalReducedMotion
+import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.Caprasimo
@@ -218,6 +223,18 @@ fun HomeScreen(
 @Composable
 private fun GoalRing(progress: Float, contentDescription: String) {
     val colors = DhikrTheme.colors
+    val reducedMotion = LocalReducedMotion.current
+    // Sweep the arc up to a changed daily total instead of snapping, on the same
+    // curve the counter ring uses.
+    val animatedProgress by animateFloatAsState(
+        targetValue = min(1f, progress),
+        animationSpec = if (reducedMotion) {
+            snap()
+        } else {
+            tween(Motion.STANDARD_MS, easing = Motion.StandardEasing)
+        },
+        label = "goal-ring",
+    )
     Box(
         modifier = Modifier
             .size(74.dp)
@@ -236,12 +253,12 @@ private fun GoalRing(progress: Float, contentDescription: String) {
             )
             drawArc(
                 color = colors.terra,
-                startAngle = -90f, sweepAngle = 360f * min(1f, progress), useCenter = false,
+                startAngle = -90f, sweepAngle = 360f * animatedProgress, useCenter = false,
                 topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
                 size = Size(size.width - strokeWidth, size.height - strokeWidth),
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             )
         }
-        Text("${(min(1f, progress) * 100).toInt()}%", fontSize = 15.sp, color = colors.text)
+        Text("${(animatedProgress * 100).toInt()}%", fontSize = 15.sp, color = colors.text)
     }
 }

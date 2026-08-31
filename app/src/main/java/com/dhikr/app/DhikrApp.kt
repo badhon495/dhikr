@@ -1,5 +1,11 @@
 package com.dhikr.app
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -8,6 +14,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -53,6 +61,8 @@ import com.dhikr.app.ui.NavHomeIcon
 import com.dhikr.app.ui.NavInsightsIcon
 import com.dhikr.app.ui.NavSettingsIcon
 import com.dhikr.app.ui.NavTasbihIcon
+import com.dhikr.app.ui.LocalReducedMotion
+import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.theme.DhikrTheme
 
 private const val ROUTE_HOME = "home"
@@ -87,6 +97,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
         val onCounterRoute = currentBackStackEntry?.destination?.route?.substringBefore("?") ==
             ROUTE_COUNTER.substringBefore("?")
 
+        CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(
             containerColor = DhikrTheme.colors.bg,
             bottomBar = {
@@ -105,6 +116,10 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                 navController = navController,
                 startDestination = ROUTE_HOME,
                 modifier = Modifier.padding(padding),
+                enterTransition = { navEnter(reducedMotion, isTabSwitch(), forward = true) },
+                exitTransition = { navExit(reducedMotion, isTabSwitch(), forward = true) },
+                popEnterTransition = { navEnter(reducedMotion, isTabSwitch(), forward = false) },
+                popExitTransition = { navExit(reducedMotion, isTabSwitch(), forward = false) },
             ) {
                 composable(ROUTE_HOME) {
                     val viewModel: HomeViewModel = viewModel(
@@ -158,7 +173,6 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                     CounterScreen(
                         viewModel = viewModel,
                         hapticsEnabled = hapticsEnabled,
-                        reducedMotion = reducedMotion,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )
@@ -193,7 +207,64 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                 }
             }
         }
+        }
     }
+}
+
+private val TAB_BASE_ROUTES = setOf(
+    ROUTE_HOME,
+    ROUTE_TASBIH_LIBRARY,
+    ROUTE_COUNTER.substringBefore("?"),
+    ROUTE_INSIGHTS,
+    ROUTE_SETTINGS,
+)
+
+/** True when both ends of the transition are top-level bottom-nav destinations —
+ *  those get a plain fade, no directional slide. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean {
+    val from = initialState.destination.route?.substringBefore("?")
+    val to = targetState.destination.route?.substringBefore("?")
+    return from in TAB_BASE_ROUTES && to in TAB_BASE_ROUTES
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnter(
+    reduced: Boolean,
+    tabSwitch: Boolean,
+    forward: Boolean,
+): EnterTransition {
+    if (reduced) return EnterTransition.None
+    val fade = fadeIn(tween(Motion.FAST_MS))
+    if (tabSwitch) return fade
+    val direction = if (forward) {
+        AnimatedContentTransitionScope.SlideDirection.Start
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.End
+    }
+    return fade + slideIntoContainer(
+        direction,
+        tween(Motion.STANDARD_MS, easing = Motion.StandardEasing),
+        initialOffset = { it / 14 },
+    )
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navExit(
+    reduced: Boolean,
+    tabSwitch: Boolean,
+    forward: Boolean,
+): ExitTransition {
+    if (reduced) return ExitTransition.None
+    val fade = fadeOut(tween(Motion.FAST_MS))
+    if (tabSwitch) return fade
+    val direction = if (forward) {
+        AnimatedContentTransitionScope.SlideDirection.Start
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.End
+    }
+    return fade + slideOutOfContainer(
+        direction,
+        tween(Motion.STANDARD_MS, easing = Motion.StandardEasing),
+        targetOffset = { it / 14 },
+    )
 }
 
 @Composable

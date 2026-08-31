@@ -2,7 +2,6 @@ package com.dhikr.app.feature.counter
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -46,6 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -66,6 +66,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhikr.app.R
 import com.dhikr.app.ui.ClampedFontScale
+import com.dhikr.app.ui.LocalReducedMotion
+import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.ArabicLineStyle
 import com.dhikr.app.ui.theme.CounterCountLongTextStyle
@@ -85,9 +87,6 @@ fun CounterScreen(
     // From the Haptics setting (DataStore) — hoisted in DhikrApp and passed in
     // so the tap handler can skip the vibration when the user turned it off.
     hapticsEnabled: Boolean = true,
-    // From the Reduce-motion setting — when on, the count-pop and ring-progress
-    // animations resolve instantly.
-    reducedMotion: Boolean = false,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -96,6 +95,7 @@ fun CounterScreen(
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
     val haptic = LocalHapticFeedback.current
+    val reducedMotion = LocalReducedMotion.current
     var showResetDialog by remember { mutableStateOf(false) }
 
     // The on-screen back chevron is gated on !state.locked, but the system
@@ -184,10 +184,23 @@ fun CounterScreen(
         animationSpec = if (reducedMotion) {
             snap()
         } else {
-            tween(160, easing = CubicBezierEasing(0.2f, 0.7f, 0.3f, 1f))
+            tween(Motion.STANDARD_MS, easing = Motion.StandardEasing)
         },
         label = "ring-progress",
     )
+
+    // Subtle lap-complete feedback (plan.md §14): the progress arc tints from
+    // terra toward sage and back over ~300ms when the lap number ticks up.
+    val lapPulse = remember { Animatable(0f) }
+    var lastLap by remember { mutableStateOf(state.lap) }
+    LaunchedEffect(state.lap) {
+        if (state.lap > lastLap && !reducedMotion) {
+            lapPulse.snapTo(1f)
+            lapPulse.animateTo(0f, animationSpec = tween(Motion.PULSE_MS))
+        }
+        lastLap = state.lap
+    }
+    val progressArcColor = lerp(colors.terra, colors.sage, lapPulse.value)
 
     Column(
         modifier = Modifier
@@ -375,7 +388,7 @@ fun CounterScreen(
                         )
                         if (animatedProgress > 0f) {
                             drawArc(
-                                color = colors.terra,
+                                color = progressArcColor,
                                 startAngle = -90f,
                                 sweepAngle = 360f * animatedProgress,
                                 useCenter = false,
