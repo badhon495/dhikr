@@ -76,6 +76,16 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 selected = state.themeMode,
                 onSelect = viewModel::onThemeModeChange,
             )
+            if (state.dynamicColorSupported) {
+                Column(modifier = Modifier.padding(top = 14.dp)) {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_dynamic_color),
+                        description = stringResource(R.string.settings_dynamic_color_desc),
+                        checked = state.dynamicColorEnabled,
+                        onCheckedChange = viewModel::onDynamicColorChange,
+                    )
+                }
+            }
         }
 
         // ---- Counting ----

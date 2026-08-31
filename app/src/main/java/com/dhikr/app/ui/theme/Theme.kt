@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.ui.platform.LocalContext
 import com.dhikr.app.core.datastore.ThemeMode
 
 val LocalDhikrColors = compositionLocalOf { LightDhikrColors }
@@ -27,10 +28,17 @@ fun ThemeMode.resolveIsDark(): Boolean = when (this) {
 @Composable
 fun DhikrTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = themeMode.resolveIsDark()
-    val tokens = if (darkTheme) DarkDhikrColors else LightDhikrColors
+    val useDynamic = dynamicColor && supportsDynamicColor()
+    val context = LocalContext.current
+    val tokens = when {
+        useDynamic -> dynamicDhikrColors(context, darkTheme)
+        darkTheme -> DarkDhikrColors
+        else -> LightDhikrColors
+    }
     // Material3's default colorScheme (background ~white, surface ~white) is
     // otherwise left untouched by DhikrColorTokens — components that read it
     // directly instead of DhikrTheme.colors (Scaffold's containerColor,
@@ -39,10 +47,10 @@ fun DhikrTheme(
     // it is what keeps Scaffold's own background — the area under the status
     // bar, which app content never draws into — from showing as a stray white
     // strip in dark mode.
-    val colorScheme = if (darkTheme) {
-        darkColorScheme(background = tokens.bg, surface = tokens.surface)
-    } else {
-        lightColorScheme(background = tokens.bg, surface = tokens.surface)
+    val colorScheme = when {
+        useDynamic -> dynamicColorScheme(context, darkTheme)
+        darkTheme -> darkColorScheme(background = tokens.bg, surface = tokens.surface)
+        else -> lightColorScheme(background = tokens.bg, surface = tokens.surface)
     }
     CompositionLocalProvider(LocalDhikrColors provides tokens) {
         MaterialTheme(colorScheme = colorScheme, typography = DhikrTypography, content = content)

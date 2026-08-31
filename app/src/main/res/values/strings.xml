@@ -148,6 +148,8 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Material You</string>
+    <string name="settings_dynamic_color_desc">Colour the app from your wallpaper</string>
     <string name="settings_counting">Counting</string>
     <string name="settings_accessibility">Accessibility</string>
     <string name="settings_reduce_motion">Reduce motion</string>

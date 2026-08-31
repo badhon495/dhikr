@@ -18,6 +18,7 @@ class AppPreferencesRepository(private val context: Context) {
     private val themeModeKey = stringPreferencesKey("theme_mode")
     private val hapticsEnabledKey = booleanPreferencesKey("haptics_enabled")
     private val reducedMotionKey = booleanPreferencesKey("reduced_motion")
+    private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
 
     val dailyGoalTarget = context.preferencesDataStore.data.map { it[dailyGoalKey] ?: 100 }
 
@@ -49,5 +50,14 @@ class AppPreferencesRepository(private val context: Context) {
 
     suspend fun setReducedMotion(value: Boolean) {
         context.preferencesDataStore.edit { it[reducedMotionKey] = value }
+    }
+
+    /** Material You: derive the app palette from the device wallpaper. Only
+     *  honoured on Android 12+ (see [DhikrTheme]); the store value is kept
+     *  regardless so toggling back and forth on an older device is harmless. */
+    val dynamicColorEnabled = context.preferencesDataStore.data.map { it[dynamicColorKey] ?: false }
+
+    suspend fun setDynamicColorEnabled(value: Boolean) {
+        context.preferencesDataStore.edit { it[dynamicColorKey] = value }
     }
 }

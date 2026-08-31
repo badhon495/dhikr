@@ -80,8 +80,8 @@ private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
-fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
-    DhikrTheme(themeMode = themeMode) {
+fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = false) {
+    DhikrTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
         val navController = rememberNavController()
         val context = LocalContext.current
         val app = context.applicationContext as DhikrApplication

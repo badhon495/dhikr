@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.ThemeMode
+import com.dhikr.app.ui.theme.supportsDynamicColor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +19,8 @@ data class SettingsUiState(
     val hapticsEnabled: Boolean = true,
     val reducedMotion: Boolean = false,
     val dailyGoalTarget: Int = 100,
+    val dynamicColorEnabled: Boolean = false,
+    val dynamicColorSupported: Boolean = supportsDynamicColor(),
     val appVersion: String = "",
 ) {
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
@@ -48,12 +51,14 @@ class SettingsViewModel(
             preferencesRepository.hapticsEnabled,
             preferencesRepository.reducedMotion,
             preferencesRepository.dailyGoalTarget,
-        ) { themeMode, hapticsEnabled, reducedMotion, dailyGoal ->
+            preferencesRepository.dynamicColorEnabled,
+        ) { themeMode, hapticsEnabled, reducedMotion, dailyGoal, dynamicColor ->
             SettingsUiState(
                 themeMode = themeMode,
                 hapticsEnabled = hapticsEnabled,
                 reducedMotion = reducedMotion,
                 dailyGoalTarget = dailyGoal,
+                dynamicColorEnabled = dynamicColor,
                 appVersion = appVersion,
             )
         }
@@ -71,6 +76,10 @@ class SettingsViewModel(
 
     fun onReducedMotionChange(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setReducedMotion(enabled) }
+    }
+
+    fun onDynamicColorChange(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setDynamicColorEnabled(enabled) }
     }
 
     fun onDailyGoalChange(value: Int) {
