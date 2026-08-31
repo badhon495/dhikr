@@ -68,8 +68,10 @@ fun TasbihLibraryScreen(
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
 
-    // Long-press action menu (Edit/Delete) state — which non-built-in Tasbih,
-    // if any, currently has its menu open (finding #4 + #5).
+    // Long-press action menu (Edit/Delete) state — which Tasbih, if any,
+    // currently has its menu open. Built-in Tasbih are included: the user can
+    // delete them too (the repository still blocks a delete while a routine
+    // references the Tasbih, surfacing the "blocked" dialog below).
     var actionMenuTarget by remember { mutableStateOf<TasbihEntity?>(null) }
     var deleteConfirmTarget by remember { mutableStateOf<TasbihEntity?>(null) }
     var deleteBlockedMessage by remember { mutableStateOf<TasbihDeleteBlocked?>(null) }
@@ -197,11 +199,9 @@ fun TasbihLibraryScreen(
                         onToggleFavorite = {
                             viewModel.onToggleFavorite(tasbih.id, tasbih.isFavorite)
                         },
-                        // Long-press is only meaningful for custom Tasbih — built-in
-                        // ones can't be edited or deleted (finding #4 + #5).
-                        onLongPress = if (!tasbih.isBuiltIn) {
-                            { actionMenuTarget = tasbih }
-                        } else null,
+                        // Long-press opens the Edit/Delete menu for every
+                        // Tasbih, built-in included.
+                        onLongPress = { actionMenuTarget = tasbih },
                     )
                 }
                 item { Box(modifier = Modifier.height(8.dp)) }

@@ -48,6 +48,8 @@ import com.dhikr.app.feature.home.HomeScreen
 import com.dhikr.app.feature.home.HomeViewModel
 import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
+import com.dhikr.app.feature.routines.RoutineEditorScreen
+import com.dhikr.app.feature.routines.RoutineEditorViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
 import com.dhikr.app.feature.routines.RoutinesViewModel
 import com.dhikr.app.feature.settings.SettingsScreen
@@ -71,6 +73,7 @@ private const val ROUTE_TASBIH_EDITOR = "tasbih/editor?id={id}"
 private const val ROUTE_COUNTER = "counter?dhikrId={dhikrId}&routineId={routineId}"
 private const val ROUTE_INSIGHTS = "insights"
 private const val ROUTE_ROUTINES = "routines"
+private const val ROUTE_ROUTINE_EDITOR = "routines/editor"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
@@ -190,6 +193,16 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
                     RoutinesScreen(
                         viewModel = viewModel,
                         onStartRoutine = { id -> navController.navigate("counter?routineId=$id") },
+                        onNewRoutine = { navController.navigate(ROUTE_ROUTINE_EDITOR) },
+                    )
+                }
+                composable(ROUTE_ROUTINE_EDITOR) {
+                    val viewModel: RoutineEditorViewModel = viewModel(
+                        factory = RoutineEditorViewModel.Factory(routineRepository, tasbihRepository),
+                    )
+                    RoutineEditorScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
                     )
                 }
                 composable(ROUTE_SETTINGS) {

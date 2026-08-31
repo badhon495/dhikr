@@ -45,6 +45,15 @@ class CounterViewModel(
     // within the same screen visit starts its own fresh window.
     private var sessionStartedAtMillis: Long = System.currentTimeMillis()
 
+    // Cumulative count (across laps) already written to permanent History for
+    // the session currently held by `engine`. Each history log records only
+    // `engine.totalCount() - loggedTotal`, so leaving the screen and coming
+    // back without any new taps records nothing the second time — the cause of
+    // the "achievement keeps going up on its own" bug. Persisted in
+    // CounterSessionState so it survives process death mid-session, and reset
+    // to 0 whenever `engine` is replaced (routine step advance) or reset.
+    private var loggedTotal = 0
+
     // True once initializeSession() has actually loaded a Tasbih and assigned
     // dhikr/engine. Every method that touches those lateinit properties from
     // outside the initializeSession() call chain (startTimer()'s recurring
@@ -166,6 +175,10 @@ class CounterViewModel(
             )
             locked = savedSession.locked
             elapsedSeconds = savedSession.elapsedSeconds
+            // Progress carried in on restore was already logged to History when
+            // the previous screen visit ended (or is tracked as un-logged via
+            // the persisted value) — either way, adopt it so we never re-log it.
+            loggedTotal = savedSession.loggedTotal
             if (!savedSession.running) engine.pause()
         }
     }
@@ -237,6 +250,7 @@ class CounterViewModel(
             routineStepIndex = nextIndex
             dhikr = nextTasbih
             engine = TasbihCounter(nextStep.targetCount, 1)
+            loggedTotal = 0 // fresh engine starts at 0; nothing logged for it yet
             // elapsedSeconds is intentionally left as-is — the session timer
             // runs continuously across routine steps, it does not reset per step.
             _uiState.value = buildState()
@@ -245,15 +259,21 @@ class CounterViewModel(
 
     private suspend fun logCurrentSessionIfNonZero() {
         if (!::engine.isInitialized) return
-        val snap = engine.snapshot()
-        if (snap.count > 0) {
+        // totalCount() spans every completed lap, not just the current one, so
+        // a multi-lap session records its full tally. Only the portion not yet
+        // logged (`- loggedTotal`) is written, so repeated leave/enter cycles
+        // without new taps add nothing.
+        val total = engine.totalCount()
+        val unlogged = total - loggedTotal
+        if (unlogged > 0) {
             historyRepository.logSession(
                 tasbihId = dhikr.id,
                 routineId = activeRoutine?.routine?.id,
-                count = snap.count,
+                count = unlogged,
                 startedAt = sessionStartedAtMillis,
                 endedAt = System.currentTimeMillis(),
             )
+            loggedTotal = total
         }
     }
 
@@ -268,6 +288,12 @@ class CounterViewModel(
     fun logAndClearOnLeave() {
         viewModelScope.launch {
             logCurrentSessionIfNonZero()
+            // Persist the bumped `loggedTotal` immediately (not just via the
+            // debounced saver, which won't fire again after the screen is
+            // gone). Without this, re-entering a session that survived to
+            // DataStore but whose ViewModel was destroyed would re-log the
+            // whole restored count — the "achievement climbs on its own" bug.
+            persist()
             sessionStartedAtMillis = System.currentTimeMillis()
         }
     }
@@ -297,6 +323,10 @@ class CounterViewModel(
         if (!sessionReady) return
         engine.reset()
         engine.resume()
+        // Reset clears the count to 0, so anything logged so far this session
+        // is now "ahead" of the engine — drop the watermark to match, otherwise
+        // fresh taps after a reset would be swallowed until they pass the old total.
+        loggedTotal = 0
         elapsedSeconds = 0
         _uiState.value = buildState()
     }
@@ -381,6 +411,7 @@ class CounterViewModel(
                 locked = s.locked,
                 routineId = activeRoutine?.routine?.id,
                 routineStep = routineStepIndex.coerceAtLeast(0),
+                loggedTotal = loggedTotal,
             )
         )
     }

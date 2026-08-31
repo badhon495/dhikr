@@ -94,6 +94,18 @@
     <string name="routines_delete_confirm_action">Delete</string>
     <string name="routines_delete_cancel_action">Cancel</string>
     <string name="routines_add_step">+ Add step</string>
+    <string name="routine_editor_title_new">New routine</string>
+    <string name="routine_editor_name_label">Name</string>
+    <string name="routine_editor_name_placeholder">e.g. Morning Dhikr</string>
+    <string name="routine_editor_steps_label">Steps</string>
+    <string name="routine_editor_no_steps">No steps yet. Add one below.</string>
+    <string name="routine_editor_step_count">Count</string>
+    <string name="routine_editor_move_up">Move step up</string>
+    <string name="routine_editor_move_down">Move step down</string>
+    <string name="routine_editor_remove_step">Remove step</string>
+    <string name="routine_editor_pick_tasbih_title">Choose a Tasbih</string>
+    <string name="routine_editor_save">Save routine</string>
+    <string name="routine_editor_footer">Stored on this device only. Nothing is uploaded.</string>
 
     <!-- Insights screen -->
     <string name="insights_title">Insights</string>

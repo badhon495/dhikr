@@ -77,10 +77,9 @@ class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewMod
     val deleteBlocked: SharedFlow<TasbihDeleteBlocked> = _deleteBlocked
 
     /**
-     * Deletes a custom (non-built-in) Tasbih (finding #4). Callers must not
-     * invoke this for a built-in Tasbih — TasbihLibraryScreen guards the
-     * long-press menu on `!isBuiltIn` before this is ever reachable, matching
-     * the repository's own FK-RESTRICT check for routine references.
+     * Deletes a Tasbih, built-in or custom. The repository still returns
+     * [DeleteResult.BlockedByRoutines] when a routine references the Tasbih,
+     * which surfaces the "can't delete" dialog instead of removing it.
      */
     fun onDeleteTasbih(tasbih: TasbihEntity) {
         viewModelScope.launch {

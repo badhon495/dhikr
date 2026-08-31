@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -39,15 +38,12 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.dao.RoutineWithSteps
-import com.dhikr.app.core.database.entity.RoutineEntity
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
@@ -58,6 +54,7 @@ import com.dhikr.app.ui.theme.PillShape
 fun RoutinesScreen(
     viewModel: RoutinesViewModel,
     onStartRoutine: (String) -> Unit,
+    onNewRoutine: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
@@ -82,21 +79,15 @@ fun RoutinesScreen(
                 )
             }
             item {
-                // Finding #8: routine creation has no UI yet (deliberately
-                // deferred, see task-14 brief) — this pill is specced in
-                // design/README.md §5 as existing UI, so it stays visible,
-                // but is dimmed via alpha so it reads as "coming soon"
-                // rather than as a dead/broken tap target. No onClick is
-                // wired: it is intentionally inert.
+                // "+ New routine" — opens the routine editor (design/README.md §5).
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(top = 4.dp)
-                        .alpha(0.5f)
                         .dashedBorder(color = colors.faint, shape = PillShape)
                         .clip(PillShape)
-                        .semantics { disabled() },
+                        .clickable(role = Role.Button) { onNewRoutine() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(stringResource(R.string.routines_new), color = colors.dim)

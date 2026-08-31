@@ -28,6 +28,7 @@ class SessionRepository(private val context: Context) {
         val LOCKED = booleanPreferencesKey("locked")
         val ROUTINE_ID = stringPreferencesKey("routine_id")
         val ROUTINE_STEP = intPreferencesKey("routine_step")
+        val LOGGED_TOTAL = intPreferencesKey("logged_total")
     }
 
     val sessionFlow: Flow<CounterSessionState?> = context.sessionDataStore.data
@@ -47,6 +48,7 @@ class SessionRepository(private val context: Context) {
                 locked = prefs[Keys.LOCKED] ?: false,
                 routineId = prefs[Keys.ROUTINE_ID],
                 routineStep = prefs[Keys.ROUTINE_STEP] ?: 0,
+                loggedTotal = prefs[Keys.LOGGED_TOTAL] ?: 0,
             )
         }
 
@@ -74,6 +76,7 @@ class SessionRepository(private val context: Context) {
                 prefs.remove(Keys.ROUTINE_ID)
             }
             prefs[Keys.ROUTINE_STEP] = state.routineStep
+            prefs[Keys.LOGGED_TOTAL] = state.loggedTotal
         }
     }
 
