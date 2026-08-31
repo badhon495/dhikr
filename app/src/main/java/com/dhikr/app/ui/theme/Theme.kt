@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import com.dhikr.app.core.datastore.ThemeMode
 
 val LocalDhikrColors = compositionLocalOf { LightDhikrColors }
 
@@ -15,11 +16,20 @@ object DhikrTheme {
         @Composable get() = LocalDhikrColors.current
 }
 
+/** Resolves the user's [ThemeMode] against the system dark/light signal. */
+@Composable
+fun ThemeMode.resolveIsDark(): Boolean = when (this) {
+    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    ThemeMode.LIGHT -> false
+    ThemeMode.DARK -> true
+}
+
 @Composable
 fun DhikrTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit,
 ) {
+    val darkTheme = themeMode.resolveIsDark()
     val tokens = if (darkTheme) DarkDhikrColors else LightDhikrColors
     // Material3's default colorScheme (background ~white, surface ~white) is
     // otherwise left untouched by DhikrColorTokens — components that read it

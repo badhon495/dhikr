@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -31,12 +32,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.ListRowShape
 import com.dhikr.app.ui.theme.NotoNaskhArabic
@@ -64,12 +67,14 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .clip(CircleShape)
-                    .clickable { onBack() }
+                    .clickable(role = Role.Button) { onBack() }
+                    .minTapTarget()
                     .padding(6.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.action_back),
                     tint = colors.text,
                     modifier = Modifier.size(20.dp),
                 )
@@ -181,8 +186,12 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
                         modifier = Modifier
                             .clip(PillShape)
                             .background(if (selected) colors.sage else colors.surface)
-                            .clickable { viewModel.onDailyGoalChange(if (selected) null else option) }
+                            .clickable(role = Role.RadioButton) {
+                                viewModel.onDailyGoalChange(if (selected) null else option)
+                            }
+                            .minTapTarget()
                             .padding(horizontal = 16.dp, vertical = 10.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = option.toString(),
@@ -199,10 +208,11 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 24.dp)
-                .height(52.dp)
+                .heightIn(min = 52.dp)
                 .clip(PillShape)
                 .background(if (state.canSave) colors.terra else colors.track)
-                .clickable(enabled = state.canSave) { viewModel.onSave(onBack) },
+                .clickable(enabled = state.canSave, role = Role.Button) { viewModel.onSave(onBack) }
+                .padding(vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -251,11 +261,11 @@ private fun PillTextField(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .heightIn(min = 48.dp)
             .clip(PillShape)
             .background(colors.card)
             .border(1.dp, colors.line, PillShape)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         if (value.isEmpty()) {
@@ -279,7 +289,8 @@ private fun StepperButton(label: String, bg: Color, fg: Color, onClick: () -> Un
             .size(36.dp)
             .clip(CircleShape)
             .background(bg)
-            .clickable { onClick() },
+            .clickable(role = Role.Button) { onClick() }
+            .minTapTarget(),
         contentAlignment = Alignment.Center,
     ) {
         Text(text = label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = fg)

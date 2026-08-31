@@ -38,6 +38,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.dao.RoutineWithSteps
 import com.dhikr.app.core.database.entity.RoutineEntity
+import com.dhikr.app.ui.headingSemantics
+import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.DialogShape
 import com.dhikr.app.ui.theme.PillShape
@@ -58,7 +63,12 @@ fun RoutinesScreen(
     val colors = DhikrTheme.colors
 
     Column(modifier = Modifier.fillMaxSize().background(colors.bg).padding(16.dp)) {
-        Text(stringResource(R.string.routines_title), fontSize = 23.sp, color = colors.text)
+        Text(
+            stringResource(R.string.routines_title),
+            fontSize = 23.sp,
+            color = colors.text,
+            modifier = Modifier.headingSemantics(),
+        )
         LazyColumn(
             modifier = Modifier.padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -85,7 +95,8 @@ fun RoutinesScreen(
                         .padding(top = 4.dp)
                         .alpha(0.5f)
                         .dashedBorder(color = colors.faint, shape = PillShape)
-                        .clip(PillShape),
+                        .clip(PillShape)
+                        .semantics { disabled() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(stringResource(R.string.routines_new), color = colors.dim)
@@ -135,8 +146,10 @@ private fun RoutineCard(
                 modifier = Modifier
                     .clip(PillShape)
                     .background(colors.sage)
-                    .clickable { onStart() }
+                    .clickable(role = Role.Button) { onStart() }
+                    .minTapTarget()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.routines_start), color = colors.onSage)
             }

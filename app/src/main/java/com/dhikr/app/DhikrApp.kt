@@ -1,6 +1,11 @@
 package com.dhikr.app
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -9,17 +14,19 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -34,6 +41,7 @@ import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.SessionRepository
+import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.feature.counter.CounterScreen
 import com.dhikr.app.feature.counter.CounterViewModel
 import com.dhikr.app.feature.home.HomeScreen
@@ -42,10 +50,19 @@ import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
 import com.dhikr.app.feature.routines.RoutinesViewModel
+import com.dhikr.app.feature.settings.SettingsScreen
+import com.dhikr.app.feature.settings.SettingsViewModel
 import com.dhikr.app.feature.tasbih.TasbihEditorScreen
 import com.dhikr.app.feature.tasbih.TasbihEditorViewModel
 import com.dhikr.app.feature.tasbih.TasbihLibraryScreen
 import com.dhikr.app.feature.tasbih.TasbihLibraryViewModel
+import com.dhikr.app.ui.NavCountIcon
+import com.dhikr.app.ui.NavHomeIcon
+import com.dhikr.app.ui.NavInsightsIcon
+import com.dhikr.app.ui.NavSettingsIcon
+import com.dhikr.app.ui.NavTasbihIcon
+import com.dhikr.app.ui.LocalReducedMotion
+import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.theme.DhikrTheme
 
 private const val ROUTE_HOME = "home"
@@ -57,8 +74,8 @@ private const val ROUTE_ROUTINES = "routines"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
-fun DhikrApp() {
-    DhikrTheme {
+fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM) {
+    DhikrTheme(themeMode = themeMode) {
         val navController = rememberNavController()
         val context = LocalContext.current
         val app = context.applicationContext as DhikrApplication
@@ -68,6 +85,8 @@ fun DhikrApp() {
         val routineRepository = remember { RoutineRepository(app.database.routineDao()) }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
+        val hapticsEnabled by preferencesRepository.hapticsEnabled.collectAsState(initial = true)
+        val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
 
         // Hoisted here rather than read off CounterViewModel directly: this
         // Scaffold — and the bottom nav bar it owns — sits outside the
@@ -78,6 +97,7 @@ fun DhikrApp() {
         val onCounterRoute = currentBackStackEntry?.destination?.route?.substringBefore("?") ==
             ROUTE_COUNTER.substringBefore("?")
 
+        CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(
             containerColor = DhikrTheme.colors.bg,
             bottomBar = {
@@ -96,6 +116,10 @@ fun DhikrApp() {
                 navController = navController,
                 startDestination = ROUTE_HOME,
                 modifier = Modifier.padding(padding),
+                enterTransition = { navEnter(reducedMotion, isTabSwitch(), forward = true) },
+                exitTransition = { navExit(reducedMotion, isTabSwitch(), forward = true) },
+                popEnterTransition = { navEnter(reducedMotion, isTabSwitch(), forward = false) },
+                popExitTransition = { navExit(reducedMotion, isTabSwitch(), forward = false) },
             ) {
                 composable(ROUTE_HOME) {
                     val viewModel: HomeViewModel = viewModel(
@@ -148,6 +172,7 @@ fun DhikrApp() {
                     )
                     CounterScreen(
                         viewModel = viewModel,
+                        hapticsEnabled = hapticsEnabled,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )
@@ -168,20 +193,77 @@ fun DhikrApp() {
                     )
                 }
                 composable(ROUTE_SETTINGS) {
-                    SettingsStub()
+                    val appVersion = remember {
+                        runCatching {
+                            context.packageManager
+                                .getPackageInfo(context.packageName, 0)
+                                .versionName
+                        }.getOrNull().orEmpty()
+                    }
+                    val viewModel: SettingsViewModel = viewModel(
+                        factory = SettingsViewModel.Factory(preferencesRepository, appVersion),
+                    )
+                    SettingsScreen(viewModel = viewModel)
                 }
             }
+        }
         }
     }
 }
 
-@Composable
-private fun SettingsStub() {
-    val colors = DhikrTheme.colors
-    Text(
-        stringResource(R.string.settings_title),
-        modifier = Modifier.background(colors.bg).padding(24.dp),
-        color = colors.text,
+private val TAB_BASE_ROUTES = setOf(
+    ROUTE_HOME,
+    ROUTE_TASBIH_LIBRARY,
+    ROUTE_COUNTER.substringBefore("?"),
+    ROUTE_INSIGHTS,
+    ROUTE_SETTINGS,
+)
+
+/** True when both ends of the transition are top-level bottom-nav destinations —
+ *  those get a plain fade, no directional slide. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch(): Boolean {
+    val from = initialState.destination.route?.substringBefore("?")
+    val to = targetState.destination.route?.substringBefore("?")
+    return from in TAB_BASE_ROUTES && to in TAB_BASE_ROUTES
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navEnter(
+    reduced: Boolean,
+    tabSwitch: Boolean,
+    forward: Boolean,
+): EnterTransition {
+    if (reduced) return EnterTransition.None
+    val fade = fadeIn(tween(Motion.FAST_MS))
+    if (tabSwitch) return fade
+    val direction = if (forward) {
+        AnimatedContentTransitionScope.SlideDirection.Start
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.End
+    }
+    return fade + slideIntoContainer(
+        direction,
+        tween(Motion.STANDARD_MS, easing = Motion.StandardEasing),
+        initialOffset = { it / 14 },
+    )
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.navExit(
+    reduced: Boolean,
+    tabSwitch: Boolean,
+    forward: Boolean,
+): ExitTransition {
+    if (reduced) return ExitTransition.None
+    val fade = fadeOut(tween(Motion.FAST_MS))
+    if (tabSwitch) return fade
+    val direction = if (forward) {
+        AnimatedContentTransitionScope.SlideDirection.Start
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.End
+    }
+    return fade + slideOutOfContainer(
+        direction,
+        tween(Motion.STANDARD_MS, easing = Motion.StandardEasing),
+        targetOffset = { it / 14 },
     )
 }
 
@@ -191,19 +273,19 @@ private fun DhikrBottomNav(navController: NavController) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
-    // Placeholder system icons — see task-14 brief: a future pass should
-    // replace these with proper Lucide-style stroke vectors matching
-    // CounterIcons.kt's pattern for visual consistency with the rest of the app.
+    // Stroke vectors ported from the prototype's NAV table, sharing
+    // CounterIcons.kt's treatment (24x24, 2.75 stroke, round caps) — see
+    // ui/NavIcons.kt.
     val items = listOf(
-        Triple(ROUTE_HOME, R.string.nav_home, android.R.drawable.ic_menu_myplaces),
-        Triple(ROUTE_TASBIH_LIBRARY, R.string.nav_tasbih, android.R.drawable.ic_menu_agenda),
-        Triple(ROUTE_COUNTER, R.string.nav_count, android.R.drawable.ic_menu_add),
-        Triple(ROUTE_INSIGHTS, R.string.nav_insights, android.R.drawable.ic_menu_sort_by_size),
-        Triple(ROUTE_SETTINGS, R.string.nav_settings, android.R.drawable.ic_menu_preferences),
+        Triple(ROUTE_HOME, R.string.nav_home, NavHomeIcon),
+        Triple(ROUTE_TASBIH_LIBRARY, R.string.nav_tasbih, NavTasbihIcon),
+        Triple(ROUTE_COUNTER, R.string.nav_count, NavCountIcon),
+        Triple(ROUTE_INSIGHTS, R.string.nav_insights, NavInsightsIcon),
+        Triple(ROUTE_SETTINGS, R.string.nav_settings, NavSettingsIcon),
     )
 
     NavigationBar(containerColor = colors.surface) {
-        items.forEach { (route, labelRes, iconRes) ->
+        items.forEach { (route, labelRes, icon) ->
             val baseRoute = route.substringBefore("?")
             // Finding #7: an exact match against the route's own base path
             // (not startsWith) so a sub-route sharing the same prefix — e.g.
@@ -236,7 +318,7 @@ private fun DhikrBottomNav(navController: NavController) {
                         }
                     }
                 },
-                icon = { Icon(painterResource(iconRes), contentDescription = label) },
+                icon = { Icon(imageVector = icon, contentDescription = label) },
                 label = { Text(label, fontSize = 10.5.sp) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = colors.text,
