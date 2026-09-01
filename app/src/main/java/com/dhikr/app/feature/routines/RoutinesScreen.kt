@@ -1,5 +1,11 @@
 package com.dhikr.app.feature.routines
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +50,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -54,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.dhikr.app.R
 import com.dhikr.app.core.database.dao.RoutineWithSteps
 import com.dhikr.app.ui.headingSemantics
@@ -65,17 +73,41 @@ import com.dhikr.app.ui.theme.PillShape
 @Composable
 fun RoutinesScreen(
     viewModel: RoutinesViewModel,
+    shareViewModel: RoutineShareViewModel,
     onStartRoutine: (String) -> Unit,
     onNewRoutine: () -> Unit,
     onEditRoutine: (String) -> Unit,
+    onImportRequested: (suspend () -> String) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+    val context = LocalContext.current
 
     // Long-press action menu (Edit/Delete) target — which routine, if any, has
     // its menu open. Presets are included: the user can edit and delete them.
     var actionMenuTarget by remember { mutableStateOf<RoutineWithSteps?>(null) }
     var deleteConfirmTarget by remember { mutableStateOf<RoutineWithSteps?>(null) }
+
+    var shareDialogOpen by remember { mutableStateOf(false) }
+    var shareSnack by remember { mutableStateOf<String?>(null) }
+    val shareStatus by shareViewModel.status.collectAsState()
+    val shareSelectable by shareViewModel.selectable.collectAsState()
+
+    var importMenuOpen by remember { mutableStateOf(false) }
+    var pasteDialogOpen by remember { mutableStateOf(false) }
+    var pasteText by remember { mutableStateOf("") }
+
+    val pickFileLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            val resolver = context.contentResolver
+            onImportRequested {
+                resolver.openInputStream(uri)?.use { it.reader().readText() }
+                    ?: error("no input stream")
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -99,21 +131,36 @@ fun RoutinesScreen(
                 color = colors.text,
                 modifier = Modifier.headingSemantics(),
             )
-            Box(
-                modifier = Modifier
-                    .clip(PillShape)
-                    .background(colors.sage)
-                    .clickable(role = Role.Button) { onNewRoutine() }
-                    .minTapTarget()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.routines_new_short),
+                    text = stringResource(R.string.routines_import),
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = colors.onSage,
+                    color = colors.sage,
+                    modifier = Modifier
+                        .clickable(role = Role.Button) { importMenuOpen = true }
+                        .minTapTarget()
+                        .padding(horizontal = 4.dp, vertical = 10.dp),
                 )
+                Box(
+                    modifier = Modifier
+                        .clip(PillShape)
+                        .background(colors.sage)
+                        .clickable(role = Role.Button) { onNewRoutine() }
+                        .minTapTarget()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.routines_new_short),
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onSage,
+                    )
+                }
             }
         }
 
@@ -212,6 +259,12 @@ fun RoutinesScreen(
                 actionMenuTarget = null
                 onEditRoutine(routineWithSteps.routine.id)
             },
+            onShare = {
+                val id = routineWithSteps.routine.id
+                actionMenuTarget = null
+                shareViewModel.open(id)
+                shareDialogOpen = true
+            },
             onDelete = {
                 actionMenuTarget = null
                 deleteConfirmTarget = routineWithSteps
@@ -251,6 +304,173 @@ fun RoutinesScreen(
             },
         )
     }
+
+    if (shareDialogOpen) {
+        when (val status = shareStatus) {
+            is RoutineShareViewModel.Status.Ready -> SharePayloadSheet(
+                payload = status.payload,
+                onSendFile = {
+                    val ok = sendRoutineFile(context, status.payload)
+                    shareDialogOpen = false
+                    shareViewModel.dismiss()
+                    if (!ok) shareSnack = context.getString(R.string.routines_share_file_error)
+                },
+                onCopyText = {
+                    copyToClipboard(context, status.payload.clipboardText)
+                    shareDialogOpen = false
+                    shareViewModel.dismiss()
+                    shareSnack = context.getString(R.string.routines_share_copied)
+                },
+                onDismiss = {
+                    shareDialogOpen = false
+                    shareViewModel.dismiss()
+                },
+            )
+            is RoutineShareViewModel.Status.Error -> AlertDialog(
+                onDismissRequest = { shareDialogOpen = false; shareViewModel.dismiss() },
+                title = { Text(stringResource(R.string.routines_share_dialog_title)) },
+                text = { Text(status.message) },
+                containerColor = colors.card,
+                titleContentColor = colors.text,
+                textContentColor = colors.dim,
+                shape = DialogShape,
+                confirmButton = {
+                    TextButton(onClick = { shareDialogOpen = false; shareViewModel.dismiss() }) {
+                        Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
+                    }
+                },
+            )
+            else -> ShareChecklistDialog(
+                routines = shareSelectable,
+                working = status is RoutineShareViewModel.Status.Working,
+                onToggle = shareViewModel::toggle,
+                onSelectAll = { shareViewModel.setAll(true) },
+                onClear = { shareViewModel.setAll(false) },
+                onShare = shareViewModel::buildPayload,
+                onDismiss = { shareDialogOpen = false; shareViewModel.dismiss() },
+            )
+        }
+    }
+
+    shareSnack?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { shareSnack = null },
+            confirmButton = {
+                TextButton(onClick = { shareSnack = null }) {
+                    Text(stringResource(R.string.routines_import_done_button), color = colors.dim)
+                }
+            },
+            text = { Text(msg) },
+            containerColor = colors.card,
+            textContentColor = colors.text,
+            shape = DialogShape,
+        )
+    }
+
+    if (importMenuOpen) {
+        AlertDialog(
+            onDismissRequest = { importMenuOpen = false },
+            title = { Text(stringResource(R.string.routines_import_menu_title)) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            shape = DialogShape,
+            text = {
+                Column {
+                    Text(
+                        stringResource(R.string.routines_import_pick_file),
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.text,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button) {
+                                importMenuOpen = false
+                                pickFileLauncher.launch(arrayOf("application/json"))
+                            }
+                            .minTapTarget()
+                            .padding(vertical = 12.dp),
+                    )
+                    Text(
+                        stringResource(R.string.routines_import_paste_text),
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.text,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Button) {
+                                importMenuOpen = false
+                                pasteText = ""
+                                pasteDialogOpen = true
+                            }
+                            .minTapTarget()
+                            .padding(vertical = 12.dp),
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { importMenuOpen = false }) {
+                    Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
+                }
+            },
+        )
+    }
+
+    if (pasteDialogOpen) {
+        AlertDialog(
+            onDismissRequest = { pasteDialogOpen = false },
+            title = { Text(stringResource(R.string.routines_import_paste_title)) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            shape = DialogShape,
+            text = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 96.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(colors.surface)
+                        .padding(12.dp),
+                ) {
+                    if (pasteText.isEmpty()) {
+                        Text(
+                            stringResource(R.string.routines_import_paste_hint),
+                            fontSize = 13.sp,
+                            color = colors.faint,
+                        )
+                    }
+                    BasicTextField(
+                        value = pasteText,
+                        onValueChange = { pasteText = it },
+                        textStyle = TextStyle(fontSize = 13.sp, color = colors.text),
+                        cursorBrush = SolidColor(colors.text),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = pasteText.isNotBlank(),
+                    onClick = {
+                        val text = pasteText
+                        pasteDialogOpen = false
+                        onImportRequested { text }
+                    },
+                ) {
+                    Text(
+                        stringResource(R.string.routines_import_paste_confirm),
+                        color = if (pasteText.isNotBlank()) colors.sage else colors.faint,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pasteDialogOpen = false }) {
+                    Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -258,6 +478,7 @@ private fun RoutineActionMenu(
     name: String,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
+    onShare: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val colors = DhikrTheme.colors
@@ -277,6 +498,17 @@ private fun RoutineActionMenu(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(role = Role.Button) { onEdit() }
+                        .minTapTarget()
+                        .padding(vertical = 12.dp),
+                )
+                Text(
+                    text = stringResource(R.string.routines_share),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) { onShare() }
                         .minTapTarget()
                         .padding(vertical = 12.dp),
                 )
@@ -445,4 +677,163 @@ private fun Modifier.drawBehindLine(color: Color): Modifier = drawBehind {
         end = Offset(size.width, 0f),
         strokeWidth = 1.dp.toPx(),
     )
+}
+
+@Composable
+private fun ShareChecklistDialog(
+    routines: List<RoutineShareViewModel.Selectable>,
+    working: Boolean,
+    onToggle: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onClear: () -> Unit,
+    onShare: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    val anyChecked = routines.any { it.checked }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.routines_share_dialog_title)) },
+        containerColor = colors.card,
+        titleContentColor = colors.text,
+        shape = DialogShape,
+        text = {
+            Column {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text(
+                        stringResource(R.string.routines_share_select_all),
+                        fontSize = 12.5.sp,
+                        color = colors.sage,
+                        modifier = Modifier
+                            .clickable(role = Role.Button, onClick = onSelectAll)
+                            .padding(vertical = 6.dp),
+                    )
+                    Text(
+                        stringResource(R.string.routines_share_clear),
+                        fontSize = 12.5.sp,
+                        color = colors.dim,
+                        modifier = Modifier
+                            .clickable(role = Role.Button, onClick = onClear)
+                            .padding(vertical = 6.dp),
+                    )
+                }
+                LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                    items(routines, key = { it.id }) { row ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Checkbox) { onToggle(row.id) }
+                                .minTapTarget()
+                                .padding(vertical = 10.dp),
+                        ) {
+                            Text(
+                                text = if (row.checked) "☑" else "☐",
+                                fontSize = 16.sp,
+                                color = if (row.checked) colors.sage else colors.faint,
+                                modifier = Modifier.padding(end = 10.dp),
+                            )
+                            Text(row.name, fontSize = 14.sp, color = colors.text, modifier = Modifier.weight(1f))
+                            if (row.isPreset) {
+                                Text(
+                                    stringResource(R.string.routines_share_preset_tag),
+                                    fontSize = 11.sp,
+                                    color = colors.faint,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = anyChecked && !working, onClick = onShare) {
+                Text(
+                    stringResource(R.string.routines_share_action),
+                    color = if (anyChecked && !working) colors.sage else colors.faint,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
+            }
+        },
+    )
+}
+
+@Composable
+private fun SharePayloadSheet(
+    payload: RoutineShareViewModel.SharePayload,
+    onSendFile: () -> Unit,
+    onCopyText: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.routines_share_dialog_title)) },
+        containerColor = colors.card,
+        titleContentColor = colors.text,
+        shape = DialogShape,
+        text = {
+            Column {
+                Text(
+                    stringResource(R.string.routines_share_send_file),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onSendFile)
+                        .minTapTarget()
+                        .padding(vertical = 12.dp),
+                )
+                Text(
+                    stringResource(R.string.routines_share_copy_text),
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.text,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onCopyText)
+                        .minTapTarget()
+                        .padding(vertical = 12.dp),
+                )
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
+            }
+        },
+    )
+}
+
+/** Writes the payload to the app cache and fires an ACTION_SEND chooser.
+ *  Returns false if the file couldn't be prepared. */
+private fun sendRoutineFile(
+    context: Context,
+    payload: RoutineShareViewModel.SharePayload,
+): Boolean = try {
+    val dir = java.io.File(context.cacheDir, "shared").apply { mkdirs() }
+    val file = java.io.File(dir, payload.suggestedFileName)
+    file.writeText(payload.fileText)
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "application/json"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(send, null))
+    true
+} catch (e: Exception) {
+    false
+}
+
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText("dhikr routine", text))
 }

@@ -2,6 +2,7 @@ package com.dhikr.app
 
 import android.content.Intent
 import android.graphics.Color.TRANSPARENT
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -29,10 +30,15 @@ class MainActivity : ComponentActivity() {
     // DhikrApp, which navigates to the counter or insights tab.
     private var pendingOpen by mutableStateOf<String?>(null)
 
+    // Set from an ACTION_VIEW launch (a tapped .dhikrroutine file) and consumed
+    // once by DhikrApp, which navigates to the import preview.
+    private var pendingShareUri by mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingRoutineId = intent?.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
         pendingOpen = intent?.getStringExtra(EXTRA_OPEN)
+        pendingShareUri = if (intent?.action == Intent.ACTION_VIEW) intent?.data else null
         setContent {
             val context = LocalContext.current
             val preferencesRepository = remember {
@@ -64,6 +70,8 @@ class MainActivity : ComponentActivity() {
                 onPendingRoutineConsumed = { pendingRoutineId = null },
                 pendingOpen = pendingOpen,
                 onPendingOpenConsumed = { pendingOpen = null },
+                pendingShareUri = pendingShareUri,
+                onPendingShareConsumed = { pendingShareUri = null },
             )
         }
     }
@@ -73,6 +81,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         pendingRoutineId = intent.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
         pendingOpen = intent.getStringExtra(EXTRA_OPEN)
+        pendingShareUri = if (intent.action == Intent.ACTION_VIEW) intent.data else null
     }
 
     companion object {

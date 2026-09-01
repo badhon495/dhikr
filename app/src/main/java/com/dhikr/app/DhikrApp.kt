@@ -5,6 +5,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import android.net.Uri
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -47,6 +48,9 @@ import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.datastore.ThemeMode
+import com.dhikr.app.core.share.AndroidBase64
+import com.dhikr.app.core.share.RoutineShareCodec
+import com.dhikr.app.core.share.RoutineShareRepository
 import com.dhikr.app.feature.counter.CounterScreen
 import com.dhikr.app.feature.counter.CounterViewModel
 import com.dhikr.app.feature.home.HomeScreen
@@ -57,6 +61,9 @@ import com.dhikr.app.feature.insights.MonthlyHistoryScreen
 import com.dhikr.app.feature.insights.MonthlyHistoryViewModel
 import com.dhikr.app.feature.routines.RoutineEditorScreen
 import com.dhikr.app.feature.routines.RoutineEditorViewModel
+import com.dhikr.app.feature.routines.RoutineImportScreen
+import com.dhikr.app.feature.routines.RoutineImportViewModel
+import com.dhikr.app.feature.routines.RoutineShareViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
 import com.dhikr.app.feature.routines.RoutinesViewModel
 import com.dhikr.app.feature.settings.BackupViewModel
@@ -82,6 +89,7 @@ private const val ROUTE_COUNTER = "counter?dhikrId={dhikrId}&routineId={routineI
 private const val ROUTE_INSIGHTS = "insights"
 private const val ROUTE_MONTHLY_HISTORY = "insights/months"
 private const val ROUTE_ROUTINES = "routines"
+private const val ROUTE_ROUTINES_IMPORT = "routines/import"
 private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
@@ -93,6 +101,8 @@ fun DhikrApp(
     onPendingRoutineConsumed: () -> Unit = {},
     pendingOpen: String? = null,
     onPendingOpenConsumed: () -> Unit = {},
+    pendingShareUri: Uri? = null,
+    onPendingShareConsumed: () -> Unit = {},
 ) {
     DhikrTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
         val navController = rememberNavController()
@@ -118,6 +128,14 @@ fun DhikrApp(
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
         val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
+        val appVersionName = remember {
+            runCatching {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName
+            }.getOrNull().orEmpty()
+        }
+        val routineShareCodec = remember { RoutineShareCodec(AndroidBase64) }
+        val routineShareRepository = remember { RoutineShareRepository(app.database, routineShareCodec) }
+        var importReader by remember { mutableStateOf<(suspend () -> String)?>(null) }
         val reminderScheduler = remember {
             com.dhikr.app.core.notifications.ReminderScheduler(context.applicationContext)
         }
@@ -165,6 +183,20 @@ fun DhikrApp(
                 }
             }
             onPendingOpenConsumed()
+        }
+
+        // A tapped .dhikrroutine file: stash a reader over its content-uri and
+        // route to the import preview. The parser is the real gate on whether
+        // the file is ours (the MIME filter is broad).
+        LaunchedEffect(pendingShareUri) {
+            val uri = pendingShareUri ?: return@LaunchedEffect
+            val resolver = context.contentResolver
+            importReader = {
+                resolver.openInputStream(uri)?.use { it.reader().readText() }
+                    ?: error("no input stream")
+            }
+            navController.navigate(ROUTE_ROUTINES_IMPORT)
+            onPendingShareConsumed()
         }
 
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
@@ -274,11 +306,41 @@ fun DhikrApp(
                     val viewModel: RoutinesViewModel = viewModel(
                         factory = RoutinesViewModel.Factory(routineRepository, tasbihRepository, reminderScheduler),
                     )
+                    val shareVm: RoutineShareViewModel = viewModel(
+                        factory = RoutineShareViewModel.Factory(
+                            routineShareRepository, routineRepository, routineShareCodec, appVersionName,
+                        ),
+                    )
                     RoutinesScreen(
                         viewModel = viewModel,
+                        shareViewModel = shareVm,
                         onStartRoutine = { id -> navController.navigate("counter?routineId=$id") },
                         onNewRoutine = { navController.navigate("routines/editor") },
                         onEditRoutine = { id -> navController.navigate("routines/editor?id=$id") },
+                        onImportRequested = { reader ->
+                            importReader = reader
+                            navController.navigate(ROUTE_ROUTINES_IMPORT)
+                        },
+                    )
+                }
+                composable(ROUTE_ROUTINES_IMPORT) {
+                    val reader = importReader
+                    val importVm: RoutineImportViewModel = viewModel(
+                        factory = RoutineImportViewModel.Factory(routineShareRepository),
+                    )
+                    LaunchedEffect(reader) {
+                        if (reader == null) {
+                            navController.popBackStack()
+                        } else {
+                            importVm.load(reader)
+                        }
+                    }
+                    RoutineImportScreen(
+                        viewModel = importVm,
+                        onClose = {
+                            importReader = null
+                            navController.popBackStack()
+                        },
                     )
                 }
                 composable(
@@ -295,18 +357,11 @@ fun DhikrApp(
                     )
                 }
                 composable(ROUTE_SETTINGS) {
-                    val appVersion = remember {
-                        runCatching {
-                            context.packageManager
-                                .getPackageInfo(context.packageName, 0)
-                                .versionName
-                        }.getOrNull().orEmpty()
-                    }
                     val viewModel: SettingsViewModel = viewModel(
-                        factory = SettingsViewModel.Factory(preferencesRepository, appVersion, context.applicationContext),
+                        factory = SettingsViewModel.Factory(preferencesRepository, appVersionName, context.applicationContext),
                     )
                     val backupViewModel: BackupViewModel = viewModel(
-                        factory = BackupViewModel.Factory(backupRepository, appVersion),
+                        factory = BackupViewModel.Factory(backupRepository, appVersionName),
                     )
                     SettingsScreen(
                         viewModel = viewModel,
