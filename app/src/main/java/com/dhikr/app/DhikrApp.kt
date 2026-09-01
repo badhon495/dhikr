@@ -91,7 +91,9 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
 
         val sessionRepository = remember { SessionRepository(context.applicationContext) }
         val tasbihRepository = remember { TasbihRepository(app.database.tasbihDao(), app.database.routineDao()) }
-        val routineRepository = remember { RoutineRepository(app.database.routineDao()) }
+        val routineRepository = remember {
+            RoutineRepository(app.database.routineDao(), app.database.routineCompletionDao())
+        }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
         val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }

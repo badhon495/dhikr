@@ -25,6 +25,9 @@ data class RoutinesUiState(
     // tasbihId -> display name, so step rows can show the real Tasbih name
     // instead of the raw id RoutineStepEntity stores.
     val tasbihNamesById: Map<String, String> = emptyMap(),
+    // Ids of routines whose last step was completed today (local time). Their
+    // cards render with a sage tint; the set clears on its own the next day.
+    val completedTodayIds: Set<String> = emptySet(),
 )
 
 class RoutinesViewModel(
@@ -38,7 +41,8 @@ class RoutinesViewModel(
         query,
         repository.observeAllWithSteps(),
         tasbihRepository.observeAll(),
-    ) { q, routines, tasbihs ->
+        repository.observeCompletedToday(),
+    ) { q, routines, tasbihs, completedToday ->
         val filtered = if (q.isBlank()) {
             routines
         } else {
@@ -51,6 +55,7 @@ class RoutinesViewModel(
             builtInCount = routines.count { it.routine.isPreset },
             customCount = routines.count { !it.routine.isPreset },
             tasbihNamesById = tasbihs.associate { it.id to it.name },
+            completedTodayIds = completedToday,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
 

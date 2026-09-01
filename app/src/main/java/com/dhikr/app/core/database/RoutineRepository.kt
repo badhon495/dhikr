@@ -1,13 +1,20 @@
 package com.dhikr.app.core.database
 
+import com.dhikr.app.core.database.dao.RoutineCompletionDao
 import com.dhikr.app.core.database.dao.RoutineDao
 import com.dhikr.app.core.database.dao.RoutineWithSteps
+import com.dhikr.app.core.database.entity.RoutineCompletionEntity
 import com.dhikr.app.core.database.entity.RoutineEntity
 import com.dhikr.app.core.database.entity.RoutineStepEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.util.Calendar
 import java.util.UUID
 
-class RoutineRepository(private val routineDao: RoutineDao) {
+class RoutineRepository(
+    private val routineDao: RoutineDao,
+    private val completionDao: RoutineCompletionDao,
+) {
 
     fun observeAllWithSteps(): Flow<List<RoutineWithSteps>> = routineDao.observeAllWithSteps()
 
@@ -46,5 +53,29 @@ class RoutineRepository(private val routineDao: RoutineDao) {
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.deleteRoutine(routine)
 
+    /** Records that [routineId] was completed today (local time). Idempotent per day. */
+    suspend fun markRoutineComplete(routineId: String) {
+        completionDao.markComplete(RoutineCompletionEntity(routineId, startOfTodayMillis()))
+    }
+
+    /**
+     * Ids of routines whose last step was completed today (local time).
+     *
+     * "Today" is resolved once, when this flow is created. If a screen keeps
+     * collecting across local midnight the set goes stale until the collector
+     * is recreated (any navigation away and back, or process death, does it) —
+     * an accepted limitation, not worth a ticker for a tab nobody watches
+     * overnight.
+     */
+    fun observeCompletedToday(): Flow<Set<String>> =
+        completionDao.observeCompletedOn(startOfTodayMillis()).map { it.toSet() }
+
     fun newId(): String = UUID.randomUUID().toString()
+
+    private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 }
