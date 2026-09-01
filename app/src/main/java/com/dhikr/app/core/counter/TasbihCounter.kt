@@ -20,21 +20,23 @@ class TasbihCounter(lapTarget: Int, private val totalLaps: Int) {
 
         if (count + 1 < lapTarget) {
             count += 1
-        } else if (lap < totalLaps) {
-            count = 0
-            lap += 1
-            justCompletedLap = true
-        } else if (!complete) {
-            count = lapTarget
-            complete = true
-            justCompleted = true
         } else {
-            // Goal already reached on final lap — keep lapping past it using
-            // lapTarget as modulus instead of freezing count or piling up
-            // past lapTarget forever.
+            // The tap that reaches lapTarget rolls straight over to the next
+            // lap on this same tap — count shows 0, lap advances — so every
+            // lap costs exactly lapTarget taps, not lapTarget + 1. (Previously
+            // the final lap displayed lapTarget and needed one more tap to
+            // roll, making that lap 34 taps instead of 33.)
             count = 0
-            lap += 1
             justCompletedLap = true
+            if (lap >= totalLaps && !complete) {
+                // First time the final lap's target is reached — fire the
+                // goal-reached signal (session log, routine advance) once.
+                complete = true
+                justCompleted = true
+            }
+            // Keep advancing lap even past totalLaps so bonus rounds after the
+            // goal keep lapping with lapTarget as modulus.
+            lap += 1
         }
 
         return snapshot().copy(justCompletedLap = justCompletedLap, isComplete = justCompleted)
@@ -66,7 +68,11 @@ class TasbihCounter(lapTarget: Int, private val totalLaps: Int) {
         this.count = count
         this.lap = lap
         this.previous = previous
-        this.complete = lap >= totalLaps && count >= lapTarget
+        // count never sits at lapTarget any more (the target tap rolls to 0 and
+        // bumps lap), so a completed final lap is simply lap past totalLaps.
+        // The `count >= lapTarget` arm keeps sessions persisted by the older
+        // engine restoring as complete.
+        this.complete = lap > totalLaps || (lap >= totalLaps && count >= lapTarget)
     }
 
     fun pause() {
