@@ -276,11 +276,11 @@ private fun PillTextField(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .clip(PillShape)
+            .clip(ListRowShape)
             .background(colors.card)
-            .border(1.dp, colors.line, PillShape)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        contentAlignment = Alignment.CenterStart,
+            .border(1.dp, colors.line, ListRowShape)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.TopStart,
     ) {
         if (value.isEmpty()) {
             Text(text = placeholder, fontSize = 14.sp, color = colors.faint)
@@ -288,7 +288,7 @@ private fun PillTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            singleLine = true,
+            singleLine = false,
             textStyle = style,
             cursorBrush = SolidColor(colors.text),
             modifier = Modifier.fillMaxWidth(),
