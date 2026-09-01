@@ -32,6 +32,11 @@ data class HomeUiState(
     val continueSession: ContinueSessionInfo? = null,
     val favorites: List<TasbihEntity> = emptyList(),
     val routines: List<RoutineWithSteps> = emptyList(),
+    // Routines completed today — their Home card shows the full sage tint.
+    val completedRoutineIds: Set<String> = emptySet(),
+    // routineId -> 0f..1f of today's in-progress position; drives the card's
+    // green fill. Both clear on their own the next day.
+    val routineProgress: Map<String, Float> = emptyMap(),
 )
 
 /**
@@ -65,7 +70,10 @@ class HomeViewModel(
         ) { dailyGoal, todayTotal, favorites, routines, session ->
             HomeInputs(dailyGoal, todayTotal, favorites, routines, session)
         }
-            .mapLatest { inputs ->
+            .combine(routineRepository.observeDayProgress()) { inputs, dayProgress ->
+                inputs to dayProgress
+            }
+            .mapLatest { (inputs, dayProgress) ->
                 val continueInfo = inputs.session?.let { s ->
                     tasbihRepository.getById(s.activeDhikrId)?.let { tasbih ->
                         ContinueSessionInfo(tasbihName = tasbih.name, count = s.count, target = tasbih.lapTarget)
@@ -84,6 +92,8 @@ class HomeViewModel(
                         .filter { it.routine.isFavorite }
                         .ifEmpty { inputs.routines }
                         .take(4),
+                    completedRoutineIds = dayProgress.completedRoutineIds,
+                    routineProgress = dayProgress.fractionByRoutineId,
                 )
             }
             .onEach { _uiState.value = it }

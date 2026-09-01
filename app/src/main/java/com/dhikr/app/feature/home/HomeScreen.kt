@@ -167,29 +167,46 @@ fun HomeScreen(
             ) {
                 state.routines.forEach { routineWithSteps ->
                     val totalCount = routineWithSteps.steps.sumOf { it.targetCount }
-                    Column(
+                    val done = routineWithSteps.routine.id in state.completedRoutineIds
+                    val fraction = if (done) 0f
+                        else (state.routineProgress[routineWithSteps.routine.id] ?: 0f).coerceIn(0f, 1f)
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(18.dp))
-                            .background(colors.surface)
+                            .background(if (done) colors.sageSoft else colors.surface)
                             .border(1.dp, colors.line, RoundedCornerShape(18.dp))
-                            .clickable { onStartRoutine(routineWithSteps.routine.id) }
-                            .padding(14.dp),
+                            .clickable { onStartRoutine(routineWithSteps.routine.id) },
                     ) {
-                        Text(
-                            routineWithSteps.routine.name,
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.text,
-                            maxLines = 2,
-                        )
-                        Text(
-                            stringResource(R.string.routines_step_count, routineWithSteps.steps.size, totalCount),
-                            fontSize = 10.5.sp,
-                            color = colors.dim,
-                            modifier = Modifier.padding(top = 6.dp),
-                        )
+                        // Green fill growing left-to-right with today's progress
+                        // through the routine; a completed routine uses the solid
+                        // tint above instead.
+                        if (fraction > 0f) {
+                            Box(modifier = Modifier.matchParentSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(fraction)
+                                        .background(colors.sageSoft),
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Text(
+                                routineWithSteps.routine.name,
+                                fontSize = 13.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.text,
+                                maxLines = 2,
+                            )
+                            Text(
+                                stringResource(R.string.routines_step_count, routineWithSteps.steps.size, totalCount),
+                                fontSize = 10.5.sp,
+                                color = colors.dim,
+                                modifier = Modifier.padding(top = 6.dp),
+                            )
+                        }
                     }
                 }
             }
