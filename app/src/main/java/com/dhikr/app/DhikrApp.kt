@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -85,7 +86,12 @@ private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
 @Composable
-fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = false) {
+fun DhikrApp(
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
+    dynamicColor: Boolean = false,
+    pendingRoutineId: String? = null,
+    onPendingRoutineConsumed: () -> Unit = {},
+) {
     DhikrTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
         val navController = rememberNavController()
         val context = LocalContext.current
@@ -103,6 +109,9 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
         val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
+        val reminderScheduler = remember {
+            com.dhikr.app.core.notifications.ReminderScheduler(context.applicationContext)
+        }
         val hapticMode by preferencesRepository.hapticMode.collectAsState(initial = HapticMode.EVERY_TAP)
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
         val counterScript by preferencesRepository.counterScript.collectAsState(initial = CounterScript.PRONUNCIATION)
@@ -122,6 +131,14 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         val currentBackStackEntry by navController.currentBackStackEntryAsState()
         val onCounterRoute = currentBackStackEntry?.destination?.route?.substringBefore("?") ==
             ROUTE_COUNTER.substringBefore("?")
+
+        // Reminder-notification tap: deep-link into the routine's counter. The
+        // existing CounterViewModel routineId path handles the rest.
+        LaunchedEffect(pendingRoutineId) {
+            val id = pendingRoutineId ?: return@LaunchedEffect
+            navController.navigate("counter?routineId=$id")
+            onPendingRoutineConsumed()
+        }
 
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(

@@ -1,5 +1,6 @@
 package com.dhikr.app
 
+import android.content.Intent
 import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,15 +10,24 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.ThemeMode
+import com.dhikr.app.core.notifications.ReminderNotifications
 import com.dhikr.app.ui.theme.resolveIsDark
 
 class MainActivity : ComponentActivity() {
+
+    // Set from the launch Intent (reminder-notification tap) and consumed once
+    // by DhikrApp, which navigates to that routine's counter.
+    private var pendingRoutineId by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingRoutineId = intent?.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
         setContent {
             val context = LocalContext.current
             val preferencesRepository = remember {
@@ -42,7 +52,18 @@ class MainActivity : ComponentActivity() {
                 }
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
             }
-            DhikrApp(themeMode = themeMode, dynamicColor = dynamicColor)
+            DhikrApp(
+                themeMode = themeMode,
+                dynamicColor = dynamicColor,
+                pendingRoutineId = pendingRoutineId,
+                onPendingRoutineConsumed = { pendingRoutineId = null },
+            )
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingRoutineId = intent.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
     }
 }
