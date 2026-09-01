@@ -102,9 +102,14 @@ internal fun parseGeminiResponse(httpStatus: Int, body: String): GeminiResult {
 
 // ---- Client ----
 
-class GeminiClient {
+/** Seam for faking the network call in tests. */
+interface GeminiApi {
+    suspend fun generateContent(apiKey: String, prompt: String): GeminiResult
+}
 
-    suspend fun generateContent(apiKey: String, prompt: String): GeminiResult =
+class GeminiClient : GeminiApi {
+
+    override suspend fun generateContent(apiKey: String, prompt: String): GeminiResult =
         withContext(Dispatchers.IO) {
             val url = URL("$GEMINI_BASE/$GEMINI_MODEL:generateContent?key=$apiKey")
             val conn = url.openConnection() as HttpURLConnection
