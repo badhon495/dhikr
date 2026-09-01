@@ -17,6 +17,7 @@ Kotlin + Jetpack Compose + Material 3 + Room + DataStore.
 - Local day-bucketing for history/stats (reactive, no stale data)
 - Crash guards and edge-case fixes from review passes (cold start, uninitialized engine, session precedence)
 - UI responsiveness and theme (light/dark) consistency pass
+- AI benefits: user-supplied Gemini API key (encrypted on-device), per-tasbih virtues/benefits generation cached in Room
 
 ### Not yet done
 - Notifications/reminders (Android notification APIs)
