@@ -15,6 +15,11 @@ data class CounterUiState(
     val elapsedSeconds: Int,
     val isComplete: Boolean,
     val justCompletedLap: Boolean,
+    // Wall-clock time the current session window started (see
+    // CounterViewModel.sessionStartedAtMillis). Only for the session-summary
+    // dialog's "started at HH:MM" line — elapsedSeconds remains the source of
+    // truth for duration/persistence.
+    val sessionStartedAtMillis: Long = 0L,
     val routineSteps: List<RoutineStepDisplay> = emptyList(),
     val currentRoutineStepIndex: Int = -1,
     val isRoutineComplete: Boolean = false,
@@ -36,7 +41,7 @@ data class CounterUiState(
             ),
             count = 0, lap = 1, totalLaps = 1, canUndo = false, running = false,
             locked = false, elapsedSeconds = 0, isComplete = false, justCompletedLap = false,
-            sessionReady = false,
+            sessionStartedAtMillis = 0L, sessionReady = false,
         )
     }
 }

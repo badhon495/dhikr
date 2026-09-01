@@ -18,13 +18,21 @@ Kotlin + Jetpack Compose + Material 3 + Room + DataStore.
 - Crash guards and edge-case fixes from review passes (cold start, uninitialized engine, session precedence)
 - UI responsiveness and theme (light/dark) consistency pass
 - AI benefits: user-supplied Gemini API key (encrypted on-device), per-tasbih virtues/benefits generation cached in Room
+- Notifications/reminders (scheduled, boot-persistent, local only)
+- Home screen widget (small/medium, direct counting)
+- Backup/export + import (JSON), routine sharing
+- Session summary: tap the counter screen's elapsed-time label for started-at time, duration, counts, pace
+- Auto counter (experimental, off by default): accelerometer-based wrist-flick tap, Settings toggle, hidden on devices without an accelerometer
+- Onboarding tutorial: 5-page overlay shown once before Home, skippable anytime
 
 ### Not yet done
-- Notifications/reminders (Android notification APIs)
-- Home screen widget
-- WorkManager/AlarmManager scheduling
+- Localization: only English strings exist (`values/`); Bengali translations pending (Arabic is content-script only, not a supported UI language — no Arabic translations or RTL planned)
 - Baseline Profiles + Macrobenchmark performance testing
-- Release build hardening (R8/shrinking verification)
+- Full performance/battery/memory audit (plan.md Phase 8)
+
+### Cut from scope
+- QR code routine sharing — JSON/file-based routine sharing is the only sharing mechanism
+- Bundled audio pronunciation
 
 ## Tech stack
 - Kotlin, Jetpack Compose, Material 3
@@ -34,8 +42,8 @@ Kotlin + Jetpack Compose + Material 3 + Room + DataStore.
 ## Project layout
 ```
 app/src/main/java/com/dhikr/app/
-  core/       # database (entities, DAOs, seed), datastore, counter engine, models
-  feature/    # home, counter, tasbih, routines, insights
+  core/       # database, datastore, counter engine (+ auto-counter detector), notifications, widget, backup, share, ai, haptics
+  feature/    # home, counter, tasbih, routines, insights, settings
   ui/         # shared UI
 ```
 

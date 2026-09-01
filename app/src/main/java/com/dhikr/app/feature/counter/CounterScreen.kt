@@ -48,9 +48,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +65,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhikr.app.R
+import com.dhikr.app.core.counter.AutoCounterSensorListener
 import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.haptics.rememberHaptics
@@ -78,6 +81,9 @@ import com.dhikr.app.ui.theme.DialogShape
 import com.dhikr.app.ui.theme.PillShape
 import com.dhikr.app.ui.theme.PronunciationLongTextStyle
 import com.dhikr.app.ui.theme.PronunciationPrimaryStyle
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.min
 
 private const val LONG_TEXT_THRESHOLD = 90
@@ -92,6 +98,8 @@ fun CounterScreen(
     // From the "Counter shows" setting. ARABIC shows the Arabic line only;
     // PRONUNCIATION shows the pronunciation line only.
     counterScript: CounterScript = CounterScript.PRONUNCIATION,
+    // From the "Count on wrist flick" setting (off by default, plan.md §40).
+    autoCounterEnabled: Boolean = false,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -102,6 +110,7 @@ fun CounterScreen(
     val haptics = rememberHaptics()
     val reducedMotion = LocalReducedMotion.current
     var showResetDialog by remember { mutableStateOf(false) }
+    var showSessionSummary by remember { mutableStateOf(false) }
 
     // The on-screen back chevron is gated on !state.locked, but the system
     // back gesture/button bypasses that entirely — it doesn't go through
@@ -170,6 +179,24 @@ fun CounterScreen(
     DisposableEffect(viewModel) {
         onDispose {
             viewModel.logAndClearOnLeave()
+        }
+    }
+
+    // Auto counter (plan.md §40): registers the accelerometer listener only
+    // while the setting is on, a session is actually loaded, and the counter
+    // isn't locked — locking exists specifically to stop accidental counts
+    // (§35), so a pocketed, locked phone must not auto-count from motion.
+    // Unregistered on every key change (including the composable leaving
+    // composition), so nothing samples the sensor once this screen is gone.
+    val appContext = LocalContext.current.applicationContext
+    DisposableEffect(autoCounterEnabled, state.sessionReady, state.locked, viewModel) {
+        val active = autoCounterEnabled && state.sessionReady && !state.locked
+        val sensorListener = if (active) AutoCounterSensorListener(appContext) else null
+        if (sensorListener != null) {
+            sensorListener.start { viewModel.onTap() }
+        }
+        onDispose {
+            sensorListener?.stop()
         }
     }
 
@@ -267,6 +294,7 @@ fun CounterScreen(
                     modifier = Modifier.size(21.dp),
                 )
             }
+            val sessionLabelDescription = stringResource(R.string.counter_session_label_content_description)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -284,6 +312,14 @@ fun CounterScreen(
                     fontSize = 11.5.sp,
                     color = colors.faint,
                     maxLines = 1,
+                    modifier = Modifier
+                        .clickable(
+                            enabled = state.sessionReady,
+                            role = Role.Button,
+                        ) { showSessionSummary = true }
+                        .semantics {
+                            contentDescription = sessionLabelDescription
+                        },
                 )
             }
             Box(
@@ -685,6 +721,75 @@ fun CounterScreen(
             confirmButton = {},
         )
     }
+
+    if (showSessionSummary) {
+        SessionSummaryDialog(
+            startedAtMillis = state.sessionStartedAtMillis,
+            elapsedSeconds = state.elapsedSeconds,
+            totalCount = state.totalCount,
+            onDismiss = { showSessionSummary = false },
+        )
+    }
+}
+
+/**
+ * Session-summary dialog opened by tapping the top-bar elapsed-time label.
+ * Pure display of state already tracked by CounterViewModel — started-at
+ * clock time, duration, total counts, and pace — no new persistence.
+ */
+@Composable
+private fun SessionSummaryDialog(
+    startedAtMillis: Long,
+    elapsedSeconds: Int,
+    totalCount: Int,
+    onDismiss: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    val startedAtLabel = remember(startedAtMillis) {
+        SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(startedAtMillis))
+    }
+    val rateText = if (elapsedSeconds > 4) {
+        val rate = (totalCount.toFloat() / (elapsedSeconds / 60f)).toInt()
+        if (rate > 0) stringResource(R.string.session_summary_rate, rate) else null
+    } else {
+        null
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.session_summary_title)) },
+        containerColor = colors.card,
+        titleContentColor = colors.text,
+        textContentColor = colors.dim,
+        shape = DialogShape,
+        text = {
+            Column {
+                SessionSummaryLine(stringResource(R.string.session_summary_started, startedAtLabel))
+                SessionSummaryLine(stringResource(R.string.session_summary_duration, formatDuration(elapsedSeconds)))
+                SessionSummaryLine(stringResource(R.string.session_summary_counts, totalCount))
+                SessionSummaryLine(rateText ?: stringResource(R.string.session_summary_rate_unavailable))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(R.string.session_summary_close),
+                    color = colors.sage,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun SessionSummaryLine(text: String) {
+    val colors = DhikrTheme.colors
+    Text(
+        text = text,
+        fontSize = 14.sp,
+        color = colors.dim,
+        modifier = Modifier.padding(top = 4.dp),
+    )
 }
 
 /** Plain "MM:SS" duration, with no pace readout — use for dialog body text

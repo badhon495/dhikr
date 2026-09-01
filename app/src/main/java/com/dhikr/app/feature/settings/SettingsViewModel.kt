@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.ai.SecureKeyStore
+import com.dhikr.app.core.counter.AutoCounterSensorListener
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.widget.DhikrWidgets
 import com.dhikr.app.core.datastore.CounterScript
@@ -29,6 +30,8 @@ data class SettingsUiState(
     val counterScript: CounterScript = CounterScript.PRONUNCIATION,
     val appVersion: String = "",
     val hasGeminiKey: Boolean = false,
+    val autoCounterEnabled: Boolean = false,
+    val autoCounterSupported: Boolean = true,
 ) {
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
     val dailyGoalOptions: List<Int> get() = DAILY_GOAL_OPTIONS
@@ -51,8 +54,17 @@ class SettingsViewModel(
     private val secureKeyStore: SecureKeyStore,
 ) : ViewModel() {
 
+    // Cheap, synchronous hardware check (getSystemService + getDefaultSensor,
+    // no listener registered) — safe to read once up front rather than as a
+    // Flow, since it can't change while the app is running.
+    private val autoCounterSupported = AutoCounterSensorListener(appContext).isSupported
+
     private val _uiState = MutableStateFlow(
-        SettingsUiState(appVersion = appVersion, hasGeminiKey = secureKeyStore.hasKey),
+        SettingsUiState(
+            appVersion = appVersion,
+            hasGeminiKey = secureKeyStore.hasKey,
+            autoCounterSupported = autoCounterSupported,
+        ),
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
@@ -72,10 +84,14 @@ class SettingsViewModel(
                 dynamicColorEnabled = dynamicColor,
                 appVersion = appVersion,
                 hasGeminiKey = secureKeyStore.hasKey,
+                autoCounterSupported = autoCounterSupported,
             )
         }
             .combine(preferencesRepository.counterScript) { state, counterScript ->
                 state.copy(counterScript = counterScript)
+            }
+            .combine(preferencesRepository.autoCounterEnabled) { state, autoCounterEnabled ->
+                state.copy(autoCounterEnabled = autoCounterEnabled)
             }
             .onEach { _uiState.value = it }
             .launchIn(viewModelScope)
@@ -99,6 +115,10 @@ class SettingsViewModel(
 
     fun onCounterScriptChange(value: CounterScript) {
         viewModelScope.launch { preferencesRepository.setCounterScript(value) }
+    }
+
+    fun onAutoCounterEnabledChange(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setAutoCounterEnabled(enabled) }
     }
 
     fun onDailyGoalChange(value: Int) {

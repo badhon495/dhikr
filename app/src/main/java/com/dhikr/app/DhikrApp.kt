@@ -7,6 +7,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import android.net.Uri
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -22,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -62,6 +65,7 @@ import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
 import com.dhikr.app.feature.insights.MonthlyHistoryScreen
 import com.dhikr.app.feature.insights.MonthlyHistoryViewModel
+import com.dhikr.app.feature.onboarding.OnboardingScreen
 import com.dhikr.app.feature.routines.RoutineEditorScreen
 import com.dhikr.app.feature.routines.RoutineEditorViewModel
 import com.dhikr.app.feature.routines.RoutineImportScreen
@@ -84,6 +88,7 @@ import com.dhikr.app.ui.NavTasbihIcon
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.theme.DhikrTheme
+import kotlinx.coroutines.launch
 
 private const val ROUTE_HOME = "home"
 private const val ROUTE_TASBIH_LIBRARY = "tasbih"
@@ -150,6 +155,12 @@ fun DhikrApp(
         val hapticMode by preferencesRepository.hapticMode.collectAsState(initial = HapticMode.EVERY_TAP)
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
         val counterScript by preferencesRepository.counterScript.collectAsState(initial = CounterScript.PRONUNCIATION)
+        val autoCounterEnabled by preferencesRepository.autoCounterEnabled.collectAsState(initial = false)
+        // Same pattern as every other preference above: default to the "off"
+        // reading (not yet seen) while DataStore's first value loads, matching
+        // reducedMotion/autoCounterEnabled's own initial=false above.
+        val hasSeenOnboarding by preferencesRepository.hasSeenOnboarding.collectAsState(initial = false)
+        val coroutineScope = rememberCoroutineScope()
 
         // Hoisted here rather than read off CounterViewModel directly: this
         // Scaffold — and the bottom nav bar it owns — sits outside the
@@ -207,6 +218,7 @@ fun DhikrApp(
             onPendingShareConsumed()
         }
 
+        Box(modifier = Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(
             containerColor = DhikrTheme.colors.bg,
@@ -216,8 +228,9 @@ fun DhikrApp(
                 // controls — a pocket touch shouldn't be able to switch tabs
                 // out of a locked session either. Guarded on onCounterRoute
                 // too so a stale true from a just-left session can't hide
-                // the bar elsewhere in the app.
-                if (!(counterLocked && onCounterRoute)) {
+                // the bar elsewhere in the app. Also hidden while onboarding
+                // is showing, so its overlay is the only interactive surface.
+                if (!(counterLocked && onCounterRoute) && hasSeenOnboarding) {
                     DhikrBottomNav(
                         navController = navController,
                         onReselect = { base -> scrollTopSignals[base] = signalOf(base) + 1 },
@@ -294,6 +307,7 @@ fun DhikrApp(
                         viewModel = viewModel,
                         hapticMode = hapticMode,
                         counterScript = counterScript,
+                        autoCounterEnabled = autoCounterEnabled,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )
@@ -388,6 +402,15 @@ fun DhikrApp(
                     )
                 }
             }
+        }
+        }
+
+        if (!hasSeenOnboarding) {
+            OnboardingScreen(
+                onFinished = {
+                    coroutineScope.launch { preferencesRepository.setHasSeenOnboarding(true) }
+                },
+            )
         }
         }
     }

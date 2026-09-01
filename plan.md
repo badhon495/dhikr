@@ -190,7 +190,6 @@ app
 │   ├── model
 │   ├── notifications
 │   ├── haptics
-│   ├── audio
 │   ├── backup
 │   └── utilities
 │
@@ -785,25 +784,20 @@ Initial languages:
 
 * English
 * Bengali
-* Arabic
 
 Use Android localization properly.
 
 Do not hardcode UI strings.
 
-Make RTL support work correctly.
+Arabic text still appears as content (the Dhikr script itself, §9/§19/§20)
+and must keep rendering correctly, but Arabic is not a supported UI
+language — no Arabic-language string translations, no RTL layout support.
 
 ---
 
-# 33. Audio
+# 33. Audio — REMOVED
 
-Optionally support audio pronunciation for built-in Dhikr.
-
-Audio should preferably be bundled locally.
-
-Do not require an internet connection for basic pronunciation playback.
-
-Allow users to disable audio.
+Out of scope. Bundled audio pronunciation will not be implemented.
 
 ---
 
@@ -886,15 +880,10 @@ No server should be necessary.
 
 ---
 
-# 38. QR Sharing
+# 38. QR Sharing — REMOVED
 
-As an advanced feature, support generating a QR code for a routine.
-
-Another user can scan the QR code and import the routine.
-
-Keep this optional and lightweight.
-
-Do not introduce unnecessary network infrastructure.
+Out of scope. Routine sharing (§37, JSON/file-based) is the only sharing
+mechanism; QR-code generation/scanning will not be implemented.
 
 ---
 
@@ -1152,7 +1141,6 @@ Do not initialize every feature during application startup.
 Avoid:
 
 * initializing AI clients
-* loading audio
 * reading entire history
 * loading all Tasbih
 * scheduling unnecessary work
@@ -1285,7 +1273,6 @@ The application should never crash because of:
 
 * invalid imported backup
 * corrupted data
-* missing optional audio
 * notification permission denial
 * missing widget
 * unavailable AI
@@ -1359,9 +1346,7 @@ Test:
 * app backgrounded
 * device restarted
 * dark mode
-* RTL
 * Bengali
-* Arabic
 * low memory
 * no internet
 * notification permission denied
@@ -1526,7 +1511,6 @@ Implement:
 * themes
 * accessibility
 * localization
-* Arabic
 * Bengali
 * improved navigation
 
@@ -1554,7 +1538,6 @@ Implement:
 * import
 * export
 * routine sharing
-* QR sharing
 
 ---
 
@@ -1562,7 +1545,6 @@ Implement:
 
 Only after the core app is stable:
 
-* audio
 * timer
 * auto-counter
 * AI
@@ -1655,7 +1637,6 @@ Before considering the application complete, verify:
 * Widget works.
 * Notifications work.
 * Dark/light modes work.
-* Arabic works.
 * Bengali works.
 * Small screens work.
 * Low-end devices remain usable.

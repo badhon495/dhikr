@@ -32,6 +32,16 @@
     <string name="routine_complete_done">Done</string>
     <string name="routine_complete_check_content_description">Routine complete</string>
 
+    <!-- Session summary dialog (tap the elapsed-time label) -->
+    <string name="session_summary_title">This session</string>
+    <string name="session_summary_started">Started at %1$s</string>
+    <string name="session_summary_duration">Duration %1$s</string>
+    <string name="session_summary_counts">%1$d counts</string>
+    <string name="session_summary_rate">%1$d per minute</string>
+    <string name="session_summary_rate_unavailable">Pace shown after a few counts</string>
+    <string name="session_summary_close">Close</string>
+    <string name="counter_session_label_content_description">Session time, tap for details</string>
+
     <!-- Home stub (placeholder until the real Home screen lands) -->
     <string name="home_title">Dhikr</string>
     <string name="home_start_counter">Start SubhanAllah</string>
@@ -200,6 +210,12 @@
     <string name="settings_accessibility">Accessibility</string>
     <string name="settings_reduce_motion">Reduce motion</string>
     <string name="settings_reduce_motion_desc">Minimise animations across the app</string>
+
+    <string name="settings_auto_counter">Auto counter (experimental)</string>
+    <string name="settings_auto_counter_toggle">Count on wrist flick</string>
+    <string name="settings_auto_counter_toggle_desc">Detect a hand motion instead of tapping</string>
+    <string name="settings_auto_counter_limitation">Experimental — uses motion, not sound. It may miss a flick or register an extra count; tapping the screen always works and stays the main way to count.</string>
+
     <string name="settings_haptics">Haptic feedback</string>
     <string name="settings_haptics_desc">When the counter vibrates</string>
     <string name="settings_haptics_off">Off</string>
@@ -277,4 +293,20 @@
     <string name="widget_insights_today">Today</string>
     <string name="widget_insights_week">This week</string>
     <string name="widget_insights_all_time">All time</string>
+
+    <!-- Onboarding (shown once, before Home, plan.md §25) -->
+    <string name="onboarding_welcome_title">Dhikr</string>
+    <string name="onboarding_welcome_body">Count Dhikr, simply. A calm, private counter — no account, no ads, nothing tracked.</string>
+    <string name="onboarding_tap_title">Tap to count</string>
+    <string name="onboarding_tap_body">Tap anywhere on the counter screen. The count updates instantly, with a soft vibration to confirm.</string>
+    <string name="onboarding_laps_title">Laps and goals</string>
+    <string name="onboarding_laps_body">Set a lap target and the app tracks laps for you. Daily and routine goals show your progress as you go.</string>
+    <string name="onboarding_history_title">Nothing is lost</string>
+    <string name="onboarding_history_body">Every session is saved automatically. Revisit your history and totals any time, even offline.</string>
+    <string name="onboarding_privacy_title">Private by design</string>
+    <string name="onboarding_privacy_body">Everything stays on your device. The app works fully offline and never sends your Dhikr anywhere.</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get started</string>
+    <string name="onboarding_page_indicator">Page %1$d of %2$d</string>
 </resources>

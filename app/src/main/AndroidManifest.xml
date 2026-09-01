@@ -6,6 +6,12 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Optional: only used by the off-by-default auto-counter (wrist-flick)
+         setting. required="false" so devices without an accelerometer aren't
+         excluded from the Play Store listing — AutoCounterSensorListener
+         already checks isSupported and hides the setting when absent. -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+
     <application
         android:name=".DhikrApplication"
         android:allowBackup="true"

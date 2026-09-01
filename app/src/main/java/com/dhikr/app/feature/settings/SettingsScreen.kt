@@ -184,6 +184,24 @@ fun SettingsScreen(
             )
         }
 
+        // ---- Auto counter (advanced, experimental, off by default) ----
+        if (state.autoCounterSupported) {
+            SettingsSection(stringResource(R.string.settings_auto_counter)) {
+                SwitchRow(
+                    title = stringResource(R.string.settings_auto_counter_toggle),
+                    description = stringResource(R.string.settings_auto_counter_toggle_desc),
+                    checked = state.autoCounterEnabled,
+                    onCheckedChange = viewModel::onAutoCounterEnabledChange,
+                )
+                Text(
+                    stringResource(R.string.settings_auto_counter_limitation),
+                    fontSize = 11.5.sp,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+            }
+        }
+
         // ---- AI features ----
         SettingsSection(stringResource(R.string.settings_ai)) {
             GeminiKeyControls(

@@ -34,6 +34,8 @@ class AppPreferencesRepository(private val context: Context) {
     private val reducedMotionKey = booleanPreferencesKey("reduced_motion")
     private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
     private val counterScriptKey = stringPreferencesKey("counter_script")
+    private val autoCounterEnabledKey = booleanPreferencesKey("auto_counter_enabled")
+    private val hasSeenOnboardingKey = booleanPreferencesKey("has_seen_onboarding")
 
     val dailyGoalTarget = context.preferencesDataStore.data.map { it[dailyGoalKey] ?: 100 }
 
@@ -99,6 +101,22 @@ class AppPreferencesRepository(private val context: Context) {
 
     suspend fun setCounterScript(value: CounterScript) {
         context.preferencesDataStore.edit { it[counterScriptKey] = value.name }
+    }
+
+    /** Off by default (plan.md §40: "keep it disabled by default"). */
+    val autoCounterEnabled = context.preferencesDataStore.data.map { it[autoCounterEnabledKey] ?: false }
+
+    suspend fun setAutoCounterEnabled(value: Boolean) {
+        context.preferencesDataStore.edit { it[autoCounterEnabledKey] = value }
+    }
+
+    /** One-shot UX flag, not a real preference — never wired into backup/restore
+     *  (plan.md §25 onboarding is per-device, not something worth carrying
+     *  across a backup). Absent (fresh install) means false: show onboarding. */
+    val hasSeenOnboarding = context.preferencesDataStore.data.map { it[hasSeenOnboardingKey] ?: false }
+
+    suspend fun setHasSeenOnboarding(value: Boolean) {
+        context.preferencesDataStore.edit { it[hasSeenOnboardingKey] = value }
     }
 
     /** One-shot read of every user-facing preference, for a backup export. */

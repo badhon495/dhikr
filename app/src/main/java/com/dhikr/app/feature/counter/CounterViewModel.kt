@@ -407,6 +407,7 @@ class CounterViewModel(
             elapsedSeconds = elapsedSeconds,
             isComplete = snap.isComplete,
             justCompletedLap = justCompletedLap,
+            sessionStartedAtMillis = sessionStartedAtMillis,
             routineSteps = steps,
             currentRoutineStepIndex = routineStepIndex,
             routineName = routine?.routine?.name,
