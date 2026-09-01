@@ -204,11 +204,21 @@ fun CounterScreen(
     // terra toward sage and back over ~300ms when the lap number ticks up.
     val lapPulse = remember { Animatable(0f) }
     var lastLap by remember { mutableStateOf(state.lap) }
-    LaunchedEffect(state.lap) {
-        // Exactly +1 — a real lap rollover only ever advances by one. A larger
-        // jump is the initial load settling from the Empty-state default (0) to
-        // the restored session's lap when the screen is (re)entered, e.g. via
-        // the "Count" nav tab; that must not buzz or pulse.
+    var lapBaselineSynced by remember { mutableStateOf(false) }
+    LaunchedEffect(state.sessionReady, state.lap) {
+        // The ViewModel emits Empty (lap 0, sessionReady false) first, then
+        // settles to the restored session in a single jump. Wait for that
+        // settle and sync the baseline off it — otherwise a session restored
+        // at exactly lap 1 looks like a fresh 0 -> 1 rollover to the +1 guard
+        // below and buzzes every time the screen is (re)entered, e.g. via the
+        // "Count" nav tab.
+        if (!state.sessionReady) return@LaunchedEffect
+        if (!lapBaselineSynced) {
+            lastLap = state.lap
+            lapBaselineSynced = true
+            return@LaunchedEffect
+        }
+        // Exactly +1 — a real lap rollover only ever advances by one.
         if (state.lap == lastLap + 1) {
             // LAP_ONLY: this is the only place the counter vibrates. EVERY_TAP
             // also gets a stronger buzz here to mark the lap boundary.
