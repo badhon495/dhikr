@@ -37,6 +37,17 @@ interface SessionDao {
     @Query("SELECT tasbihId, COALESCE(SUM(count), 0) AS total FROM session GROUP BY tasbihId")
     suspend fun lifetimeTotalsByTasbih(): List<TasbihTotal>
 
+    // Per-Tasbih totals since a cutoff, Flow-backed so the Tasbih card's
+    // progress fill re-emits whenever a session is logged — including the
+    // per-step sessions a routine logs (each carries its step's tasbihId).
+    @Query(
+        """
+        SELECT tasbihId, COALESCE(SUM(count), 0) AS total FROM session
+        WHERE startedAt >= :sinceMillis GROUP BY tasbihId
+        """
+    )
+    fun totalsByTasbihSince(sinceMillis: Long): Flow<List<TasbihTotal>>
+
     // Buckets are computed in LOCAL time, not UTC: `offsetMillis` is the
     // caller's current local UTC offset (see HistoryRepository, which
     // recomputes it per call so DST transitions stay correct). Shifting

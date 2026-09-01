@@ -103,6 +103,7 @@ fun DhikrApp(
                 app.database.tasbihDao(),
                 app.database.routineDao(),
                 app.database.tasbihProgressDao(),
+                app.database.sessionDao(),
             )
         }
         val routineRepository = remember {

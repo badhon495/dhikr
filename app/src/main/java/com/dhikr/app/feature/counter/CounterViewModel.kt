@@ -364,14 +364,11 @@ class CounterViewModel(
         // fresh taps after a reset would be swallowed until they pass the old total.
         loggedTotal = 0
         elapsedSeconds = 0
-        // Drop the saved position immediately so the card's green fill clears
-        // without waiting for the debounced persist. (Routine steps keep their
-        // row — reset there only rewinds the current step.)
-        if (activeRoutine == null) {
-            val tasbihId = dhikr.id
-            viewModelScope.launch { tasbihRepository.clearSessionProgress(tasbihId) }
-        }
         _uiState.value = buildState()
+        // persist() (debounced off the state change above) rewrites the saved
+        // resume position at count 0. Today's already-logged History count is
+        // intentionally kept — those reps still happened today, so the card's
+        // progress fill stays where it is.
     }
 
     fun onTogglePause() {

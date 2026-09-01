@@ -1,6 +1,7 @@
 package com.dhikr.app.core.database
 
 import com.dhikr.app.core.database.dao.RoutineDao
+import com.dhikr.app.core.database.dao.SessionDao
 import com.dhikr.app.core.database.dao.TasbihDao
 import com.dhikr.app.core.database.dao.TasbihProgressDao
 import com.dhikr.app.core.database.entity.TasbihEntity
@@ -19,6 +20,7 @@ class TasbihRepository(
     private val tasbihDao: TasbihDao,
     private val routineDao: RoutineDao,
     private val progressDao: TasbihProgressDao,
+    private val sessionDao: SessionDao,
 ) {
 
     fun observeAll(): Flow<List<TasbihEntity>> = tasbihDao.observeAll()
@@ -74,26 +76,25 @@ class TasbihRepository(
     suspend fun getSessionProgress(tasbihId: String): TasbihProgressEntity? =
         progressDao.getForTasbih(tasbihId, startOfTodayMillis())
 
-    /** Clears [tasbihId]'s saved position (session reset). */
-    suspend fun clearSessionProgress(tasbihId: String) = progressDao.deleteForTasbih(tasbihId)
-
     /**
-     * tasbihId -> fraction 0f..1f of today's counting position toward the
-     * Tasbih's total goal (lapTarget × lapCount). "Today" is resolved once when
-     * the flow is created; a collector alive across local midnight goes stale
-     * until recreated (any navigation away and back does it).
+     * tasbihId -> fraction 0f..1f of today's total count for that Tasbih toward
+     * its goal (lapTarget × lapCount). Sourced from logged History, so counting
+     * a Tasbih inside a routine feeds this too (each routine step logs a
+     * session under its own tasbihId). "Today" is resolved once when the flow
+     * is created; a collector alive across local midnight goes stale until
+     * recreated (any navigation away and back does it).
      */
     fun observeSessionProgressToday(): Flow<Map<String, Float>> = combine(
         tasbihDao.observeAll(),
-        progressDao.observeForDay(startOfTodayMillis()),
-    ) { tasbihs, rows ->
-        val tasbihById = tasbihs.associateBy { it.id }
-        rows.mapNotNull { row ->
-            val tasbih = tasbihById[row.tasbihId] ?: return@mapNotNull null
+        sessionDao.totalsByTasbihSince(startOfTodayMillis()),
+    ) { tasbihs, totals ->
+        val totalById = totals.associate { it.tasbihId to it.total }
+        tasbihs.mapNotNull { tasbih ->
             val goal = tasbih.lapTarget * tasbih.lapCount
             if (goal <= 0) return@mapNotNull null
-            val total = (row.lap - 1) * tasbih.lapTarget + row.count
-            row.tasbihId to (total.toFloat() / goal).coerceIn(0f, 1f)
+            val done = totalById[tasbih.id] ?: return@mapNotNull null
+            if (done <= 0) return@mapNotNull null
+            tasbih.id to (done.toFloat() / goal).coerceIn(0f, 1f)
         }.toMap()
     }
 
