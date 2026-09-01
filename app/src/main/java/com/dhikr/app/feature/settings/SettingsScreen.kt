@@ -58,16 +58,22 @@ import java.util.Locale
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     backupViewModel: BackupViewModel,
+    scrollToTopSignal: Int = 0,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(scrollToTopSignal) {
+        if (scrollToTopSignal > 0) scrollState.animateScrollTo(0)
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg)
             .imePadding()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
     ) {
         Text(

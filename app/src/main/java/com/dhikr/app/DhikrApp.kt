@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -107,6 +108,13 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         // NavHost destination that creates the Counter screen's ViewModel.
         // CounterScreen reports lock changes up through onLockedChanged.
         var counterLocked by remember { mutableStateOf(false) }
+
+        // Per-tab "scroll to top" signal. Tapping a bottom-nav tab you're
+        // already on bumps its counter; the tab screen watches its own entry
+        // and animates its scroll container back to the top on each change.
+        val scrollTopSignals = remember { mutableStateMapOf<String, Int>() }
+        fun signalOf(route: String) = scrollTopSignals[route] ?: 0
+
         val currentBackStackEntry by navController.currentBackStackEntryAsState()
         val onCounterRoute = currentBackStackEntry?.destination?.route?.substringBefore("?") ==
             ROUTE_COUNTER.substringBefore("?")
@@ -122,7 +130,10 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                 // too so a stale true from a just-left session can't hide
                 // the bar elsewhere in the app.
                 if (!(counterLocked && onCounterRoute)) {
-                    DhikrBottomNav(navController)
+                    DhikrBottomNav(
+                        navController = navController,
+                        onReselect = { base -> scrollTopSignals[base] = signalOf(base) + 1 },
+                    )
                 }
             },
         ) { padding ->
@@ -141,6 +152,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     )
                     HomeScreen(
                         viewModel = viewModel,
+                        scrollToTopSignal = signalOf(ROUTE_HOME),
                         onContinueSession = { navController.navigate("counter") },
                         onOpenTasbih = { id -> navController.navigate("counter?dhikrId=$id") },
                         onOpenLibrary = { navController.navigate(ROUTE_TASBIH_LIBRARY) },
@@ -154,6 +166,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     )
                     TasbihLibraryScreen(
                         viewModel = viewModel,
+                        scrollToTopSignal = signalOf(ROUTE_TASBIH_LIBRARY),
                         onOpenTasbih = { id -> navController.navigate("counter?dhikrId=$id") },
                         onNewTasbih = { navController.navigate("tasbih/editor") },
                         onEditTasbih = { id -> navController.navigate("tasbih/editor?id=$id") },
@@ -198,6 +211,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     )
                     InsightsScreen(
                         viewModel = viewModel,
+                        scrollToTopSignal = signalOf(ROUTE_INSIGHTS),
                         onStartCounting = { navController.navigate("counter") },
                         onSeeAllMonths = { navController.navigate(ROUTE_MONTHLY_HISTORY) },
                     )
@@ -246,7 +260,11 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     val backupViewModel: BackupViewModel = viewModel(
                         factory = BackupViewModel.Factory(backupRepository, appVersion),
                     )
-                    SettingsScreen(viewModel = viewModel, backupViewModel = backupViewModel)
+                    SettingsScreen(
+                        viewModel = viewModel,
+                        backupViewModel = backupViewModel,
+                        scrollToTopSignal = signalOf(ROUTE_SETTINGS),
+                    )
                 }
             }
         }
@@ -311,7 +329,10 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.navExit(
 }
 
 @Composable
-private fun DhikrBottomNav(navController: NavController) {
+private fun DhikrBottomNav(
+    navController: NavController,
+    onReselect: (String) -> Unit,
+) {
     val colors = DhikrTheme.colors
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -364,6 +385,10 @@ private fun DhikrBottomNav(navController: NavController) {
                             popUpTo(navController.graph.findStartDestination().id)
                             launchSingleTop = true
                         }
+                    } else {
+                        // Already on this tab — a repeat tap scrolls its
+                        // screen back to the top.
+                        onReselect(baseRoute)
                     }
                 },
                 icon = { Icon(imageVector = icon, contentDescription = label) },

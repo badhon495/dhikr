@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,9 +51,15 @@ fun InsightsScreen(
     viewModel: InsightsViewModel,
     onStartCounting: () -> Unit,
     onSeeAllMonths: () -> Unit,
+    scrollToTopSignal: Int = 0,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(scrollToTopSignal) {
+        if (scrollToTopSignal > 0) scrollState.animateScrollTo(0)
+    }
 
     if (state.isEmpty) {
         Column(
@@ -105,7 +112,7 @@ fun InsightsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.bg)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(16.dp),
     ) {
         val monthName = remember {

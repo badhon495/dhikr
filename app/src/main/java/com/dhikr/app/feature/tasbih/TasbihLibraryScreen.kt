@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -65,9 +66,15 @@ fun TasbihLibraryScreen(
     onOpenTasbih: (String) -> Unit,
     onNewTasbih: () -> Unit,
     onEditTasbih: (String) -> Unit,
+    scrollToTopSignal: Int = 0,
 ) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(scrollToTopSignal) {
+        if (scrollToTopSignal > 0) listState.animateScrollToItem(0)
+    }
 
     // Long-press action menu (Edit/Delete) state — which Tasbih, if any,
     // currently has its menu open. Built-in Tasbih are included: the user can
@@ -191,6 +198,7 @@ fun TasbihLibraryScreen(
             }
         } else {
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
