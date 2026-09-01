@@ -200,6 +200,15 @@
     <string name="settings_counter_script_arabic">Arabic</string>
     <string name="settings_daily_goal_custom">Custom</string>
     <string name="settings_daily_goal_custom_placeholder">Enter a number</string>
+    <string name="settings_ai">AI features</string>
+    <string name="settings_ai_desc">Add your own Google Gemini API key to generate a short summary of a tasbih\'s virtues and benefits. The key is stored encrypted on this device and is sent only to Google\'s Gemini API when you generate benefits.</string>
+    <string name="settings_ai_key_label">Gemini API key</string>
+    <string name="settings_ai_key_placeholder">Paste your API key</string>
+    <string name="settings_ai_key_set">Key saved</string>
+    <string name="settings_ai_key_hint">Get a key at aistudio.google.com/apikey</string>
+    <string name="settings_ai_key_save">Save</string>
+    <string name="settings_ai_key_change">Change</string>
+    <string name="settings_ai_key_clear">Remove</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_desc">Save everything — your tasbih, routines, history and settings — to a file you can keep or move to another device.</string>
     <string name="settings_backup_export">Export backup</string>

@@ -39,6 +39,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.dhikr.app.R
+import com.dhikr.app.core.ai.BenefitsRepository
+import com.dhikr.app.core.ai.GeminiClient
+import com.dhikr.app.core.ai.SecureKeyStore
 import com.dhikr.app.core.backup.BackupRepository
 import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
@@ -128,6 +131,11 @@ fun DhikrApp(
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
         val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
+        val secureKeyStore = remember { SecureKeyStore(context.applicationContext) }
+        val geminiClient = remember { GeminiClient() }
+        val benefitsRepository = remember {
+            BenefitsRepository.create(secureKeyStore, geminiClient, tasbihRepository)
+        }
         val appVersionName = remember {
             runCatching {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -358,7 +366,12 @@ fun DhikrApp(
                 }
                 composable(ROUTE_SETTINGS) {
                     val viewModel: SettingsViewModel = viewModel(
-                        factory = SettingsViewModel.Factory(preferencesRepository, appVersionName, context.applicationContext),
+                        factory = SettingsViewModel.Factory(
+                            preferencesRepository,
+                            appVersionName,
+                            context.applicationContext,
+                            secureKeyStore,
+                        ),
                     )
                     val backupViewModel: BackupViewModel = viewModel(
                         factory = BackupViewModel.Factory(backupRepository, appVersionName),

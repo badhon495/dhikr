@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dhikr.app.core.ai.SecureKeyStore
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.widget.DhikrWidgets
 import com.dhikr.app.core.datastore.CounterScript
@@ -27,6 +28,7 @@ data class SettingsUiState(
     val dynamicColorSupported: Boolean = supportsDynamicColor(),
     val counterScript: CounterScript = CounterScript.PRONUNCIATION,
     val appVersion: String = "",
+    val hasGeminiKey: Boolean = false,
 ) {
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
     val dailyGoalOptions: List<Int> get() = DAILY_GOAL_OPTIONS
@@ -46,9 +48,12 @@ class SettingsViewModel(
     private val preferencesRepository: AppPreferencesRepository,
     private val appVersion: String,
     private val appContext: Context,
+    private val secureKeyStore: SecureKeyStore,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SettingsUiState(appVersion = appVersion))
+    private val _uiState = MutableStateFlow(
+        SettingsUiState(appVersion = appVersion, hasGeminiKey = secureKeyStore.hasKey),
+    )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
@@ -66,6 +71,7 @@ class SettingsViewModel(
                 dailyGoalTarget = dailyGoal,
                 dynamicColorEnabled = dynamicColor,
                 appVersion = appVersion,
+                hasGeminiKey = secureKeyStore.hasKey,
             )
         }
             .combine(preferencesRepository.counterScript) { state, counterScript ->
@@ -106,13 +112,28 @@ class SettingsViewModel(
         }
     }
 
+    fun saveGeminiKey(raw: String) {
+        viewModelScope.launch {
+            secureKeyStore.setGeminiKey(raw)
+            _uiState.value = _uiState.value.copy(hasGeminiKey = secureKeyStore.hasKey)
+        }
+    }
+
+    fun clearGeminiKey() {
+        viewModelScope.launch {
+            secureKeyStore.setGeminiKey(null)
+            _uiState.value = _uiState.value.copy(hasGeminiKey = false)
+        }
+    }
+
     class Factory(
         private val preferencesRepository: AppPreferencesRepository,
         private val appVersion: String,
         private val appContext: Context,
+        private val secureKeyStore: SecureKeyStore,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            SettingsViewModel(preferencesRepository, appVersion, appContext) as T
+            SettingsViewModel(preferencesRepository, appVersion, appContext, secureKeyStore) as T
     }
 }

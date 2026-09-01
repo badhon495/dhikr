@@ -33,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -180,6 +181,15 @@ fun SettingsScreen(
                 description = stringResource(R.string.settings_reduce_motion_desc),
                 checked = state.reducedMotion,
                 onCheckedChange = viewModel::onReducedMotionChange,
+            )
+        }
+
+        // ---- AI features ----
+        SettingsSection(stringResource(R.string.settings_ai)) {
+            GeminiKeyControls(
+                hasKey = state.hasGeminiKey,
+                onSave = viewModel::saveGeminiKey,
+                onClear = viewModel::clearGeminiKey,
             )
         }
 
@@ -423,6 +433,118 @@ private fun AboutLine(text: String) {
         color = colors.dim,
         modifier = Modifier.padding(vertical = 3.dp),
     )
+}
+
+@Composable
+private fun GeminiKeyControls(
+    hasKey: Boolean,
+    onSave: (String) -> Unit,
+    onClear: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    // editing==true shows the text field; when a key is already saved we start
+    // collapsed behind a "Change" button so the field isn't pre-filled with a
+    // secret.
+    var editing by rememberSaveable { mutableStateOf(!hasKey) }
+    var draft by rememberSaveable { mutableStateOf("") }
+
+    Text(
+        stringResource(R.string.settings_ai_desc),
+        fontSize = 12.sp,
+        color = colors.faint,
+        modifier = Modifier.padding(bottom = 12.dp),
+    )
+
+    if (hasKey && !editing) {
+        Text(
+            stringResource(R.string.settings_ai_key_set),
+            fontSize = 13.sp,
+            color = colors.dim,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 10.dp),
+        ) {
+            KeyActionPill(stringResource(R.string.settings_ai_key_change), colors.surface, colors.text) {
+                draft = ""
+                editing = true
+            }
+            KeyActionPill(stringResource(R.string.settings_ai_key_clear), colors.surface, colors.text) {
+                onClear()
+                editing = true
+            }
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(ListRowShape)
+                .background(colors.card)
+                .border(1.dp, colors.line, ListRowShape)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (draft.isEmpty()) {
+                Text(
+                    stringResource(R.string.settings_ai_key_placeholder),
+                    fontSize = 14.sp,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                singleLine = true,
+                textStyle = TextStyle(fontSize = 14.sp, color = colors.text),
+                cursorBrush = SolidColor(colors.text),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    autoCorrectEnabled = false,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Text(
+            stringResource(R.string.settings_ai_key_hint),
+            fontSize = 11.5.sp,
+            color = colors.faint,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        KeyActionPill(
+            label = stringResource(R.string.settings_ai_key_save),
+            bg = if (draft.isNotBlank()) colors.sage else colors.surface,
+            fg = if (draft.isNotBlank()) colors.onSage else colors.faint,
+            modifier = Modifier.padding(top = 10.dp),
+        ) {
+            if (draft.isNotBlank()) {
+                onSave(draft)
+                draft = ""
+                editing = false
+            }
+        }
+    }
+}
+
+@Composable
+private fun KeyActionPill(
+    label: String,
+    bg: Color,
+    fg: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .clip(PillShape)
+            .background(bg)
+            .clickable(role = Role.Button, onClick = onClick)
+            .minTapTarget()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = fg)
+    }
 }
 
 /**
