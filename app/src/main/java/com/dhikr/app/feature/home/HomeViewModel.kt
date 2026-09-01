@@ -32,6 +32,8 @@ data class HomeUiState(
     val continueSession: ContinueSessionInfo? = null,
     val favorites: List<TasbihEntity> = emptyList(),
     val routines: List<RoutineWithSteps> = emptyList(),
+    // tasbihId -> display name, for the routine cards' step preview.
+    val tasbihNamesById: Map<String, String> = emptyMap(),
     // Routines completed today — their Home card shows the full sage tint.
     val completedRoutineIds: Set<String> = emptySet(),
     // routineId -> 0f..1f of today's in-progress position; drives the card's
@@ -79,7 +81,10 @@ class HomeViewModel(
             .combine(tasbihRepository.observeSessionProgressToday()) { (inputs, dayProgress), tasbihProgress ->
                 Triple(inputs, dayProgress, tasbihProgress)
             }
-            .mapLatest { (inputs, dayProgress, tasbihProgress) ->
+            .combine(tasbihRepository.observeAll()) { (inputs, dayProgress, tasbihProgress), allTasbihs ->
+                HomeCombined(inputs, dayProgress, tasbihProgress, allTasbihs.associate { it.id to it.name })
+            }
+            .mapLatest { (inputs, dayProgress, tasbihProgress, tasbihNamesById) ->
                 val continueInfo = inputs.session?.let { s ->
                     tasbihRepository.getById(s.activeDhikrId)?.let { tasbih ->
                         ContinueSessionInfo(tasbihName = tasbih.name, count = s.count, target = tasbih.lapTarget)
@@ -91,13 +96,13 @@ class HomeViewModel(
                     todayTotal = inputs.todayTotal,
                     continueSession = continueInfo,
                     favorites = inputs.favorites,
+                    tasbihNamesById = tasbihNamesById,
                     // Favorited routines if the user has marked any; otherwise
-                    // fall back to the first few so the section is never empty.
-                    // Capped so the home Row layout (weight-split cards) stays legible.
+                    // fall back to all of them so the section is never empty.
+                    // Rendered as a full-width card list, so no cap.
                     routines = inputs.routines
                         .filter { it.routine.isFavorite }
-                        .ifEmpty { inputs.routines }
-                        .take(4),
+                        .ifEmpty { inputs.routines },
                     completedRoutineIds = dayProgress.completedRoutineIds,
                     routineProgress = dayProgress.fractionByRoutineId,
                     tasbihProgress = tasbihProgress,
@@ -106,6 +111,13 @@ class HomeViewModel(
             .onEach { _uiState.value = it }
             .launchIn(viewModelScope)
     }
+
+    private data class HomeCombined(
+        val inputs: HomeInputs,
+        val dayProgress: com.dhikr.app.core.database.RoutineDayProgress,
+        val tasbihProgress: Map<String, Float>,
+        val tasbihNamesById: Map<String, String>,
+    )
 
     private data class HomeInputs(
         val dailyGoal: Int,

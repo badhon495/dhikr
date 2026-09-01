@@ -9,12 +9,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.core.database.dao.RoutineWithSteps
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.headingSemantics
@@ -152,63 +151,27 @@ fun HomeScreen(
             }
         }
 
-        // Routines — favorited ones if the user marked any, else the first few.
+        // Routines — favorited ones if the user marked any, else all of them.
+        // Full-width cards, one per row: matches the Favourites list width but
+        // reads heavier — a step-count chip leads each card and the first step
+        // names preview the plan, so the two sections stay visually distinct.
         Column {
             SectionHeader(
                 title = stringResource(R.string.home_routines_title),
                 actionLabel = stringResource(R.string.home_routines_manage),
                 onAction = onOpenRoutines,
             )
-            Row(
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .height(IntrinsicSize.Min),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                state.routines.forEach { routineWithSteps ->
-                    val totalCount = routineWithSteps.steps.sumOf { it.targetCount }
-                    val done = routineWithSteps.routine.id in state.completedRoutineIds
-                    val fraction = if (done) 0f
-                        else (state.routineProgress[routineWithSteps.routine.id] ?: 0f).coerceIn(0f, 1f)
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(if (done) colors.sageSoft else colors.surface)
-                            .border(1.dp, colors.line, RoundedCornerShape(18.dp))
-                            .clickable { onStartRoutine(routineWithSteps.routine.id) },
-                    ) {
-                        // Green fill growing left-to-right with today's progress
-                        // through the routine; a completed routine uses the solid
-                        // tint above instead.
-                        if (fraction > 0f) {
-                            Box(modifier = Modifier.matchParentSize()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(fraction)
-                                        .background(colors.sageSoft),
-                                )
-                            }
-                        }
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                routineWithSteps.routine.name,
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = colors.text,
-                                maxLines = 2,
-                            )
-                            Text(
-                                stringResource(R.string.routines_step_count, routineWithSteps.steps.size, totalCount),
-                                fontSize = 10.5.sp,
-                                color = colors.dim,
-                                modifier = Modifier.padding(top = 6.dp),
-                            )
-                        }
-                    }
-                }
+            state.routines.forEach { routineWithSteps ->
+                val done = routineWithSteps.routine.id in state.completedRoutineIds
+                val fraction = if (done) 0f
+                    else (state.routineProgress[routineWithSteps.routine.id] ?: 0f).coerceIn(0f, 1f)
+                RoutineHomeCard(
+                    routine = routineWithSteps,
+                    tasbihNamesById = state.tasbihNamesById,
+                    completedToday = done,
+                    fraction = fraction,
+                    onStart = { onStartRoutine(routineWithSteps.routine.id) },
+                )
             }
         }
 
@@ -254,6 +217,88 @@ fun HomeScreen(
                         Text(tasbih.arabic, fontSize = 14.sp, color = colors.dim)
                     }
                 }
+            }
+        }
+    }
+}
+
+/**
+ * A single routine on Home: a full-width card led by a step-count chip, with
+ * the first step names previewing the plan and the routine's total on the
+ * right. Tap starts the routine. Matches the Favourites list width but is
+ * deliberately busier so the two sections don't blur together.
+ */
+@Composable
+private fun RoutineHomeCard(
+    routine: RoutineWithSteps,
+    tasbihNamesById: Map<String, String>,
+    completedToday: Boolean,
+    fraction: Float,
+    onStart: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    val steps = routine.steps.sortedBy { it.stepOrder }
+    val totalCount = steps.sumOf { it.targetCount }
+    val previewNames = steps.take(3).joinToString(" · ") { tasbihNamesById[it.tasbihId] ?: it.tasbihId }
+    val moreCount = steps.size - 3
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(if (completedToday) colors.sageSoft else colors.surface)
+            .border(1.dp, colors.line, RoundedCornerShape(18.dp))
+            .clickable(role = Role.Button) { onStart() },
+    ) {
+        // Green fill growing left-to-right with today's progress through the
+        // routine; a completed routine uses the solid tint above instead.
+        if (fraction > 0f) {
+            Box(modifier = Modifier.matchParentSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(fraction)
+                        .background(colors.sageSoft),
+                )
+            }
+        }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    stringResource(R.string.home_routine_step_chip, steps.size, totalCount),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp,
+                    color = colors.onSage,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(colors.sage)
+                        .padding(horizontal = 9.dp, vertical = 3.dp),
+                )
+                Text(
+                    routine.routine.name,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.text,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 10.dp),
+                )
+            }
+            if (previewNames.isNotEmpty()) {
+                Text(
+                    if (moreCount > 0) {
+                        stringResource(R.string.home_routine_step_preview_more, previewNames, moreCount)
+                    } else {
+                        previewNames
+                    },
+                    fontSize = 12.sp,
+                    color = colors.dim,
+                    maxLines = 1,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
             }
         }
     }

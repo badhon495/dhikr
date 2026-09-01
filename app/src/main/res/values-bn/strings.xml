@@ -55,6 +55,8 @@
     <string name="home_favorites_all">সব</string>
     <string name="home_routines_title">রুটিন</string>
     <string name="home_routines_manage">পরিচালনা</string>
+    <string name="home_routine_step_chip">%1$d ধাপ · %2$d</string>
+    <string name="home_routine_step_preview_more">%1$s  +%2$d আরও</string>
 
     <!-- Tasbih library screen -->
     <string name="tasbih_library_title">তাসবিহ</string>
