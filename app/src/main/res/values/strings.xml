@@ -190,6 +190,25 @@
     <string name="settings_about_no_upload">Nothing is uploaded. Your counts stay on this device.</string>
     <string name="settings_version">Version %1$s</string>
 
+    <!-- Reminders (Phase 5A) -->
+    <string name="reminder_section_title">Reminder</string>
+    <string name="reminder_toggle_label">Daily reminder</string>
+    <string name="reminder_toggle_desc">A local nudge to start this routine</string>
+    <string name="reminder_time_label">Time</string>
+    <string name="reminder_days_label">Repeat</string>
+    <string name="reminder_notification_title">Time for %1$s</string>
+    <string name="reminder_notification_body">Tap to start counting.</string>
+    <string name="reminder_snooze_action">Snooze 15 min</string>
+    <string name="reminder_permission_hint">Notifications are turned off for Dhikr. Turn them on in system settings to get reminders.</string>
+    <string name="reminder_permission_rationale">Dhikr needs notification access to remind you at the time you pick.</string>
+    <string name="reminder_day_sun">S</string>
+    <string name="reminder_day_mon">M</string>
+    <string name="reminder_day_tue">T</string>
+    <string name="reminder_day_wed">W</string>
+    <string name="reminder_day_thu">T</string>
+    <string name="reminder_day_fri">F</string>
+    <string name="reminder_day_sat">S</string>
+
     <!-- Bottom navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_tasbih">Tasbih</string>
