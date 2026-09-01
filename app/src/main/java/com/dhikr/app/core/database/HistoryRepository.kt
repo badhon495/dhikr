@@ -87,21 +87,52 @@ class HistoryRepository(
         return (1..daysInMonth).associateWith { day -> byDay[day] ?: 0 }
     }
 
+    /**
+     * Three flat queries instead of the old per-Tasbih loop (which re-ran the
+     * whole-table `dailyTotalsSince` GROUP BY, plus `getById` and
+     * `totalForTasbih`, once per Tasbih): one lifetime-totals GROUP BY, one
+     * name lookup, one last-7-days GROUP BY, all folded in memory. Groups are
+     * ordered by lifetime total, descending.
+     */
     suspend fun historyByTasbih(): List<TasbihHistoryGroup> {
         val since = startOfTodayMillis() - 6 * dayMillis
-        val tasbihIds = sessionDao.distinctTasbihIds()
-        val offsetMillis = localOffsetMillis()
-        return tasbihIds.mapNotNull { id ->
-            val tasbih = tasbihRepository.getById(id) ?: return@mapNotNull null
-            // Fixed: per-Tasbih lifetime total must be filtered by tasbihId — the
-            // draft's sessionDao.totalSince(0L) would sum ALL Tasbih's sessions,
-            // making every group show the same wrong grand-total.
-            val lifetimeTotal = sessionDao.totalForTasbih(id)
-            val daily = sessionDao.dailyTotalsSince(since, dayMillis, offsetMillis)
-                .filter { it.tasbihId == id }
-                .map { it.dayStartMillis to it.total }
-            TasbihHistoryGroup(tasbihId = id, tasbihName = tasbih.name, lifetimeTotal = lifetimeTotal, dailyTotals = daily)
+        val lifetimeTotals = sessionDao.lifetimeTotalsByTasbih()
+        if (lifetimeTotals.isEmpty()) return emptyList()
+        val names = tasbihRepository.getAll().associate { it.id to it.name }
+        val dailyByTasbih = sessionDao.dailyTotalsSince(since, dayMillis, localOffsetMillis())
+            .groupBy { it.tasbihId }
+        return lifetimeTotals
+            .sortedByDescending { it.total }
+            .mapNotNull { row ->
+                val name = names[row.tasbihId] ?: return@mapNotNull null
+                val daily = dailyByTasbih[row.tasbihId].orEmpty().map { it.dayStartMillis to it.total }
+                TasbihHistoryGroup(row.tasbihId, name, row.total, daily)
+            }
+    }
+
+    /**
+     * Summary of the previous calendar month only. Reads just that month's
+     * day-buckets instead of bucketing all of history via `monthlySummaries()`.
+     */
+    suspend fun previousMonthSummary(): MonthSummary? {
+        val prev = Calendar.getInstance().apply {
+            add(Calendar.MONTH, -1)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
         }
+        val prevStart = prev.timeInMillis
+        val thisMonthStart = startOfMonthMillis()
+        val buckets = sessionDao.allTasbihDailyTotalsSince(prevStart, dayMillis, localOffsetMillis())
+            .filter { it.dayStartMillis < thisMonthStart }
+        if (buckets.isEmpty()) return null
+        return MonthSummary(
+            year = prev.get(Calendar.YEAR),
+            month = prev.get(Calendar.MONTH),
+            monthStartMillis = prevStart,
+            total = buckets.sumOf { it.total },
+            consistentDays = buckets.count { it.total > 0 },
+            daysInMonth = prev.getActualMaximum(Calendar.DAY_OF_MONTH),
+        )
     }
 
     /**

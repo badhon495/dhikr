@@ -24,6 +24,8 @@ class TasbihRepository(
 
     suspend fun getById(id: String): TasbihEntity? = tasbihDao.getById(id)
 
+    suspend fun getAll(): List<TasbihEntity> = tasbihDao.getAll()
+
     suspend fun insert(tasbih: TasbihEntity) = tasbihDao.insert(tasbih)
 
     suspend fun update(tasbih: TasbihEntity) = tasbihDao.update(tasbih)

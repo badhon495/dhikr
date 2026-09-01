@@ -7,13 +7,15 @@ import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.MonthSummary
 import com.dhikr.app.core.database.TasbihHistoryGroup
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onEach
 import java.util.Calendar
 
 data class InsightsUiState(
@@ -32,12 +34,14 @@ data class InsightsUiState(
  * The 2x2 totals tiles are driven by Room-backed Flows (finding #6) so they
  * refresh the moment a session is logged elsewhere (e.g. Home → Counter →
  * count → back to Insights via bottom nav, which keeps this ViewModel alive
- * in the back stack rather than recreating it). The 7-day bars, consistency
- * calendar and per-Tasbih history remain one-shot suspend reads recomputed
- * every time the totals Flow re-emits — `combine`'s `today` total already
- * changes on every insert, so using it as a re-fetch trigger via
- * `flatMapLatest` keeps everything in this screen consistent without needing
- * a second, independent invalidation source for the more complex queries.
+ * in the back stack rather than recreating it).
+ *
+ * Load order matters for perceived speed: when the totals Flow emits we push
+ * the tiles into `_uiState` immediately, then fan the four heavier reads
+ * (7-day bars, consistency calendar, per-Tasbih history, previous month) out
+ * concurrently with `async` and patch them in as one update. So the screen
+ * paints the tiles right away instead of waiting on the slowest query, and
+ * the heavy reads overlap instead of running back to back.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class InsightsViewModel(private val repository: HistoryRepository) : ViewModel() {
@@ -52,28 +56,33 @@ class InsightsViewModel(private val repository: HistoryRepository) : ViewModel()
             repository.monthTotalFlow(),
             repository.allTimeTotalFlow(),
         ) { today, week, month, allTime -> InsightsTotals(today, week, month, allTime) }
+            .distinctUntilChanged()
             .mapLatest { totals ->
-                val now = Calendar.getInstance()
-                val last7Days = repository.last7DaysTotals()
-                val calendar = repository.calendarIntensity(now.get(Calendar.YEAR), now.get(Calendar.MONTH))
-                val history = repository.historyByTasbih()
-                val lastMonth = Calendar.getInstance().apply { add(Calendar.MONTH, -1) }
-                val previousMonth = repository.monthlySummaries().firstOrNull {
-                    it.year == lastMonth.get(Calendar.YEAR) && it.month == lastMonth.get(Calendar.MONTH)
-                }
-                InsightsUiState(
+                _uiState.value = _uiState.value.copy(
                     today = totals.today,
                     week = totals.week,
                     month = totals.month,
                     allTime = totals.allTime,
-                    last7Days = last7Days,
-                    calendarIntensity = calendar,
-                    historyByTasbih = history,
-                    previousMonth = previousMonth,
                     isEmpty = totals.allTime == 0,
                 )
+                if (totals.allTime == 0) return@mapLatest
+
+                coroutineScope {
+                    val now = Calendar.getInstance()
+                    val last7Days = async { repository.last7DaysTotals() }
+                    val calendar = async {
+                        repository.calendarIntensity(now.get(Calendar.YEAR), now.get(Calendar.MONTH))
+                    }
+                    val history = async { repository.historyByTasbih() }
+                    val previousMonth = async { repository.previousMonthSummary() }
+                    _uiState.value = _uiState.value.copy(
+                        last7Days = last7Days.await(),
+                        calendarIntensity = calendar.await(),
+                        historyByTasbih = history.await(),
+                        previousMonth = previousMonth.await(),
+                    )
+                }
             }
-            .onEach { _uiState.value = it }
             .launchIn(viewModelScope)
     }
 

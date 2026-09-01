@@ -44,6 +44,9 @@ interface TasbihDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(tasbih: List<TasbihEntity>)
 
+    @Query("SELECT * FROM tasbih")
+    suspend fun getAll(): List<TasbihEntity>
+
     @Query("SELECT * FROM tasbih WHERE isBuiltIn = 0")
     suspend fun getAllCustom(): List<TasbihEntity>
 

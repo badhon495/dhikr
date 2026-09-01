@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 
 data class TasbihDailyTotal(val tasbihId: String, val dayStartMillis: Long, val total: Int)
 
+data class TasbihTotal(val tasbihId: String, val total: Int)
+
 @Dao
 interface SessionDao {
 
@@ -29,6 +31,11 @@ interface SessionDao {
     // would be wrong here (see HistoryRepository for details).
     @Query("SELECT COALESCE(SUM(count), 0) FROM session WHERE tasbihId = :tasbihId")
     suspend fun totalForTasbih(tasbihId: String): Int
+
+    // One row per Tasbih with its lifetime total — replaces calling
+    // totalForTasbih() in a per-Tasbih loop (HistoryRepository.historyByTasbih).
+    @Query("SELECT tasbihId, COALESCE(SUM(count), 0) AS total FROM session GROUP BY tasbihId")
+    suspend fun lifetimeTotalsByTasbih(): List<TasbihTotal>
 
     // Buckets are computed in LOCAL time, not UTC: `offsetMillis` is the
     // caller's current local UTC offset (see HistoryRepository, which
