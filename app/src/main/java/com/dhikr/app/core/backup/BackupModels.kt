@@ -85,12 +85,15 @@ data class BackupRoutine(
     val name: String,
     val createdAt: Long,
     val updatedAt: Long,
+    // Default keeps older backup files readable.
+    val isFavorite: Boolean = false,
     val steps: List<BackupRoutineStep> = emptyList(),
 ) {
     fun toEntity() = RoutineEntity(
         id = id,
         name = name,
         isPreset = false,
+        isFavorite = isFavorite,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )

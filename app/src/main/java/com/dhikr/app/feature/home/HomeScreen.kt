@@ -170,7 +170,7 @@ fun HomeScreen(
             }
         }
 
-        // Routines
+        // Routines — favorited ones if the user marked any, else the first few.
         Column {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,

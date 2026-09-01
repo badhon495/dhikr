@@ -53,6 +53,7 @@ class BackupRepository(
                     name = rws.routine.name,
                     createdAt = rws.routine.createdAt,
                     updatedAt = rws.routine.updatedAt,
+                    isFavorite = rws.routine.isFavorite,
                     steps = rws.steps
                         .sortedBy { it.stepOrder }
                         .map(BackupRoutineStep::from),

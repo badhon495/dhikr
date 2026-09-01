@@ -28,7 +28,9 @@ import com.dhikr.app.core.database.entity.TasbihEntity
     // v3: added routine_completion table (per-day "routine done" markers).
     // v4: renamed TasbihEntity.transliteration -> pronunciation. No hand
     // migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 4,
+    // v5: added RoutineEntity.isFavorite (+ index). No hand migration —
+    // fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 5,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -77,7 +77,13 @@ class HomeViewModel(
                     todayTotal = inputs.todayTotal,
                     continueSession = continueInfo,
                     favorites = inputs.favorites,
-                    routines = inputs.routines.take(3),
+                    // Favorited routines if the user has marked any; otherwise
+                    // fall back to the first few so the section is never empty.
+                    // Capped so the home Row layout (weight-split cards) stays legible.
+                    routines = inputs.routines
+                        .filter { it.routine.isFavorite }
+                        .ifEmpty { inputs.routines }
+                        .take(4),
                 )
             }
             .onEach { _uiState.value = it }

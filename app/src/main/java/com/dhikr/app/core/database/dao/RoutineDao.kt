@@ -23,7 +23,7 @@ data class RoutineWithSteps(
 interface RoutineDao {
 
     @Transaction
-    @Query("SELECT * FROM routine ORDER BY isPreset DESC, name ASC")
+    @Query("SELECT * FROM routine ORDER BY isFavorite DESC, isPreset DESC, name ASC")
     fun observeAllWithSteps(): Flow<List<RoutineWithSteps>>
 
     @Transaction
@@ -58,6 +58,9 @@ interface RoutineDao {
 
     @Update
     suspend fun updateRoutine(routine: RoutineEntity)
+
+    @Query("UPDATE routine SET isFavorite = :isFavorite WHERE id = :id")
+    suspend fun setFavorite(id: String, isFavorite: Boolean)
 
     @Delete
     suspend fun deleteRoutine(routine: RoutineEntity)

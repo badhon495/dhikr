@@ -67,6 +67,10 @@ class RoutinesViewModel(
         viewModelScope.launch { repository.deleteRoutine(routine) }
     }
 
+    fun onToggleFavorite(routineId: String, currentlyFavorite: Boolean) {
+        viewModelScope.launch { repository.toggleFavorite(routineId, currentlyFavorite) }
+    }
+
     fun onReorderSteps(routineId: String, steps: List<Pair<String, Int>>) {
         viewModelScope.launch { repository.updateSteps(routineId, steps) }
     }

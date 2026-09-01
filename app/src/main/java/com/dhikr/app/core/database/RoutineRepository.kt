@@ -53,6 +53,10 @@ class RoutineRepository(
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.deleteRoutine(routine)
 
+    suspend fun toggleFavorite(id: String, currentlyFavorite: Boolean) {
+        routineDao.setFavorite(id, !currentlyFavorite)
+    }
+
     /** Records that [routineId] was completed today (local time). Idempotent per day. */
     suspend fun markRoutineComplete(routineId: String) {
         completionDao.markComplete(RoutineCompletionEntity(routineId, startOfTodayMillis()))

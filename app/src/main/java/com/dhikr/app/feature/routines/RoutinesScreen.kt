@@ -17,10 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -40,6 +43,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -180,6 +186,12 @@ fun RoutinesScreen(
                         completedToday = routineWithSteps.routine.id in state.completedTodayIds,
                         onStart = { onStartRoutine(routineWithSteps.routine.id) },
                         onLongPress = { actionMenuTarget = routineWithSteps },
+                        onToggleFavorite = {
+                            viewModel.onToggleFavorite(
+                                routineWithSteps.routine.id,
+                                routineWithSteps.routine.isFavorite,
+                            )
+                        },
                     )
                 }
                 item { Box(modifier = Modifier.height(8.dp)) }
@@ -297,10 +309,17 @@ private fun RoutineCard(
     completedToday: Boolean,
     onStart: () -> Unit,
     onLongPress: () -> Unit,
+    onToggleFavorite: () -> Unit,
 ) {
     val colors = DhikrTheme.colors
     val steps = routineWithSteps.steps.sortedBy { it.stepOrder }
     val totalCount = steps.sumOf { it.targetCount }
+    val isFavorite = routineWithSteps.routine.isFavorite
+    val favoriteDescription = stringResource(R.string.routines_favorite_content_description)
+    val favoriteState = stringResource(
+        if (isFavorite) R.string.routines_favorite_state_on
+        else R.string.routines_favorite_state_off,
+    )
 
     Column(
         modifier = Modifier
@@ -315,13 +334,37 @@ private fun RoutineCard(
             )
             .padding(16.dp),
     ) {
-        Column {
-            Text(routineWithSteps.routine.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.text)
-            Text(
-                stringResource(R.string.routines_step_count, steps.size, totalCount),
-                fontSize = 12.5.sp,
-                color = colors.dim,
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(routineWithSteps.routine.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.text)
+                Text(
+                    stringResource(R.string.routines_step_count, steps.size, totalCount),
+                    fontSize = 12.5.sp,
+                    color = colors.dim,
+                )
+            }
+            // Nested clickable: a tap consumed here toggles the favorite and does
+            // not propagate to the card's combinedClickable (which starts the
+            // routine), matching TasbihRow's heart.
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
+                    .minTapTarget()
+                    .semantics {
+                        contentDescription = favoriteDescription
+                        stateDescription = favoriteState
+                    }
+                    .padding(6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = null,
+                    tint = if (isFavorite) colors.terra else colors.faint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         steps.forEachIndexed { index, step ->
             Row(
