@@ -148,7 +148,13 @@ fun CounterScreen(
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
-                viewModel.flushSession()
+                // Refresh placed widgets only after the session persist actually
+                // completes, so the provider's DataStore read sees the latest
+                // count instead of racing the async write.
+                val appContext = view.context.applicationContext
+                viewModel.flushSession {
+                    com.dhikr.app.core.widget.DhikrWidgets.refreshAll(appContext)
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

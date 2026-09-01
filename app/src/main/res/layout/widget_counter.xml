@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_counter_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_counter_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/widget_text_dim"
+        android:textSize="13sp"
+        tools:ignore="HardcodedText"
+        android:text="SubhanAllah" />
+
+    <TextView
+        android:id="@+id/widget_counter_value"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:maxLines="1"
+        android:textColor="@color/widget_text"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText"
+        android:text="0 / 33" />
+
+    <ProgressBar
+        android:id="@+id/widget_counter_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:max="33"
+        android:progress="0"
+        android:progressDrawable="@drawable/widget_progress" />
+
+    <Button
+        android:id="@+id/widget_counter_plus"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/widget_background"
+        android:backgroundTint="@color/widget_accent"
+        android:textColor="@color/widget_on_accent"
+        android:textSize="22sp"
+        android:contentDescription="@string/widget_increment_content_description"
+        tools:ignore="HardcodedText"
+        android:text="+" />
+
+</LinearLayout>

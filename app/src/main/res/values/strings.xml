@@ -215,4 +215,17 @@
     <string name="nav_count">Count</string>
     <string name="nav_insights">Insights</string>
     <string name="nav_settings">Settings</string>
+
+    <!-- Home-screen widgets (Phase 5B) -->
+    <string name="widget_counter_label">Dhikr counter</string>
+    <string name="widget_counter_description">Count your current session from the home screen.</string>
+    <string name="widget_insights_label">Dhikr insights</string>
+    <string name="widget_insights_description">Today, this week and all-time counts.</string>
+    <string name="widget_increment_content_description">Add one count</string>
+    <string name="widget_no_session_title">Dhikr</string>
+    <string name="widget_no_session_body">Tap to start counting</string>
+    <string name="widget_routine_hint">Open to continue</string>
+    <string name="widget_insights_today">Today</string>
+    <string name="widget_insights_week">This week</string>
+    <string name="widget_insights_all_time">All time</string>
 </resources>

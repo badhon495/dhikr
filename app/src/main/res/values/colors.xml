@@ -6,4 +6,13 @@
          instead of the platform's default white, which otherwise bleeds
          through as a white status bar before Compose draws its first frame. -->
     <color name="window_background">#F5EAD8</color>
+    <!-- Home-screen widgets (Phase 5B). Mirror DhikrColorTokens (Color.kt);
+         values-night/colors.xml carries the dark equivalents. -->
+    <color name="widget_surface">#F9F4ED</color>
+    <color name="widget_text">#201E1D</color>
+    <color name="widget_text_dim">#645C50</color>
+    <color name="widget_progress_track">#1A201E1D</color>
+    <color name="widget_progress_fill">#7A8A5E</color>
+    <color name="widget_accent">#7A8A5E</color>
+    <color name="widget_on_accent">#F9F4ED</color>
 </resources>

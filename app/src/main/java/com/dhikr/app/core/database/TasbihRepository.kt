@@ -6,9 +6,9 @@ import com.dhikr.app.core.database.dao.TasbihDao
 import com.dhikr.app.core.database.dao.TasbihProgressDao
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.database.entity.TasbihProgressEntity
+import com.dhikr.app.core.utilities.DayBounds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import java.util.Calendar
 import java.util.UUID
 
 sealed interface DeleteResult {
@@ -58,7 +58,7 @@ class TasbihRepository(
      * Tasbih's previous row and drops any rows from earlier days in the same call.
      */
     suspend fun saveSessionProgress(tasbihId: String, count: Int, lap: Int, loggedInSession: Int) {
-        val today = startOfTodayMillis()
+        val today = DayBounds.startOfTodayMillis()
         progressDao.deleteStale(today)
         progressDao.upsert(
             TasbihProgressEntity(
@@ -74,7 +74,7 @@ class TasbihRepository(
 
     /** Today's saved position for [tasbihId], or null if none (or only a stale one). */
     suspend fun getSessionProgress(tasbihId: String): TasbihProgressEntity? =
-        progressDao.getForTasbih(tasbihId, startOfTodayMillis())
+        progressDao.getForTasbih(tasbihId, DayBounds.startOfTodayMillis())
 
     /**
      * tasbihId -> fraction 0f..1f of today's total count for that Tasbih toward
@@ -86,7 +86,7 @@ class TasbihRepository(
      */
     fun observeSessionProgressToday(): Flow<Map<String, Float>> = combine(
         tasbihDao.observeAll(),
-        sessionDao.totalsByTasbihSince(startOfTodayMillis()),
+        sessionDao.totalsByTasbihSince(DayBounds.startOfTodayMillis()),
     ) { tasbihs, totals ->
         val totalById = totals.associate { it.tasbihId to it.total }
         tasbihs.mapNotNull { tasbih ->
@@ -99,11 +99,4 @@ class TasbihRepository(
     }
 
     fun newId(): String = UUID.randomUUID().toString()
-
-    private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 }

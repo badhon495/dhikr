@@ -25,9 +25,14 @@ class MainActivity : ComponentActivity() {
     // by DhikrApp, which navigates to that routine's counter.
     private var pendingRoutineId by mutableStateOf<String?>(null)
 
+    // Set from the launch Intent (widget body tap) and consumed once by
+    // DhikrApp, which navigates to the counter or insights tab.
+    private var pendingOpen by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingRoutineId = intent?.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
+        pendingOpen = intent?.getStringExtra(EXTRA_OPEN)
         setContent {
             val context = LocalContext.current
             val preferencesRepository = remember {
@@ -57,6 +62,8 @@ class MainActivity : ComponentActivity() {
                 dynamicColor = dynamicColor,
                 pendingRoutineId = pendingRoutineId,
                 onPendingRoutineConsumed = { pendingRoutineId = null },
+                pendingOpen = pendingOpen,
+                onPendingOpenConsumed = { pendingOpen = null },
             )
         }
     }
@@ -65,5 +72,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingRoutineId = intent.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
+        pendingOpen = intent.getStringExtra(EXTRA_OPEN)
+    }
+
+    companion object {
+        const val EXTRA_OPEN = "com.dhikr.app.extra.OPEN"
+        const val OPEN_COUNTER = "counter"
+        const val OPEN_INSIGHTS = "insights"
     }
 }

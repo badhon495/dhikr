@@ -2,4 +2,12 @@
 <resources>
     <!-- Mirrors DhikrColorTokens.bg (Color.kt) for dark theme. -->
     <color name="window_background">#1C1A17</color>
+    <!-- Home-screen widgets (Phase 5B) — dark. Mirror DarkDhikrColors (Color.kt). -->
+    <color name="widget_surface">#332E26</color>
+    <color name="widget_text">#F6EFE2</color>
+    <color name="widget_text_dim">#C0B6A5</color>
+    <color name="widget_progress_track">#1AF6EFE2</color>
+    <color name="widget_progress_fill">#AEBF92</color>
+    <color name="widget_accent">#AEBF92</color>
+    <color name="widget_on_accent">#272E1B</color>
 </resources>
