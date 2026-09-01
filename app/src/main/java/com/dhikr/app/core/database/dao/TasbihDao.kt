@@ -50,6 +50,10 @@ interface TasbihDao {
     @Query("SELECT * FROM tasbih WHERE isBuiltIn = 0")
     suspend fun getAllCustom(): List<TasbihEntity>
 
+    /** Routine sharing: pick out the tasbih a shared routine's steps reference. */
+    @Query("SELECT * FROM tasbih WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<String>): List<TasbihEntity>
+
     @Query("SELECT id FROM tasbih WHERE isBuiltIn = 1 AND isFavorite = 1")
     suspend fun getBuiltInFavoriteIds(): List<String>
 

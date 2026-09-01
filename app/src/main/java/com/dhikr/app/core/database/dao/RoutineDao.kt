@@ -41,6 +41,11 @@ interface RoutineDao {
     @Query("SELECT * FROM routine WHERE isPreset = 0")
     suspend fun getAllCustomWithSteps(): List<RoutineWithSteps>
 
+    /** Routine sharing: the checklist-selected routines to bundle. */
+    @Transaction
+    @Query("SELECT * FROM routine WHERE id IN (:ids)")
+    suspend fun getManyWithSteps(ids: List<String>): List<RoutineWithSteps>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRoutines(routines: List<RoutineEntity>)
 
