@@ -26,7 +26,9 @@ import com.dhikr.app.core.database.entity.TasbihEntity
     // hits fallbackToDestructiveMigration (below) and is rebuilt+reseeded
     // instead of crashing the app on launch with an identity-hash mismatch.
     // v3: added routine_completion table (per-day "routine done" markers).
-    version = 3,
+    // v4: renamed TasbihEntity.transliteration -> pronunciation. No hand
+    // migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 4,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

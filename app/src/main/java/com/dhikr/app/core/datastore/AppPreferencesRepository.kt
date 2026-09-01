@@ -22,6 +22,10 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
  */
 enum class HapticMode { OFF, EVERY_TAP, LAP_ONLY }
 
+/** Which script the counter screen shows for a dhikr. The chosen one also
+ *  becomes the mandatory field in the tasbih editor. */
+enum class CounterScript { PRONUNCIATION, ARABIC }
+
 class AppPreferencesRepository(private val context: Context) {
     private val dailyGoalKey = intPreferencesKey("daily_goal_target")
     private val themeModeKey = stringPreferencesKey("theme_mode")
@@ -29,6 +33,7 @@ class AppPreferencesRepository(private val context: Context) {
     private val hapticModeKey = stringPreferencesKey("haptic_mode")
     private val reducedMotionKey = booleanPreferencesKey("reduced_motion")
     private val dynamicColorKey = booleanPreferencesKey("dynamic_color")
+    private val counterScriptKey = stringPreferencesKey("counter_script")
 
     val dailyGoalTarget = context.preferencesDataStore.data.map { it[dailyGoalKey] ?: 100 }
 
@@ -84,6 +89,18 @@ class AppPreferencesRepository(private val context: Context) {
         context.preferencesDataStore.edit { it[dynamicColorKey] = value }
     }
 
+    /** Script shown on the counter. Absent/unknown falls back to PRONUNCIATION. */
+    val counterScript = context.preferencesDataStore.data.map { prefs ->
+        when (prefs[counterScriptKey]) {
+            CounterScript.ARABIC.name -> CounterScript.ARABIC
+            else -> CounterScript.PRONUNCIATION
+        }
+    }
+
+    suspend fun setCounterScript(value: CounterScript) {
+        context.preferencesDataStore.edit { it[counterScriptKey] = value.name }
+    }
+
     /** One-shot read of every user-facing preference, for a backup export. */
     suspend fun snapshot(): PreferencesSnapshot = PreferencesSnapshot(
         dailyGoalTarget = dailyGoalTarget.first(),
@@ -91,6 +108,7 @@ class AppPreferencesRepository(private val context: Context) {
         hapticMode = hapticMode.first(),
         reducedMotion = reducedMotion.first(),
         dynamicColorEnabled = dynamicColorEnabled.first(),
+        counterScript = counterScript.first(),
     )
 
     /**
@@ -104,6 +122,7 @@ class AppPreferencesRepository(private val context: Context) {
         hapticMode: HapticMode?,
         reducedMotion: Boolean?,
         dynamicColorEnabled: Boolean?,
+        counterScript: CounterScript?,
     ) {
         context.preferencesDataStore.edit { prefs ->
             dailyGoalTarget?.let { prefs[dailyGoalKey] = it }
@@ -111,6 +130,7 @@ class AppPreferencesRepository(private val context: Context) {
             hapticMode?.let { prefs[hapticModeKey] = it.name }
             reducedMotion?.let { prefs[reducedMotionKey] = it }
             dynamicColorEnabled?.let { prefs[dynamicColorKey] = it }
+            counterScript?.let { prefs[counterScriptKey] = it.name }
         }
     }
 }
@@ -121,4 +141,5 @@ data class PreferencesSnapshot(
     val hapticMode: HapticMode,
     val reducedMotion: Boolean,
     val dynamicColorEnabled: Boolean,
+    val counterScript: CounterScript,
 )

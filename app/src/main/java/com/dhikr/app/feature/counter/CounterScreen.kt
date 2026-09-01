@@ -63,6 +63,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.dhikr.app.R
+import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.haptics.rememberHaptics
 import com.dhikr.app.ui.ClampedFontScale
@@ -75,8 +76,8 @@ import com.dhikr.app.ui.theme.CounterCountStyle
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.DialogShape
 import com.dhikr.app.ui.theme.PillShape
-import com.dhikr.app.ui.theme.TransliterationLongTextStyle
-import com.dhikr.app.ui.theme.TransliterationStyle
+import com.dhikr.app.ui.theme.PronunciationLongTextStyle
+import com.dhikr.app.ui.theme.PronunciationPrimaryStyle
 import kotlin.math.min
 
 private const val LONG_TEXT_THRESHOLD = 90
@@ -88,6 +89,9 @@ fun CounterScreen(
     // OFF: no vibration. EVERY_TAP: buzz on every count. LAP_ONLY: buzz only
     // when a lap completes.
     hapticMode: HapticMode = HapticMode.EVERY_TAP,
+    // From the "Counter shows" setting. ARABIC shows the Arabic line only;
+    // PRONUNCIATION shows the pronunciation line only.
+    counterScript: CounterScript = CounterScript.PRONUNCIATION,
     onBack: () -> Unit,
     // Reports the lock toggle up to DhikrApp, which owns the Scaffold the
     // bottom nav bar lives in — CounterScreen has no reach to it directly.
@@ -163,10 +167,16 @@ fun CounterScreen(
         }
     }
 
-    val isLongText = state.dhikr.transliteration.length > LONG_TEXT_THRESHOLD
+    // Only one script is shown, per the "Counter shows" setting.
+    val showArabic = counterScript == CounterScript.ARABIC
+    val scriptText = if (showArabic) state.dhikr.arabic else state.dhikr.pronunciation
+    val isLongText = scriptText.length > LONG_TEXT_THRESHOLD
     val ringSize = if (isLongText) 178.dp else 252.dp
     val countStyle = if (isLongText) CounterCountLongTextStyle else CounterCountStyle
-    val transliterationStyle = if (isLongText) TransliterationLongTextStyle else TransliterationStyle
+    val pronunciationStyle = when {
+        isLongText -> PronunciationLongTextStyle
+        else -> PronunciationPrimaryStyle
+    }
 
     // Quick pop of the ring on every registered tap / lap rollover — skipped
     // entirely under Reduce motion.
@@ -355,26 +365,17 @@ fun CounterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                if (state.dhikr.arabic.isNotEmpty()) {
+                if (scriptText.isNotEmpty()) {
                     Text(
-                        text = state.dhikr.arabic,
-                        style = ArabicLineStyle,
-                        color = colors.text,
-                        textAlign = TextAlign.Center,
+                        text = scriptText,
+                        style = if (showArabic) ArabicLineStyle else pronunciationStyle,
+                        color = if (showArabic) colors.text else colors.dim,
+                        textAlign = if (isLongText) TextAlign.Justify else TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 2.dp),
+                            .padding(bottom = if (isLongText) 16.dp else 22.dp),
                     )
                 }
-                Text(
-                    text = state.dhikr.transliteration,
-                    style = transliterationStyle,
-                    color = colors.dim,
-                    textAlign = if (isLongText) TextAlign.Justify else TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = if (isLongText) 16.dp else 22.dp),
-                )
 
                 // Progress ring + count
                 Box(

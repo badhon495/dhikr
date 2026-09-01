@@ -163,7 +163,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(tasbih.name, fontSize = 14.5.sp, color = colors.text)
-                        Text(tasbih.transliteration, fontSize = 12.sp, color = colors.faint, maxLines = 1)
+                        Text(tasbih.pronunciation, fontSize = 12.sp, color = colors.faint, maxLines = 1)
                     }
                     Text(tasbih.arabic, fontSize = 14.sp, color = colors.dim)
                 }

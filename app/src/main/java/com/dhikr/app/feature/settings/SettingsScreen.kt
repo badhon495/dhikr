@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.ui.headingSemantics
@@ -139,6 +140,29 @@ fun SettingsScreen(
                     target = state.dailyGoalTarget,
                     isCustom = state.isCustomGoal,
                     onSelect = viewModel::onDailyGoalChange,
+                )
+            }
+            Column(modifier = Modifier.padding(top = 14.dp)) {
+                Text(
+                    stringResource(R.string.settings_counter_script),
+                    fontSize = 14.sp,
+                    color = colors.text,
+                )
+                Text(
+                    stringResource(R.string.settings_counter_script_desc),
+                    fontSize = 12.sp,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+                )
+                ChoiceRow(
+                    options = listOf(
+                        CounterScript.PRONUNCIATION to
+                            stringResource(R.string.settings_counter_script_pronunciation),
+                        CounterScript.ARABIC to
+                            stringResource(R.string.settings_counter_script_arabic),
+                    ),
+                    selected = state.counterScript,
+                    onSelect = viewModel::onCounterScriptChange,
                 )
             }
         }

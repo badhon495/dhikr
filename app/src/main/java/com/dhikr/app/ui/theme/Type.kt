@@ -38,16 +38,23 @@ val ArabicLineStyle = TextStyle(
     lineHeight = 51.sp, // 1.7 line-height
 )
 
-val TransliterationStyle = TextStyle(
+val PronunciationStyle = TextStyle(
     fontFamily = NotoSansBengali,
     fontSize = 14.5.sp,
     lineHeight = 21.sp, // 1.45
 )
 
-val TransliterationLongTextStyle = TextStyle(
+val PronunciationLongTextStyle = TextStyle(
     fontFamily = NotoSansBengali,
     fontSize = 13.5.sp,
     lineHeight = 27.sp, // 2.0
+)
+
+/** Pronunciation shown as the sole/primary counter script (Arabic hidden). */
+val PronunciationPrimaryStyle = TextStyle(
+    fontFamily = NotoSansBengali,
+    fontSize = 22.sp,
+    lineHeight = 34.sp,
 )
 
 // Default Material3 typography so any Text composable that doesn't set an

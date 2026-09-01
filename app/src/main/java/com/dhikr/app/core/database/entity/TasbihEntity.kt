@@ -12,7 +12,7 @@ data class TasbihEntity(
     @PrimaryKey val id: String,
     val name: String,
     val arabic: String,
-    val transliteration: String,
+    val pronunciation: String,
     val translation: String,
     val note: String = "",
     val source: String? = null,

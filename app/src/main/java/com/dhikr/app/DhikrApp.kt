@@ -41,6 +41,7 @@ import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.datastore.ThemeMode
@@ -99,6 +100,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
         val hapticMode by preferencesRepository.hapticMode.collectAsState(initial = HapticMode.EVERY_TAP)
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
+        val counterScript by preferencesRepository.counterScript.collectAsState(initial = CounterScript.PRONUNCIATION)
 
         // Hoisted here rather than read off CounterViewModel directly: this
         // Scaffold — and the bottom nav bar it owns — sits outside the
@@ -163,7 +165,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                 ) { backStackEntry ->
                     val editingId = backStackEntry.arguments?.getString("id")
                     val viewModel: TasbihEditorViewModel = viewModel(
-                        factory = TasbihEditorViewModel.Factory(tasbihRepository, editingId),
+                        factory = TasbihEditorViewModel.Factory(tasbihRepository, preferencesRepository, editingId),
                     )
                     TasbihEditorScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
@@ -185,6 +187,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     CounterScreen(
                         viewModel = viewModel,
                         hapticMode = hapticMode,
+                        counterScript = counterScript,
                         onBack = { navController.popBackStack() },
                         onLockedChanged = { counterLocked = it },
                     )
