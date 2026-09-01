@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Dhikr" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- AppCompat parent so MainActivity can extend AppCompatActivity, which
+         is what backports the per-app language switch (AppCompatDelegate
+         .setApplicationLocales) below API 33. UI is all Compose, so the
+         AppCompat theme attributes are otherwise unused. -->
+    <style name="Theme.Dhikr" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

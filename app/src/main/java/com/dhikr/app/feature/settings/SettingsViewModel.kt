@@ -28,6 +28,7 @@ data class SettingsUiState(
     val dynamicColorEnabled: Boolean = false,
     val dynamicColorSupported: Boolean = supportsDynamicColor(),
     val counterScript: CounterScript = CounterScript.PRONUNCIATION,
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM,
     val appVersion: String = "",
     val hasGeminiKey: Boolean = false,
     val autoCounterEnabled: Boolean = false,
@@ -64,6 +65,7 @@ class SettingsViewModel(
             appVersion = appVersion,
             hasGeminiKey = secureKeyStore.hasKey,
             autoCounterSupported = autoCounterSupported,
+            appLanguage = AppLanguage.current,
         ),
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -93,7 +95,9 @@ class SettingsViewModel(
             .combine(preferencesRepository.autoCounterEnabled) { state, autoCounterEnabled ->
                 state.copy(autoCounterEnabled = autoCounterEnabled)
             }
-            .onEach { _uiState.value = it }
+            // Language lives outside DataStore (AppCompatDelegate owns it), so
+            // carry the value read at construction through each rebuild.
+            .onEach { _uiState.value = it.copy(appLanguage = _uiState.value.appLanguage) }
             .launchIn(viewModelScope)
     }
 
@@ -115,6 +119,17 @@ class SettingsViewModel(
 
     fun onCounterScriptChange(value: CounterScript) {
         viewModelScope.launch { preferencesRepository.setCounterScript(value) }
+    }
+
+    /**
+     * Switches the app language immediately. On API 33+ the system recreates the
+     * activity; on older versions AppCompat does. Either way the new
+     * [SettingsViewModel] reads the fresh value via [AppLanguage.current], so no
+     * local state update is needed here.
+     */
+    fun onAppLanguageChange(value: AppLanguage) {
+        if (value == _uiState.value.appLanguage) return
+        AppLanguage.apply(value)
     }
 
     fun onAutoCounterEnabledChange(enabled: Boolean) {

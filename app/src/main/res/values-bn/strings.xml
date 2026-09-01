@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dhikr</string>
+
+    <!-- Shared -->
+    <string name="action_back">পেছনে</string>
+
+    <!-- Counter screen -->
+    <string name="counter_back_content_description">হোমে ফিরুন</string>
+    <string name="counter_lock_content_description">কাউন্টার লক</string>
+    <string name="counter_undo">পূর্বাবস্থা</string>
+    <string name="counter_pause">বিরতি</string>
+    <string name="counter_resume">চালিয়ে যান</string>
+    <string name="counter_reset_content_description">রিসেট</string>
+    <string name="counter_of_target">%1$d এর মধ্যে</string>
+    <string name="counter_lap_label">ল্যাপ %2$d এর %1$d · %4$d এর %3$d</string>
+    <string name="counter_tap_hint">গণনা করতে যেকোনো জায়গায় ট্যাপ করুন</string>
+    <string name="counter_tap_hint_locked">লক করা — গণনা তবুও চলছে</string>
+    <string name="counter_tap_action_label">গণনা</string>
+    <string name="counter_count_description">%2$d এর %1$d</string>
+
+    <!-- Reset confirmation dialog -->
+    <string name="reset_dialog_title">এই সেশন রিসেট করবেন?</string>
+    <string name="reset_dialog_body">%1$d টি গণনা মুছে যাবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।</string>
+    <string name="reset_dialog_keep_counting">গণনা চালিয়ে যান</string>
+    <string name="reset_dialog_confirm">রিসেট</string>
+
+    <!-- Routine step chips + routine-complete dialog -->
+    <string name="counter_step_label">ধাপ %2$d এর %1$d</string>
+    <string name="routine_complete_title">রুটিন সম্পন্ন</string>
+    <string name="routine_complete_body">%1$s শেষ হয়েছে — %3$s এ %2$d টি গণনা।</string>
+    <string name="routine_complete_done">সম্পন্ন</string>
+    <string name="routine_complete_check_content_description">রুটিন সম্পন্ন</string>
+
+    <!-- Session summary dialog (tap the elapsed-time label) -->
+    <string name="session_summary_title">এই সেশন</string>
+    <string name="session_summary_started">শুরু %1$s এ</string>
+    <string name="session_summary_duration">সময়কাল %1$s</string>
+    <string name="session_summary_counts">%1$d টি গণনা</string>
+    <string name="session_summary_rate">মিনিটে %1$d</string>
+    <string name="session_summary_rate_unavailable">কয়েকটি গণনার পর গতি দেখানো হবে</string>
+    <string name="session_summary_close">বন্ধ করুন</string>
+    <string name="counter_session_label_content_description">সেশনের সময়, বিস্তারিত দেখতে ট্যাপ করুন</string>
+
+    <!-- Home stub (placeholder until the real Home screen lands) -->
+    <string name="home_title">Dhikr</string>
+    <string name="home_start_counter">SubhanAllah শুরু করুন</string>
+
+    <!-- Home screen -->
+    <string name="home_greeting">আসসালামু আলাইকুম</string>
+    <string name="home_goal_ring_description">দৈনিক লক্ষ্য: %2$d এর %1$d</string>
+    <string name="home_continue_session_kicker">সেশন চালিয়ে যান</string>
+    <string name="home_continue_session_description">%1$s চালিয়ে যান, %3$d এর %2$d</string>
+    <string name="home_favorites_title">প্রিয়</string>
+    <string name="home_favorites_all">সব</string>
+    <string name="home_routines_title">রুটিন</string>
+    <string name="home_routines_manage">পরিচালনা</string>
+
+    <!-- Tasbih library screen -->
+    <string name="tasbih_library_title">তাসবিহ</string>
+    <string name="tasbih_library_new">+ নতুন</string>
+    <string name="tasbih_library_search_placeholder">নাম, আরবি, উচ্চারণ খুঁজুন</string>
+    <string name="tasbih_library_search_content_description">খুঁজুন</string>
+    <string name="tasbih_library_result_count_all">%1$d টি অন্তর্নির্মিত · %2$d টি কাস্টম</string>
+    <string name="tasbih_library_result_count_filtered">\"%3$s\" এর সাথে %2$d এর %1$d টি মিলেছে</string>
+    <string name="tasbih_library_empty">এর সাথে কিছু মেলেনি। এটি কাস্টম তাসবিহ হিসেবে তৈরি করুন।</string>
+    <string name="tasbih_library_favorite_content_description">প্রিয়</string>
+    <string name="tasbih_library_favorite_state_on">প্রিয় করা হয়েছে</string>
+    <string name="tasbih_library_favorite_state_off">প্রিয় নয়</string>
+    <string name="tasbih_library_meta_laps">%1$d × %2$d ল্যাপ</string>
+    <string name="tasbih_library_meta_per_lap">প্রতি ল্যাপে %1$d</string>
+    <string name="tasbih_library_actions_title">%1$s</string>
+    <string name="tasbih_library_actions_edit">সম্পাদনা</string>
+    <string name="tasbih_library_actions_delete">মুছুন</string>
+    <string name="tasbih_library_delete_confirm_title">এই তাসবিহ মুছবেন?</string>
+    <string name="tasbih_library_delete_confirm_body">এটি পূর্বাবস্থায় ফেরানো যাবে না।</string>
+    <string name="tasbih_library_delete_confirm_action">মুছুন</string>
+    <string name="tasbih_library_delete_cancel_action">বাতিল</string>
+    <string name="tasbih_library_delete_blocked_title">%1$s মোছা যাচ্ছে না</string>
+    <string name="tasbih_library_delete_blocked_body">এটি %1$s এ ব্যবহৃত হচ্ছে। প্রথমে সেই রুটিন থেকে সরান।</string>
+    <string name="tasbih_library_delete_blocked_dismiss">ঠিক আছে</string>
+    <string name="tasbih_editor_title_new">নতুন তাসবিহ</string>
+    <string name="tasbih_editor_title_edit">তাসবিহ সম্পাদনা</string>
+    <string name="tasbih_editor_name_label">নাম</string>
+    <string name="tasbih_editor_name_placeholder">যেমন সন্ধ্যার তাসবিহ</string>
+    <string name="tasbih_editor_arabic_label">আরবি লেখা</string>
+    <string name="tasbih_editor_arabic_placeholder">اكتب الذكر</string>
+    <string name="tasbih_editor_translation_label">অনুবাদ</string>
+    <string name="tasbih_editor_translation_placeholder">এর অর্থ কী</string>
+    <string name="tasbih_editor_pronunciation_label">উচ্চারণ</string>
+    <string name="tasbih_editor_pronunciation_placeholder">এটি যেভাবে শোনায়</string>
+    <string name="tasbih_editor_required_suffix">%1$s · আবশ্যক</string>
+    <string name="tasbih_editor_note_label">ব্যক্তিগত নোট</string>
+    <string name="tasbih_editor_note_placeholder">আপনি কেন এটি পাঠ করছেন</string>
+    <string name="tasbih_editor_lap_target_label">ল্যাপ লক্ষ্য</string>
+    <string name="tasbih_editor_daily_goal_label">দৈনিক লক্ষ্য</string>
+    <string name="tasbih_editor_save">তাসবিহ সংরক্ষণ</string>
+    <string name="tasbih_editor_footer">এই ডিভাইসে সংরক্ষিত। উপকারিতা তৈরি করলে এই যিকরের লেখা Google এর Gemini API তে পাঠানো হয়।</string>
+    <string name="tasbih_editor_benefits_label">ফজিলত ও উপকারিতা</string>
+    <string name="tasbih_editor_benefits_generate">উপকারিতা তৈরি করুন</string>
+    <string name="tasbih_editor_benefits_regenerate">পুনরায় তৈরি করুন</string>
+    <string name="tasbih_editor_benefits_loading">তৈরি হচ্ছে…</string>
+    <string name="tasbih_editor_benefits_generated_at">%1$s তৈরি হয়েছে</string>
+    <string name="tasbih_editor_benefits_no_key">এটি ব্যবহার করতে Settings এ একটি Gemini API key যোগ করুন।</string>
+    <string name="tasbih_editor_benefits_retry">আবার চেষ্টা করুন</string>
+    <string name="tasbih_editor_benefits_err_network">Gemini এ পৌঁছানো যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</string>
+    <string name="tasbih_editor_benefits_err_auth">সেই API key প্রত্যাখ্যাত হয়েছে। Settings এ পরীক্ষা করুন।</string>
+    <string name="tasbih_editor_benefits_err_rate">Gemini অনুরোধের হার সীমিত করছে। কিছুক্ষণ পর আবার চেষ্টা করুন।</string>
+    <string name="tasbih_editor_benefits_err_blocked">Gemini এই যিকরের জন্য উত্তর দিতে অস্বীকৃতি জানিয়েছে।</string>
+    <string name="tasbih_editor_benefits_err_malformed">Gemini এমন একটি উত্তর পাঠিয়েছে যা পড়া যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="tasbih_editor_benefits_err_unknown">উপকারিতা তৈরিতে কিছু ভুল হয়েছে। আবার চেষ্টা করুন।</string>
+
+    <!-- Routines screen -->
+    <string name="routines_title">রুটিন</string>
+    <string name="routines_new_short">+ নতুন</string>
+    <string name="routines_step_count">%1$d টি ধাপ · %2$d টি গণনা</string>
+    <string name="routines_new">+ নতুন রুটিন</string>
+    <string name="routines_search_placeholder">রুটিন খুঁজুন</string>
+    <string name="routines_search_content_description">রুটিন খুঁজুন</string>
+    <string name="routines_result_count_all">%1$d টি অন্তর্নির্মিত · %2$d টি কাস্টম</string>
+    <string name="routines_result_count_filtered">\"%3$s\" এর সাথে %2$d এর %1$d টি মিলেছে</string>
+    <string name="routines_empty">এর সাথে কোনো রুটিন মেলেনি।</string>
+    <string name="routines_actions_title">%1$s</string>
+    <string name="routines_actions_edit">সম্পাদনা</string>
+    <string name="routines_actions_delete">মুছুন</string>
+    <string name="routines_delete_confirm_title">এই রুটিন মুছবেন?</string>
+    <string name="routines_delete_confirm_body">এটি পূর্বাবস্থায় ফেরানো যাবে না।</string>
+    <string name="routines_delete_confirm_action">মুছুন</string>
+    <string name="routines_delete_cancel_action">বাতিল</string>
+    <string name="routines_add_step">+ ধাপ যোগ করুন</string>
+    <string name="routines_favorite_content_description">প্রিয় রুটিন</string>
+    <string name="routines_favorite_state_on">প্রিয় করা হয়েছে</string>
+    <string name="routines_favorite_state_off">প্রিয় নয়</string>
+    <string name="routines_share">শেয়ার</string>
+    <string name="routines_share_dialog_title">রুটিন শেয়ার করুন</string>
+    <string name="routines_share_select_all">সব নির্বাচন করুন</string>
+    <string name="routines_share_clear">মুছুন</string>
+    <string name="routines_share_preset_tag">প্রিসেট</string>
+    <string name="routines_share_action">শেয়ার</string>
+    <string name="routines_share_send_file">ফাইল পাঠান</string>
+    <string name="routines_share_copy_text">টেক্সট হিসেবে কপি করুন</string>
+    <string name="routines_share_copied">রুটিনের টেক্সট কপি হয়েছে।</string>
+    <string name="routines_share_error">শেয়ার করার জন্য রুটিন প্রস্তুত করা যায়নি।</string>
+    <string name="routines_share_file_error">শেয়ার করার জন্য ফাইল প্রস্তুত করা যায়নি। আপনি এটি টেক্সট হিসেবে কপি করতে পারেন।</string>
+    <string name="routines_import">আমদানি</string>
+    <string name="routines_import_menu_title">রুটিন আমদানি করুন</string>
+    <string name="routines_import_pick_file">ফাইল বাছুন</string>
+    <string name="routines_import_paste_text">টেক্সট পেস্ট করুন</string>
+    <string name="routines_import_paste_title">রুটিনের টেক্সট পেস্ট করুন</string>
+    <string name="routines_import_paste_hint">শেয়ার করা DHIKR-ROUTINE টেক্সট এখানে পেস্ট করুন</string>
+    <string name="routines_import_paste_confirm">প্রাকদর্শন</string>
+    <string name="routines_import_title">রুটিন আমদানি করুন</string>
+    <string name="routines_import_loading">পড়া হচ্ছে…</string>
+    <string name="routines_import_adds_tasbih">%1$d টি নতুন তাসবিহ যোগ করে</string>
+    <string name="routines_import_adds_no_tasbih">কোনো নতুন তাসবিহ নেই</string>
+    <string name="routines_import_confirm">আমদানি</string>
+    <string name="routines_import_cancel">বাতিল</string>
+    <string name="routines_import_working">আমদানি হচ্ছে…</string>
+    <string name="routines_import_done">%1$d টি রুটিন · %2$d টি নতুন তাসবিহ যোগ হয়েছে।</string>
+    <string name="routines_import_done_button">সম্পন্ন</string>
+    <string name="routine_editor_title_new">নতুন রুটিন</string>
+    <string name="routine_editor_title_edit">রুটিন সম্পাদনা</string>
+    <string name="routine_editor_name_label">নাম</string>
+    <string name="routine_editor_name_placeholder">যেমন সকালের যিকর</string>
+    <string name="routine_editor_steps_label">ধাপসমূহ</string>
+    <string name="routine_editor_no_steps">এখনও কোনো ধাপ নেই। নিচে একটি যোগ করুন।</string>
+    <string name="routine_editor_step_count">গণনা</string>
+    <string name="routine_editor_move_up">ধাপ উপরে নিন</string>
+    <string name="routine_editor_move_down">ধাপ নিচে নিন</string>
+    <string name="routine_editor_remove_step">ধাপ সরান</string>
+    <string name="routine_editor_pick_tasbih_title">একটি তাসবিহ বাছুন</string>
+    <string name="routine_editor_save">রুটিন সংরক্ষণ</string>
+    <string name="routine_editor_footer">শুধু এই ডিভাইসে সংরক্ষিত। কিছুই আপলোড হয় না।</string>
+
+    <!-- Insights screen -->
+    <string name="insights_title">পরিসংখ্যান</string>
+    <string name="insights_today">আজ</string>
+    <string name="insights_this_week">এই সপ্তাহ</string>
+    <string name="insights_this_month">এই মাস</string>
+    <string name="insights_all_time">সর্বকালীন</string>
+    <string name="insights_last_7_days">গত ৭ দিন</string>
+    <string name="insights_bar_chart_description">গত ৭ দিন: %1$s</string>
+    <string name="insights_consistency">ধারাবাহিকতা</string>
+    <string name="insights_consistency_meta">এই মাসে %1$d দিন</string>
+    <string name="insights_legend_less">কম</string>
+    <string name="insights_legend_more">বেশি</string>
+    <string name="insights_history_title">ইতিহাস</string>
+    <string name="insights_history_grouped">যিকর অনুসারে সাজানো</string>
+    <string name="insights_day_today">আজ</string>
+    <string name="insights_day_yesterday">গতকাল</string>
+    <string name="insights_empty_title">এখনও কোনো সেশন নেই</string>
+    <string name="insights_empty_body">আপনার প্রথম সেশন শেষ করার সাথে সাথেই গণনা এখানে দেখা যাবে।</string>
+    <string name="insights_empty_cta">গণনা শুরু করুন</string>
+    <string name="insights_empty_icon_content_description">এখনও কোনো সেশন নেই</string>
+    <string name="insights_last_month">গত মাস</string>
+    <string name="insights_month_active_days">%2$d এর %1$d দিন সক্রিয়</string>
+    <string name="insights_see_all_months">সব মাস দেখুন</string>
+    <string name="insights_all_months_title">মাসিক ইতিহাস</string>
+    <string name="insights_all_months_empty">দেখানোর মতো এখনও কোনো মাস নেই।</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">সেটিংস</string>
+    <string name="settings_language">ভাষা</string>
+    <string name="settings_language_desc">অ্যাপ জুড়ে ব্যবহৃত ভাষা</string>
+    <string name="settings_language_system">সিস্টেম</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_bangla">বাংলা</string>
+    <string name="settings_appearance">চেহারা</string>
+    <string name="settings_theme_system">সিস্টেম</string>
+    <string name="settings_theme_light">উজ্জ্বল</string>
+    <string name="settings_theme_dark">গাঢ়</string>
+    <string name="settings_dynamic_color">Material You</string>
+    <string name="settings_dynamic_color_desc">আপনার ওয়ালপেপার থেকে অ্যাপের রঙ নিন</string>
+    <string name="settings_counting">গণনা</string>
+    <string name="settings_accessibility">অ্যাক্সেসিবিলিটি</string>
+    <string name="settings_reduce_motion">মোশন কমান</string>
+    <string name="settings_reduce_motion_desc">অ্যাপ জুড়ে অ্যানিমেশন কমান</string>
+
+    <string name="settings_auto_counter">অটো কাউন্টার (পরীক্ষামূলক)</string>
+    <string name="settings_auto_counter_toggle">কব্জির ঝাঁকুনিতে গণনা</string>
+    <string name="settings_auto_counter_toggle_desc">ট্যাপ না করে হাতের নড়াচড়া শনাক্ত করুন</string>
+    <string name="settings_auto_counter_limitation">পরীক্ষামূলক — শব্দ নয়, নড়াচড়া ব্যবহার করে। এটি কোনো ঝাঁকুনি মিস করতে পারে বা একটি বাড়তি গণনা যোগ করতে পারে; স্ক্রিনে ট্যাপ করা সবসময় কাজ করে এবং গণনার মূল উপায় হিসেবে থাকে।</string>
+
+    <string name="settings_haptics">হ্যাপটিক ফিডব্যাক</string>
+    <string name="settings_haptics_desc">কাউন্টার কখন কম্পন করবে</string>
+    <string name="settings_haptics_off">বন্ধ</string>
+    <string name="settings_haptics_every_tap">প্রতি গণনায়</string>
+    <string name="settings_haptics_lap_only">ল্যাপ সম্পন্ন হলে</string>
+    <string name="settings_daily_goal">দৈনিক লক্ষ্য</string>
+    <string name="settings_daily_goal_desc">হোমের রিং-এ দেখানো লক্ষ্য</string>
+    <string name="settings_counter_script">কাউন্টার দেখায়</string>
+    <string name="settings_counter_script_desc">কাউন্টারে কোন লিপি দেখা যাবে। নির্বাচিতটি তাসবিহ যোগ করার সময় আবশ্যক হয়ে যায়।</string>
+    <string name="settings_counter_script_pronunciation">উচ্চারণ</string>
+    <string name="settings_counter_script_arabic">আরবি</string>
+    <string name="settings_daily_goal_custom">কাস্টম</string>
+    <string name="settings_daily_goal_custom_placeholder">একটি সংখ্যা লিখুন</string>
+    <string name="settings_ai">AI বৈশিষ্ট্য</string>
+    <string name="settings_ai_desc">একটি তাসবিহর ফজিলত ও উপকারিতার সংক্ষিপ্ত সারাংশ তৈরি করতে নিজের Google Gemini API key যোগ করুন। key টি এই ডিভাইসে এনক্রিপ্ট করে সংরক্ষিত হয় এবং শুধু উপকারিতা তৈরির সময় Google এর Gemini API তে পাঠানো হয়।</string>
+    <string name="settings_ai_key_label">Gemini API key</string>
+    <string name="settings_ai_key_placeholder">আপনার API key পেস্ট করুন</string>
+    <string name="settings_ai_key_set">Key সংরক্ষিত</string>
+    <string name="settings_ai_key_hint">aistudio.google.com/apikey থেকে একটি key নিন</string>
+    <string name="settings_ai_key_save">সংরক্ষণ</string>
+    <string name="settings_ai_key_change">পরিবর্তন</string>
+    <string name="settings_ai_key_clear">সরান</string>
+    <string name="settings_backup">ব্যাকআপ</string>
+    <string name="settings_backup_desc">সবকিছু — আপনার তাসবিহ, রুটিন, ইতিহাস ও সেটিংস — একটি ফাইলে সংরক্ষণ করুন যা আপনি রাখতে বা অন্য ডিভাইসে নিতে পারেন।</string>
+    <string name="settings_backup_export">ব্যাকআপ এক্সপোর্ট</string>
+    <string name="settings_backup_import">ব্যাকআপ ইমপোর্ট</string>
+    <string name="settings_backup_import_note">ইমপোর্ট করলে ফাইলটি এখানে যা আছে তার সাথে মিশে যায়। একই পরিচয়ের আইটেম ফাইল দিয়ে প্রতিস্থাপিত হয়; বাকি সব রাখা হয়।</string>
+    <string name="settings_backup_working">কাজ চলছে…</string>
+    <string name="settings_backup_export_done">ব্যাকআপ সংরক্ষিত হয়েছে।</string>
+    <string name="settings_backup_restore_done">%1$d তাসবিহ, %2$d রুটিন, %3$d সেশন পুনরুদ্ধার হয়েছে।</string>
+    <string name="settings_backup_restore_done_skipped">%1$d তাসবিহ, %2$d রুটিন, %3$d সেশন পুনরুদ্ধার হয়েছে (%4$d টি বাদ পড়েছে)।</string>
+    <string name="settings_backup_settings_not_restored">ফাইলের সেটিংস প্রয়োগ করা যায়নি।</string>
+    <string name="settings_backup_filename">dhikr-backup-%1$s.json</string>
+    <string name="settings_about">সম্পর্কে</string>
+    <string name="settings_about_offline">সম্পূর্ণ অফলাইনে কাজ করে।</string>
+    <string name="settings_about_no_account">কোনো অ্যাকাউন্ট লাগে না।</string>
+    <string name="settings_about_no_upload">কিছুই আপলোড হয় না। আপনার গণনা এই ডিভাইসেই থাকে।</string>
+    <string name="settings_version">সংস্করণ %1$s</string>
+
+    <!-- Reminders (Phase 5A) -->
+    <string name="reminder_section_title">রিমাইন্ডার</string>
+    <string name="reminder_toggle_label">দৈনিক রিমাইন্ডার</string>
+    <string name="reminder_toggle_desc">এই রুটিন শুরু করার একটি স্থানীয় তাগিদ</string>
+    <string name="reminder_time_label">সময়</string>
+    <string name="reminder_days_label">পুনরাবৃত্তি</string>
+    <string name="reminder_notification_title">%1$s এর সময় হয়েছে</string>
+    <string name="reminder_notification_body">গণনা শুরু করতে ট্যাপ করুন।</string>
+    <string name="reminder_snooze_action">১৫ মিনিট পরে</string>
+    <string name="reminder_permission_hint">Dhikr এর জন্য নোটিফিকেশন বন্ধ আছে। রিমাইন্ডার পেতে সিস্টেম সেটিংসে চালু করুন।</string>
+    <string name="reminder_permission_rationale">আপনার বেছে নেওয়া সময়ে মনে করিয়ে দিতে Dhikr এর নোটিফিকেশন অ্যাক্সেস দরকার।</string>
+    <string name="reminder_day_sun">র</string>
+    <string name="reminder_day_mon">সো</string>
+    <string name="reminder_day_tue">ম</string>
+    <string name="reminder_day_wed">বু</string>
+    <string name="reminder_day_thu">বৃ</string>
+    <string name="reminder_day_fri">শু</string>
+    <string name="reminder_day_sat">শ</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">হোম</string>
+    <string name="nav_tasbih">তাসবিহ</string>
+    <string name="nav_count">গণনা</string>
+    <string name="nav_insights">পরিসংখ্যান</string>
+    <string name="nav_settings">সেটিংস</string>
+
+    <!-- Home-screen widgets (Phase 5B) -->
+    <string name="widget_counter_label">Dhikr কাউন্টার</string>
+    <string name="widget_counter_description">হোম স্ক্রিন থেকে আপনার বর্তমান সেশন গণনা করুন।</string>
+    <string name="widget_insights_label">Dhikr পরিসংখ্যান</string>
+    <string name="widget_insights_description">আজ, এই সপ্তাহ ও সর্বকালীন গণনা।</string>
+    <string name="widget_increment_content_description">একটি গণনা যোগ করুন</string>
+    <string name="widget_no_session_title">Dhikr</string>
+    <string name="widget_no_session_body">গণনা শুরু করতে ট্যাপ করুন</string>
+    <string name="widget_routine_hint">চালিয়ে যেতে খুলুন</string>
+    <string name="widget_insights_today">আজ</string>
+    <string name="widget_insights_week">এই সপ্তাহ</string>
+    <string name="widget_insights_all_time">সর্বকালীন</string>
+
+    <!-- Onboarding (shown once, before Home, plan.md §25) -->
+    <string name="onboarding_welcome_title">Dhikr</string>
+    <string name="onboarding_welcome_body">সহজে যিকর গণনা করুন। একটি শান্ত, ব্যক্তিগত কাউন্টার — কোনো অ্যাকাউন্ট নেই, বিজ্ঞাপন নেই, কিছুই ট্র্যাক করা হয় না।</string>
+    <string name="onboarding_tap_title">গণনা করতে ট্যাপ করুন</string>
+    <string name="onboarding_tap_body">কাউন্টার স্ক্রিনে যেকোনো জায়গায় ট্যাপ করুন। গণনা সাথে সাথে হালনাগাদ হয়, নিশ্চিত করতে একটি মৃদু কম্পন সহ।</string>
+    <string name="onboarding_laps_title">ল্যাপ ও লক্ষ্য</string>
+    <string name="onboarding_laps_body">একটি ল্যাপ লক্ষ্য ঠিক করুন, অ্যাপ আপনার জন্য ল্যাপ গণনা করবে। দৈনিক ও রুটিন লক্ষ্য আপনার অগ্রগতি দেখায়।</string>
+    <string name="onboarding_history_title">কিছুই হারায় না</string>
+    <string name="onboarding_history_body">প্রতিটি সেশন স্বয়ংক্রিয়ভাবে সংরক্ষিত হয়। যেকোনো সময়, এমনকি অফলাইনেও আপনার ইতিহাস ও মোট দেখুন।</string>
+    <string name="onboarding_privacy_title">নকশাগতভাবে ব্যক্তিগত</string>
+    <string name="onboarding_privacy_body">সবকিছু আপনার ডিভাইসেই থাকে। অ্যাপটি সম্পূর্ণ অফলাইনে কাজ করে এবং কখনো আপনার যিকর কোথাও পাঠায় না।</string>
+    <string name="onboarding_skip">বাদ দিন</string>
+    <string name="onboarding_next">পরবর্তী</string>
+    <string name="onboarding_get_started">শুরু করুন</string>
+    <string name="onboarding_page_indicator">%2$d এর %1$d পৃষ্ঠা</string>
+</resources>

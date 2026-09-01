@@ -84,6 +84,25 @@ fun SettingsScreen(
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
         )
 
+        // ---- Language ----
+        SettingsSection(stringResource(R.string.settings_language)) {
+            Text(
+                stringResource(R.string.settings_language_desc),
+                fontSize = 12.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(bottom = 10.dp),
+            )
+            ChoiceRow(
+                options = listOf(
+                    AppLanguage.SYSTEM to stringResource(R.string.settings_language_system),
+                    AppLanguage.ENGLISH to stringResource(R.string.settings_language_english),
+                    AppLanguage.BANGLA to stringResource(R.string.settings_language_bangla),
+                ),
+                selected = state.appLanguage,
+                onSelect = viewModel::onAppLanguageChange,
+            )
+        }
+
         // ---- Appearance ----
         SettingsSection(stringResource(R.string.settings_appearance)) {
             val themeLabels = listOf(

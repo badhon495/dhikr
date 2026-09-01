@@ -4,10 +4,10 @@ import android.content.Intent
 import android.graphics.Color.TRANSPARENT
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,7 +20,7 @@ import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.core.notifications.ReminderNotifications
 import com.dhikr.app.ui.theme.resolveIsDark
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     // Set from the launch Intent (reminder-notification tap) and consumed once
     // by DhikrApp, which navigates to that routine's counter.

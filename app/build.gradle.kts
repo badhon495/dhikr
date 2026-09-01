@@ -37,6 +37,11 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Ship only the languages we actually translate. Keeps the per-app
+        // language picker (locales_config.xml) honest and trims unused
+        // AppCompat/lib locale resources.
+        androidResources.localeFilters += listOf("en", "bn")
     }
 
     buildTypes {
@@ -86,6 +91,7 @@ kotlin {
 
 dependencies {
     implementation(libs.core.ktx)
+    implementation(libs.appcompat)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
