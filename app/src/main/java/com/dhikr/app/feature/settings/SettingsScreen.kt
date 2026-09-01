@@ -65,13 +65,13 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
     ) {
         Text(
             stringResource(R.string.settings_title),
             fontSize = 23.sp,
             color = colors.text,
-            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+            modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
         )
 
         // ---- Appearance ----

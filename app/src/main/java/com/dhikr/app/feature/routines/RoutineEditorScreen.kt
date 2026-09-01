@@ -68,11 +68,11 @@ fun RoutineEditorScreen(
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
     ) {
-        // ---- Header: back chevron + title ----
+        // ---- Header: back chevron + title (title hugs the top of the row) ----
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp, bottom = 20.dp),
@@ -100,7 +100,7 @@ fun RoutineEditorScreen(
                 fontSize = 23.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = colors.text,
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.padding(start = 8.dp, top = 8.dp),
             )
         }
 

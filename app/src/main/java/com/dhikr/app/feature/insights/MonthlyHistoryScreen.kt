@@ -51,7 +51,7 @@ fun MonthlyHistoryScreen(viewModel: MonthlyHistoryViewModel, onBack: () -> Unit)
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
