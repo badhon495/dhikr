@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -187,6 +188,7 @@ fun RoutinesScreen(
                         routineWithSteps = routineWithSteps,
                         tasbihNamesById = state.tasbihNamesById,
                         completedToday = routineWithSteps.routine.id in state.completedTodayIds,
+                        progress = state.progressByRoutineId[routineWithSteps.routine.id] ?: 0f,
                         onStart = { onStartRoutine(routineWithSteps.routine.id) },
                         onLongPress = { actionMenuTarget = routineWithSteps },
                         onToggleFavorite = {
@@ -310,6 +312,7 @@ private fun RoutineCard(
     routineWithSteps: RoutineWithSteps,
     tasbihNamesById: Map<String, String>,
     completedToday: Boolean,
+    progress: Float,
     onStart: () -> Unit,
     onLongPress: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -324,6 +327,8 @@ private fun RoutineCard(
         else R.string.routines_favorite_state_off,
     )
 
+    val partialProgress = if (completedToday) 0f else progress.coerceIn(0f, 1f)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -336,6 +341,20 @@ private fun RoutineCard(
                 onLongClick = onLongPress,
             ),
     ) {
+      // Green fill that grows left-to-right with today's progress through the
+      // routine. Sits behind the content; a fully completed routine uses the
+      // solid `sageSoft` card background above instead.
+      if (partialProgress > 0f) {
+          Box(modifier = Modifier.matchParentSize()) {
+              Box(
+                  modifier = Modifier
+                      .fillMaxHeight()
+                      .fillMaxWidth(partialProgress)
+                      .background(colors.sageSoft),
+              )
+          }
+      }
+
       Column(modifier = Modifier.padding(18.dp)) {
         Column {
             Text(

@@ -4,10 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.dhikr.app.core.database.dao.RoutineCompletionDao
 import com.dhikr.app.core.database.dao.RoutineDao
+import com.dhikr.app.core.database.dao.RoutineProgressDao
 import com.dhikr.app.core.database.dao.SessionDao
 import com.dhikr.app.core.database.dao.TasbihDao
 import com.dhikr.app.core.database.entity.RoutineCompletionEntity
 import com.dhikr.app.core.database.entity.RoutineEntity
+import com.dhikr.app.core.database.entity.RoutineProgressEntity
 import com.dhikr.app.core.database.entity.RoutineStepEntity
 import com.dhikr.app.core.database.entity.SessionEntity
 import com.dhikr.app.core.database.entity.TasbihEntity
@@ -19,6 +21,7 @@ import com.dhikr.app.core.database.entity.TasbihEntity
         RoutineStepEntity::class,
         SessionEntity::class,
         RoutineCompletionEntity::class,
+        RoutineProgressEntity::class,
     ],
     // v2: no schema change from v1, but the version had been left at 1 across
     // several real schema edits (session/routine tables added without a bump).
@@ -30,7 +33,9 @@ import com.dhikr.app.core.database.entity.TasbihEntity
     // migration — fallbackToDestructiveMigration rebuilds + reseeds.
     // v5: added RoutineEntity.isFavorite (+ index). No hand migration —
     // fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 5,
+    // v6: added routine_progress table (per-day in-progress routine position).
+    // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -38,4 +43,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun routineDao(): RoutineDao
     abstract fun sessionDao(): SessionDao
     abstract fun routineCompletionDao(): RoutineCompletionDao
+    abstract fun routineProgressDao(): RoutineProgressDao
 }

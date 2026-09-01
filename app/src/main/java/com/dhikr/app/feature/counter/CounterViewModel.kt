@@ -107,13 +107,31 @@ class CounterViewModel(
                 routineStepNames = sortedSteps.map { step ->
                     tasbihRepository.getById(step.tasbihId)?.name ?: step.tasbihId
                 }
-                routineStepIndex = (savedSession?.routineStep ?: 0).coerceIn(0, sortedSteps.lastIndex)
+                // Per-routine saved position for today (survives opening other
+                // routines, cleared at local midnight). Authoritative for
+                // routines; the single DataStore session is only a fallback.
+                val savedProgress = routineRepository.getProgress(routineIdToLoad)
+                routineStepIndex = (savedProgress?.stepIndex ?: savedSession?.routineStep ?: 0)
+                    .coerceIn(0, sortedSteps.lastIndex)
                 val currentStep = sortedSteps[routineStepIndex]
                 val stepTasbih = tasbihRepository.getById(currentStep.tasbihId)
                 if (stepTasbih != null) {
                     dhikr = stepTasbih
                     engine = TasbihCounter(currentStep.targetCount, 1)
-                    applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
+                    if (savedProgress != null) {
+                        val restoredCount = savedProgress.countInStep
+                            .coerceIn(0, (currentStep.targetCount - 1).coerceAtLeast(0))
+                        engine.restore(count = restoredCount, lap = 1, previous = null)
+                        // Adopt the already-logged watermark for this step so the
+                        // taps History recorded when the screen was last left are
+                        // not logged a second time on resume.
+                        loggedTotal = savedProgress.loggedInStep.coerceIn(0, restoredCount)
+                        elapsedSeconds = savedSession?.elapsedSeconds?.takeIf {
+                            savedSession.routineId == routineIdToLoad
+                        } ?: 0
+                    } else {
+                        applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
+                    }
                     sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == currentStep.tasbihId) {
                         System.currentTimeMillis() - elapsedSeconds * 1000L
                     } else {
@@ -415,6 +433,19 @@ class CounterViewModel(
                 loggedTotal = loggedTotal,
             )
         )
+        // Per-routine progress row — the part that survives opening a different
+        // routine. Only while a routine is genuinely mid-flight (not once its
+        // last step is done: markRoutineComplete() clears the row and the card
+        // switches to the "completed today" tint).
+        val routineId = activeRoutine?.routine?.id
+        if (routineId != null && !s.isRoutineComplete) {
+            routineRepository.saveProgress(
+                routineId = routineId,
+                stepIndex = routineStepIndex.coerceAtLeast(0),
+                countInStep = snap.count,
+                loggedInStep = loggedTotal,
+            )
+        }
     }
 
     override fun onCleared() {

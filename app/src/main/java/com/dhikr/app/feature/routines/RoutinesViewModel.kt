@@ -28,6 +28,11 @@ data class RoutinesUiState(
     // Ids of routines whose last step was completed today (local time). Their
     // cards render with a sage tint; the set clears on its own the next day.
     val completedTodayIds: Set<String> = emptySet(),
+    // routineId -> fraction in 0f..1f of today's in-progress position (taps done
+    // / total taps in the routine). Absent or 0 = not started today; routines in
+    // completedTodayIds are not included here. Drives the card's growing green
+    // fill; clears on its own the next day.
+    val progressByRoutineId: Map<String, Float> = emptyMap(),
 )
 
 class RoutinesViewModel(
@@ -42,12 +47,26 @@ class RoutinesViewModel(
         repository.observeAllWithSteps(),
         tasbihRepository.observeAll(),
         repository.observeCompletedToday(),
-    ) { q, routines, tasbihs, completedToday ->
+        repository.observeProgressToday(),
+    ) { q, routines, tasbihs, completedToday, progressRows ->
         val filtered = if (q.isBlank()) {
             routines
         } else {
             routines.filter { it.routine.name.contains(q.trim(), ignoreCase = true) }
         }
+        val stepsByRoutine = routines.associate { rws ->
+            rws.routine.id to rws.steps.sortedBy { it.stepOrder }
+        }
+        val progress = progressRows.mapNotNull { row ->
+            if (row.routineId in completedToday) return@mapNotNull null
+            val steps = stepsByRoutine[row.routineId] ?: return@mapNotNull null
+            val total = steps.sumOf { it.targetCount }
+            if (total <= 0) return@mapNotNull null
+            val stepIndex = row.stepIndex.coerceIn(0, steps.lastIndex)
+            val doneBefore = steps.take(stepIndex).sumOf { it.targetCount }
+            val fraction = (doneBefore + row.countInStep).toFloat() / total
+            row.routineId to fraction.coerceIn(0f, 1f)
+        }.toMap()
         RoutinesUiState(
             query = q,
             routines = filtered,
@@ -56,6 +75,7 @@ class RoutinesViewModel(
             customCount = routines.count { !it.routine.isPreset },
             tasbihNamesById = tasbihs.associate { it.id to it.name },
             completedTodayIds = completedToday,
+            progressByRoutineId = progress,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
 
