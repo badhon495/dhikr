@@ -1,5 +1,9 @@
 package com.dhikr.app.feature.routines
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,9 +27,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +48,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -185,6 +194,8 @@ fun RoutineEditorScreen(
             )
         }
 
+        ReminderSection(viewModel = viewModel, state = state)
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -248,6 +259,160 @@ fun RoutineEditorScreen(
                         color = colors.dim,
                         fontWeight = FontWeight.SemiBold,
                     )
+                }
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReminderSection(
+    viewModel: RoutineEditorViewModel,
+    state: RoutineEditorUiState,
+) {
+    val colors = DhikrTheme.colors
+    val context = LocalContext.current
+    var showTimePicker by remember { mutableStateOf(false) }
+    var permissionDenied by remember { mutableStateOf(false) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> permissionDenied = !granted }
+
+    FieldLabel(
+        text = stringResource(R.string.reminder_section_title),
+        modifier = Modifier.padding(top = 24.dp),
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(ListRowShape)
+            .background(colors.card)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.reminder_toggle_label),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.text,
+            )
+            Text(
+                text = stringResource(R.string.reminder_toggle_desc),
+                fontSize = 11.5.sp,
+                color = colors.faint,
+            )
+        }
+        Switch(
+            checked = state.reminderEnabled,
+            onCheckedChange = { checked ->
+                viewModel.onReminderEnabledChange(checked)
+                if (checked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !com.dhikr.app.core.notifications.ReminderNotifications.hasPermission(context)
+                ) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            },
+        )
+    }
+
+    if (state.reminderEnabled) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .heightIn(min = 48.dp)
+                .clip(ListRowShape)
+                .background(colors.card)
+                .clickable(role = Role.Button) { showTimePicker = true }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.reminder_time_label),
+                fontSize = 13.sp,
+                color = colors.dim,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "%02d:%02d".format(
+                    state.reminderMinuteOfDay / 60,
+                    state.reminderMinuteOfDay % 60,
+                ),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = colors.text,
+            )
+        }
+
+        Text(
+            text = stringResource(R.string.reminder_days_label).uppercase(),
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = colors.dim,
+            modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+        )
+        val dayLabels = listOf(
+            R.string.reminder_day_sun, R.string.reminder_day_mon, R.string.reminder_day_tue,
+            R.string.reminder_day_wed, R.string.reminder_day_thu, R.string.reminder_day_fri,
+            R.string.reminder_day_sat,
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            dayLabels.forEachIndexed { bit, labelRes ->
+                val selected = state.reminderDays == 0 || (state.reminderDays and (1 shl bit)) != 0
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 3.dp)
+                        .heightIn(min = 40.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) colors.sage else colors.surface)
+                        .clickable(role = Role.Button) { viewModel.onReminderDayToggle(bit) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (selected) colors.onSage else colors.dim,
+                    )
+                }
+            }
+        }
+
+        if (permissionDenied) {
+            Text(
+                text = stringResource(R.string.reminder_permission_hint),
+                fontSize = 11.5.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+
+    if (showTimePicker) {
+        val picker = rememberTimePickerState(
+            initialHour = state.reminderMinuteOfDay / 60,
+            initialMinute = state.reminderMinuteOfDay % 60,
+            is24Hour = true,
+        )
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            containerColor = colors.card,
+            shape = DialogShape,
+            text = { TimePicker(state = picker) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.onReminderTimeChange(picker.hour * 60 + picker.minute)
+                    showTimePicker = false
+                }) { Text(stringResource(R.string.routine_complete_done), color = colors.text) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text(stringResource(R.string.routines_delete_cancel_action), color = colors.dim)
                 }
             },
         )

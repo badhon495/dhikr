@@ -245,7 +245,7 @@ fun DhikrApp(
                 }
                 composable(ROUTE_ROUTINES) {
                     val viewModel: RoutinesViewModel = viewModel(
-                        factory = RoutinesViewModel.Factory(routineRepository, tasbihRepository),
+                        factory = RoutinesViewModel.Factory(routineRepository, tasbihRepository, reminderScheduler),
                     )
                     RoutinesScreen(
                         viewModel = viewModel,
@@ -260,7 +260,7 @@ fun DhikrApp(
                 ) { backStackEntry ->
                     val editingId = backStackEntry.arguments?.getString("id")
                     val viewModel: RoutineEditorViewModel = viewModel(
-                        factory = RoutineEditorViewModel.Factory(routineRepository, tasbihRepository, editingId),
+                        factory = RoutineEditorViewModel.Factory(routineRepository, tasbihRepository, editingId, reminderScheduler),
                     )
                     RoutineEditorScreen(
                         viewModel = viewModel,

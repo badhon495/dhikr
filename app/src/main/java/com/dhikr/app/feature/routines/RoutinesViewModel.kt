@@ -38,6 +38,7 @@ data class RoutinesUiState(
 class RoutinesViewModel(
     private val repository: RoutineRepository,
     private val tasbihRepository: TasbihRepository,
+    private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -84,7 +85,10 @@ class RoutinesViewModel(
     }
 
     fun onDeleteRoutine(routine: RoutineEntity) {
-        viewModelScope.launch { repository.deleteRoutine(routine) }
+        viewModelScope.launch {
+            repository.deleteRoutine(routine)
+            reminderScheduler.cancel(routine.id)
+        }
     }
 
     fun onToggleFavorite(routineId: String, currentlyFavorite: Boolean) {
@@ -98,9 +102,10 @@ class RoutinesViewModel(
     class Factory(
         private val repository: RoutineRepository,
         private val tasbihRepository: TasbihRepository,
+        private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RoutinesViewModel(repository, tasbihRepository) as T
+            RoutinesViewModel(repository, tasbihRepository, reminderScheduler) as T
     }
 }
