@@ -2,6 +2,7 @@ package com.dhikr.app.core.database
 
 import com.dhikr.app.core.database.dao.SessionDao
 import com.dhikr.app.core.database.entity.SessionEntity
+import com.dhikr.app.core.utilities.DayBounds
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
 import java.util.TimeZone
@@ -46,11 +47,11 @@ class HistoryRepository(
     // table) so HomeViewModel/InsightsViewModel can collect reactively and
     // stay fresh after a count is logged, instead of reading once in init
     // (finding #6).
-    fun todayTotalFlow(): Flow<Int> = sessionDao.totalSince(startOfTodayMillis())
+    fun todayTotalFlow(): Flow<Int> = sessionDao.totalSince(DayBounds.startOfTodayMillis())
 
-    fun weekTotalFlow(): Flow<Int> = sessionDao.totalSince(startOfTodayMillis() - 6 * dayMillis)
+    fun weekTotalFlow(): Flow<Int> = sessionDao.totalSince(DayBounds.startOfTodayMillis() - 6 * dayMillis)
 
-    fun monthTotalFlow(): Flow<Int> = sessionDao.totalSince(startOfMonthMillis())
+    fun monthTotalFlow(): Flow<Int> = sessionDao.totalSince(DayBounds.startOfMonthMillis())
 
     fun allTimeTotalFlow(): Flow<Int> = sessionDao.totalSince(0L)
 
@@ -65,7 +66,7 @@ class HistoryRepository(
     private fun localOffsetMillis(): Long = TimeZone.getDefault().getOffset(System.currentTimeMillis()).toLong()
 
     suspend fun last7DaysTotals(): List<Pair<String, Int>> {
-        val since = startOfTodayMillis() - 6 * dayMillis
+        val since = DayBounds.startOfTodayMillis() - 6 * dayMillis
         val totals = sessionDao.allTasbihDailyTotalsSince(since, dayMillis, localOffsetMillis()).associateBy { it.dayStartMillis }
         return (0..6).map { offset ->
             val dayStart = since + offset * dayMillis
@@ -95,7 +96,7 @@ class HistoryRepository(
      * ordered by lifetime total, descending.
      */
     suspend fun historyByTasbih(): List<TasbihHistoryGroup> {
-        val since = startOfTodayMillis() - 6 * dayMillis
+        val since = DayBounds.startOfTodayMillis() - 6 * dayMillis
         val lifetimeTotals = sessionDao.lifetimeTotalsByTasbih()
         if (lifetimeTotals.isEmpty()) return emptyList()
         val names = tasbihRepository.getAll().associate { it.id to it.name }
@@ -121,7 +122,7 @@ class HistoryRepository(
             set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
         }
         val prevStart = prev.timeInMillis
-        val thisMonthStart = startOfMonthMillis()
+        val thisMonthStart = DayBounds.startOfMonthMillis()
         val buckets = sessionDao.allTasbihDailyTotalsSince(prevStart, dayMillis, localOffsetMillis())
             .filter { it.dayStartMillis < thisMonthStart }
         if (buckets.isEmpty()) return null
@@ -166,15 +167,6 @@ class HistoryRepository(
             }
             .sortedByDescending { it.monthStartMillis }
     }
-
-    private fun startOfTodayMillis(): Long = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-
-    private fun startOfMonthMillis(): Long = Calendar.getInstance().apply {
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
 }
 
 private object SimpleDateFormatCache {
