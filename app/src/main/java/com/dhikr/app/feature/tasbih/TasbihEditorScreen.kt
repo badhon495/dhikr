@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,9 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -23,8 +26,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -155,11 +164,9 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(
-                    text = state.lapTarget.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.text,
+                NumberField(
+                    value = state.lapTarget,
+                    onValueChange = viewModel::onLapTargetChange,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StepperButton(
@@ -179,29 +186,10 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
         }
 
         LabeledField(stringResource(R.string.tasbih_editor_daily_goal_label)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(33, 100, 500).forEach { option ->
-                    val selected = state.dailyGoal == option
-                    Box(
-                        modifier = Modifier
-                            .clip(PillShape)
-                            .background(if (selected) colors.sage else colors.surface)
-                            .clickable(role = Role.RadioButton) {
-                                viewModel.onDailyGoalChange(if (selected) null else option)
-                            }
-                            .minTapTarget()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = option.toString(),
-                            fontSize = 13.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (selected) colors.onSage else colors.text,
-                        )
-                    }
-                }
-            }
+            DailyGoalPicker(
+                selected = state.dailyGoal,
+                onSelect = viewModel::onDailyGoalChange,
+            )
         }
 
         Box(
@@ -294,5 +282,141 @@ private fun StepperButton(label: String, bg: Color, fg: Color, onClick: () -> Un
         contentAlignment = Alignment.Center,
     ) {
         Text(text = label, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = fg)
+    }
+}
+
+/**
+ * Inline number pill the user can type into directly. Digits-only, coerced by
+ * the caller's [onValueChange]; a blank field commits nothing so the last value
+ * stands. Stays in sync when the value changes elsewhere (e.g. stepper buttons).
+ */
+@Composable
+private fun NumberField(value: Int, onValueChange: (Int) -> Unit) {
+    val colors = DhikrTheme.colors
+    var text by rememberSaveable { mutableStateOf(value.toString()) }
+    LaunchedEffect(value) {
+        if (text.toIntOrNull() != value) text = value.toString()
+    }
+    Box(
+        modifier = Modifier
+            .widthIn(min = 64.dp)
+            .heightIn(min = 36.dp)
+            .clip(PillShape)
+            .background(colors.surface)
+            .border(1.dp, colors.line, PillShape)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        BasicTextField(
+            value = text,
+            onValueChange = { raw ->
+                val digits = raw.filter { it.isDigit() }.take(5)
+                text = digits
+                digits.toIntOrNull()?.let(onValueChange)
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = colors.text,
+                textAlign = TextAlign.Center,
+            ),
+            cursorBrush = SolidColor(colors.text),
+        )
+    }
+}
+
+/**
+ * Preset daily-goal pills (33 / 100 / 500) plus a "Custom" pill that reveals an
+ * inline number field. Tapping the active pill again clears the goal (null).
+ */
+@Composable
+private fun DailyGoalPicker(selected: Int?, onSelect: (Int?) -> Unit) {
+    val colors = DhikrTheme.colors
+    val presets = listOf(33, 100, 500)
+    var customActive by rememberSaveable { mutableStateOf(false) }
+    var customText by rememberSaveable { mutableStateOf("") }
+
+    LaunchedEffect(selected) {
+        if (selected != null && selected !in presets && !customActive) {
+            customActive = true
+            customText = selected.toString()
+        }
+    }
+
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        presets.forEach { option ->
+            val isSel = !customActive && selected == option
+            GoalPill(option.toString(), isSel) {
+                customActive = false
+                onSelect(if (isSel) null else option)
+            }
+        }
+        GoalPill(stringResource(R.string.settings_daily_goal_custom), customActive) {
+            if (customActive) {
+                customActive = false
+                onSelect(null)
+            } else {
+                customActive = true
+                onSelect(customText.toIntOrNull())
+            }
+        }
+    }
+
+    if (customActive) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp)
+                .heightIn(min = 48.dp)
+                .clip(PillShape)
+                .background(colors.card)
+                .border(1.dp, colors.line, PillShape)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            if (customText.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.settings_daily_goal_custom_placeholder),
+                    fontSize = 14.sp,
+                    color = colors.faint,
+                )
+            }
+            BasicTextField(
+                value = customText,
+                onValueChange = { raw ->
+                    val digits = raw.filter { it.isDigit() }.take(5)
+                    customText = digits
+                    onSelect(digits.toIntOrNull())
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                textStyle = TextStyle(fontSize = 14.sp, color = colors.text),
+                cursorBrush = SolidColor(colors.text),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoalPill(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = DhikrTheme.colors
+    Box(
+        modifier = Modifier
+            .clip(PillShape)
+            .background(if (selected) colors.sage else colors.surface)
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .minTapTarget()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (selected) colors.onSage else colors.text,
+        )
     }
 }

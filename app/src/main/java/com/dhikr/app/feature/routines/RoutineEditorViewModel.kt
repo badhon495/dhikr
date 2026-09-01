@@ -84,7 +84,7 @@ class RoutineEditorViewModel(
             steps = state.steps.mapIndexed { i, step ->
                 if (i == index) step.copy(targetCount = count.coerceAtLeast(1)) else step
             },
-        )
+        ).withCanSave()
     }
 
     fun onMoveStep(index: Int, up: Boolean) = update { state ->
