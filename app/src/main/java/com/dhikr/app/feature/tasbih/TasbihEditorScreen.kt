@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -209,6 +212,16 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
             DailyGoalPicker(
                 selected = state.dailyGoal,
                 onSelect = viewModel::onDailyGoalChange,
+            )
+        }
+
+        if (state.canGenerateBenefits) {
+            BenefitsBlock(
+                text = state.benefitsText,
+                generatedAt = state.benefitsGeneratedAt,
+                loading = state.benefitsLoading,
+                error = state.benefitsError,
+                onGenerate = viewModel::generateBenefits,
             )
         }
 
@@ -444,5 +457,111 @@ private fun GoalPill(label: String, selected: Boolean, onClick: () -> Unit) {
             fontWeight = FontWeight.SemiBold,
             color = if (selected) colors.onSage else colors.text,
         )
+    }
+}
+
+@Composable
+private fun BenefitsBlock(
+    text: String?,
+    generatedAt: Long?,
+    loading: Boolean,
+    error: BenefitsError?,
+    onGenerate: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    LabeledField(stringResource(R.string.tasbih_editor_benefits_label)) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (text != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(ListRowShape)
+                        .background(colors.card)
+                        .border(1.dp, colors.line, ListRowShape)
+                        .padding(16.dp),
+                ) {
+                    Text(text = text, fontSize = 13.5.sp, color = colors.text)
+                }
+                if (generatedAt != null) {
+                    Text(
+                        text = stringResource(
+                            R.string.tasbih_editor_benefits_generated_at,
+                            relativeTimeLabel(generatedAt),
+                        ),
+                        fontSize = 11.5.sp,
+                        color = colors.faint,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+
+            if (error != null) {
+                Text(
+                    text = stringResource(benefitsErrorText(error)),
+                    fontSize = 12.sp,
+                    color = colors.terra,
+                    modifier = Modifier.padding(top = if (text != null) 10.dp else 0.dp),
+                )
+            }
+
+            val buttonLabel = when {
+                loading -> stringResource(R.string.tasbih_editor_benefits_loading)
+                error != null -> stringResource(R.string.tasbih_editor_benefits_retry)
+                text != null -> stringResource(R.string.tasbih_editor_benefits_regenerate)
+                else -> stringResource(R.string.tasbih_editor_benefits_generate)
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .heightIn(min = 48.dp)
+                    .clip(PillShape)
+                    .background(if (loading) colors.track else colors.sage)
+                    .clickable(enabled = !loading, role = Role.Button) { onGenerate() }
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (loading) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            color = colors.text,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = buttonLabel,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (loading) colors.text else colors.onSage,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun benefitsErrorText(error: BenefitsError): Int = when (error) {
+    BenefitsError.NO_KEY -> R.string.tasbih_editor_benefits_no_key
+    BenefitsError.NETWORK -> R.string.tasbih_editor_benefits_err_network
+    BenefitsError.AUTH -> R.string.tasbih_editor_benefits_err_auth
+    BenefitsError.RATE_LIMIT -> R.string.tasbih_editor_benefits_err_rate
+    BenefitsError.BLOCKED -> R.string.tasbih_editor_benefits_err_blocked
+    BenefitsError.MALFORMED -> R.string.tasbih_editor_benefits_err_malformed
+    BenefitsError.UNKNOWN -> R.string.tasbih_editor_benefits_err_unknown
+}
+
+/** "just now" / "5 min ago" / "3 hr ago" / "2 days ago". */
+private fun relativeTimeLabel(epochMillis: Long): String {
+    val delta = System.currentTimeMillis() - epochMillis
+    val min = delta / 60_000
+    val hr = min / 60
+    val days = hr / 24
+    return when {
+        min < 1 -> "just now"
+        min < 60 -> "$min min ago"
+        hr < 24 -> "$hr hr ago"
+        else -> "$days day${if (days == 1L) "" else "s"} ago"
     }
 }

@@ -266,7 +266,12 @@ fun DhikrApp(
                 ) { backStackEntry ->
                     val editingId = backStackEntry.arguments?.getString("id")
                     val viewModel: TasbihEditorViewModel = viewModel(
-                        factory = TasbihEditorViewModel.Factory(tasbihRepository, preferencesRepository, editingId),
+                        factory = TasbihEditorViewModel.Factory(
+                            tasbihRepository,
+                            preferencesRepository,
+                            editingId,
+                            benefitsRepository,
+                        ),
                     )
                     TasbihEditorScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }

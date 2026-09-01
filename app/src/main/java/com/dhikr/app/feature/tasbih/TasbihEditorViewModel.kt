@@ -3,6 +3,8 @@ package com.dhikr.app.feature.tasbih
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dhikr.app.core.ai.BenefitsRepository
+import com.dhikr.app.core.ai.GeminiResult
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.AppPreferencesRepository
@@ -13,6 +15,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+enum class BenefitsError { NO_KEY, NETWORK, AUTH, RATE_LIMIT, BLOCKED, MALFORMED, UNKNOWN }
+
+internal fun GeminiResult.Kind.toBenefitsError(): BenefitsError = when (this) {
+    GeminiResult.Kind.NO_KEY -> BenefitsError.NO_KEY
+    GeminiResult.Kind.NETWORK -> BenefitsError.NETWORK
+    GeminiResult.Kind.AUTH -> BenefitsError.AUTH
+    GeminiResult.Kind.RATE_LIMIT -> BenefitsError.RATE_LIMIT
+    GeminiResult.Kind.BLOCKED -> BenefitsError.BLOCKED
+    GeminiResult.Kind.MALFORMED -> BenefitsError.MALFORMED
+    GeminiResult.Kind.UNKNOWN -> BenefitsError.UNKNOWN
+}
 
 data class TasbihEditorUiState(
     val isEditingExisting: Boolean = false,
@@ -27,6 +41,11 @@ data class TasbihEditorUiState(
     // editor requires before a save is allowed.
     val requiredScript: CounterScript = CounterScript.PRONUNCIATION,
     val canSave: Boolean = false,
+    val canGenerateBenefits: Boolean = false,
+    val benefitsText: String? = null,
+    val benefitsGeneratedAt: Long? = null,
+    val benefitsLoading: Boolean = false,
+    val benefitsError: BenefitsError? = null,
 ) {
     val arabicRequired: Boolean get() = requiredScript == CounterScript.ARABIC
     val pronunciationRequired: Boolean get() = requiredScript == CounterScript.PRONUNCIATION
@@ -36,6 +55,7 @@ class TasbihEditorViewModel(
     private val repository: TasbihRepository,
     private val preferencesRepository: AppPreferencesRepository,
     private val editingId: String? = null,
+    private val benefitsRepository: BenefitsRepository? = null,
 ) : ViewModel() {
 
     private var loadedEntity: TasbihEntity? = null
@@ -57,6 +77,9 @@ class TasbihEditorViewModel(
                             note = entity.note,
                             lapTarget = entity.lapTarget,
                             dailyGoal = entity.dailyGoal,
+                            canGenerateBenefits = benefitsRepository != null,
+                            benefitsText = entity.benefitsText,
+                            benefitsGeneratedAt = entity.benefitsGeneratedAt,
                         )
                     }
                     recomputeCanSave()
@@ -120,6 +143,30 @@ class TasbihEditorViewModel(
         }
     }
 
+    fun generateBenefits() {
+        val repo = benefitsRepository ?: return
+        val id = editingId ?: return
+        if (_uiState.value.benefitsLoading) return
+        viewModelScope.launch {
+            update { it.copy(benefitsLoading = true, benefitsError = null) }
+            when (val result = repo.generate(id)) {
+                is GeminiResult.Success -> update {
+                    it.copy(
+                        benefitsLoading = false,
+                        benefitsText = result.text,
+                        benefitsGeneratedAt = System.currentTimeMillis(),
+                    )
+                }
+                is GeminiResult.Error -> update {
+                    it.copy(
+                        benefitsLoading = false,
+                        benefitsError = result.kind.toBenefitsError(),
+                    )
+                }
+            }
+        }
+    }
+
     private inline fun updateField(block: (TasbihEditorUiState) -> TasbihEditorUiState) {
         update(block)
         recomputeCanSave()
@@ -143,9 +190,10 @@ class TasbihEditorViewModel(
         private val repository: TasbihRepository,
         private val preferencesRepository: AppPreferencesRepository,
         private val editingId: String? = null,
+        private val benefitsRepository: BenefitsRepository? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TasbihEditorViewModel(repository, preferencesRepository, editingId) as T
+            TasbihEditorViewModel(repository, preferencesRepository, editingId, benefitsRepository) as T
     }
 }
