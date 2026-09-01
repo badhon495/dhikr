@@ -57,7 +57,7 @@
 
 Note: `format` and `version` have **no default** — a JSON object missing either fails to deserialize, which the codec turns into `ShareFormatException`. This is why `{}` is rejected.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `app/src/test/java/com/dhikr/app/core/share/RoutineShareModelsTest.kt`:
 
@@ -114,12 +114,12 @@ class RoutineShareModelsTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareModelsTest"`
 Expected: FAIL — `RoutineShareFile` unresolved.
 
-- [ ] **Step 3: Write the models file**
+- [x] **Step 3: Write the models file**
 
 `app/src/main/java/com/dhikr/app/core/share/RoutineShareModels.kt`:
 
@@ -217,12 +217,12 @@ data class PreviewRoutine(val name: String, val steps: List<PreviewStep>)
 data class PreviewStep(val tasbihName: String, val targetCount: Int)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareModelsTest"`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/RoutineShareModels.kt app/src/test/java/com/dhikr/app/core/share/RoutineShareModelsTest.kt
@@ -243,7 +243,7 @@ git commit -m "feat: add routine-share payload models"
 
 No test: this file is a three-line platform wrapper. It is kept separate precisely so the codec (Task 3) can be tested with a `java.util.Base64`-backed double. `android.util.Base64` is stubbed to return-default-values in unit tests (`testOptions.unitTests.isReturnDefaultValues = true`), so calling `AndroidBase64` from a test would silently return junk — the codec test must inject its own port.
 
-- [ ] **Step 1: Write the file**
+- [x] **Step 1: Write the file**
 
 `app/src/main/java/com/dhikr/app/core/share/Base64Port.kt`:
 
@@ -267,12 +267,12 @@ object AndroidBase64 : Base64Port {
 }
 ```
 
-- [ ] **Step 2: Verify it compiles**
+- [x] **Step 2: Verify it compiles**
 
 Run: `./gradlew :app:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/Base64Port.kt
@@ -294,7 +294,7 @@ git commit -m "feat: add Base64Port seam for the routine-share codec"
   - `fun encodeText(file: RoutineShareFile): String` — `SHARE_TEXT_PREFIX` + `base64.encode(gzip(minified JSON bytes))`, single line.
   - `fun decode(raw: String): RoutineShareFile` — trims; if it starts with `SHARE_TEXT_PREFIX`, strips + base64-decodes + gunzips then parses; if it starts with `"DHIKR-ROUTINE-"` but not the exact v1 prefix, throws; otherwise parses `raw` as JSON. Validates `format == SHARE_FORMAT` and `version <= SHARE_VERSION`. Every failure path throws `ShareFormatException`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `app/src/test/java/com/dhikr/app/core/share/RoutineShareCodecTest.kt`:
 
@@ -391,12 +391,12 @@ class RoutineShareCodecTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareCodecTest"`
 Expected: FAIL — `RoutineShareCodec` unresolved.
 
-- [ ] **Step 3: Write the codec**
+- [x] **Step 3: Write the codec**
 
 `app/src/main/java/com/dhikr/app/core/share/RoutineShareCodec.kt`:
 
@@ -475,12 +475,12 @@ class RoutineShareCodec(private val base64: Base64Port) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareCodecTest"`
 Expected: PASS (8 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/RoutineShareCodec.kt app/src/test/java/com/dhikr/app/core/share/RoutineShareCodecTest.kt
@@ -501,7 +501,7 @@ git commit -m "feat: add routine-share codec (file + text forms)"
   `fun build(routines: List<RoutineWithSteps>, customTasbih: List<TasbihEntity>, appVersionName: String, now: Long): RoutineShareFile`
   — strips ids / per-user state, re-normalizes each routine's `stepOrder` to `0..n-1` in `stepOrder` order, bundles exactly the passed `customTasbih`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `app/src/test/java/com/dhikr/app/core/share/RoutineShareBuilderTest.kt`:
 
@@ -565,12 +565,12 @@ class RoutineShareBuilderTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareBuilderTest"`
 Expected: FAIL — `RoutineShareBuilder` unresolved.
 
-- [ ] **Step 3: Write the builder**
+- [x] **Step 3: Write the builder**
 
 `app/src/main/java/com/dhikr/app/core/share/RoutineShareBuilder.kt`:
 
@@ -630,12 +630,12 @@ object RoutineShareBuilder {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineShareBuilderTest"`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/RoutineShareBuilder.kt app/src/test/java/com/dhikr/app/core/share/RoutineShareBuilderTest.kt
@@ -659,7 +659,7 @@ git commit -m "feat: add routine-share builder"
   - Per bundled tasbih: id already in `existingTasbihIds` → reuse (not in `tasbihInserts`, counted in `tasbihReused`); else insert as `TasbihEntity(isBuiltIn = false, isFavorite = false, createdAt = now, updatedAt = now, ...)`.
   - Per routine: `RoutineEntity` with `newRoutineId()`, `isPreset = false`, `isFavorite = false`, reminders default, `createdAt = updatedAt = now`, `name = name.trim()`. Steps become `RoutineStepEntity` (default `stepId`), `stepOrder` re-normalized to `0..n-1` **in payload array order**, `targetCount` from payload.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `app/src/test/java/com/dhikr/app/core/share/RoutineImportPlannerTest.kt`:
 
@@ -810,12 +810,12 @@ class RoutineImportPlannerTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineImportPlannerTest"`
 Expected: FAIL — `RoutineImportPlanner` unresolved.
 
-- [ ] **Step 3: Write the planner**
+- [x] **Step 3: Write the planner**
 
 `app/src/main/java/com/dhikr/app/core/share/RoutineImportPlanner.kt`:
 
@@ -917,12 +917,12 @@ object RoutineImportPlanner {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.share.RoutineImportPlannerTest"`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/RoutineImportPlanner.kt app/src/test/java/com/dhikr/app/core/share/RoutineImportPlannerTest.kt
@@ -948,7 +948,7 @@ git commit -m "feat: add routine-import planner"
 
 No automated test (Global Constraints). Verified by build + Task 12's manual smoke.
 
-- [ ] **Step 1: Add `RoutineDao.getManyWithSteps`**
+- [x] **Step 1: Add `RoutineDao.getManyWithSteps`**
 
 In `RoutineDao.kt`, after the existing `getWithSteps` (around line 31):
 
@@ -958,7 +958,7 @@ In `RoutineDao.kt`, after the existing `getWithSteps` (around line 31):
     suspend fun getManyWithSteps(ids: List<String>): List<RoutineWithSteps>
 ```
 
-- [ ] **Step 2: Add `TasbihDao.getByIds`**
+- [x] **Step 2: Add `TasbihDao.getByIds`**
 
 In `TasbihDao.kt`, after `getAllCustom` (around line 51):
 
@@ -967,7 +967,7 @@ In `TasbihDao.kt`, after `getAllCustom` (around line 51):
     suspend fun getByIds(ids: List<String>): List<TasbihEntity>
 ```
 
-- [ ] **Step 3: Write the repository**
+- [x] **Step 3: Write the repository**
 
 `app/src/main/java/com/dhikr/app/core/share/RoutineShareRepository.kt`:
 
@@ -1063,12 +1063,12 @@ class RoutineShareRepository(
 }
 ```
 
-- [ ] **Step 4: Verify build**
+- [x] **Step 4: Verify build**
 
 Run: `./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL (Room KSP regenerates the DAOs).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/share/RoutineShareRepository.kt app/src/main/java/com/dhikr/app/core/database/dao/RoutineDao.kt app/src/main/java/com/dhikr/app/core/database/dao/TasbihDao.kt
@@ -1094,7 +1094,7 @@ git commit -m "feat: add RoutineShareRepository + supporting DAO reads"
 
 No automated test (Android/ViewModel — verified by build, consistent with the repo of pure logic beneath it). Mirrors `BackupViewModel`'s Context-free split.
 
-- [ ] **Step 1: Write the ViewModel**
+- [x] **Step 1: Write the ViewModel**
 
 `app/src/main/java/com/dhikr/app/feature/routines/RoutineShareViewModel.kt`:
 
@@ -1238,12 +1238,12 @@ class RoutineShareViewModel(
 }
 ```
 
-- [ ] **Step 2: Verify build**
+- [x] **Step 2: Verify build**
 
 Run: `./gradlew :app:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/routines/RoutineShareViewModel.kt
@@ -1268,7 +1268,7 @@ git commit -m "feat: add RoutineShareViewModel"
 
 No automated test (verified by build).
 
-- [ ] **Step 1: Write the ViewModel**
+- [x] **Step 1: Write the ViewModel**
 
 `app/src/main/java/com/dhikr/app/feature/routines/RoutineImportViewModel.kt`:
 
@@ -1353,12 +1353,12 @@ class RoutineImportViewModel(
 }
 ```
 
-- [ ] **Step 2: Verify build**
+- [x] **Step 2: Verify build**
 
 Run: `./gradlew :app:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/routines/RoutineImportViewModel.kt
@@ -1377,7 +1377,7 @@ git commit -m "feat: add RoutineImportViewModel"
 - Consumes: `RoutineImportViewModel` (Task 8).
 - Produces: `@Composable fun RoutineImportScreen(viewModel: RoutineImportViewModel, onClose: () -> Unit)` — renders the four states, calls `viewModel.confirm()` on Import, calls `onClose()` on Cancel and on the Done button.
 
-- [ ] **Step 1: Add strings**
+- [x] **Step 1: Add strings**
 
 In `app/src/main/res/values/strings.xml`, after the `routines_favorite_state_off` line (line 110):
 
@@ -1411,7 +1411,7 @@ In `app/src/main/res/values/strings.xml`, after the `routines_favorite_state_off
     <string name="routines_import_done_button">Done</string>
 ```
 
-- [ ] **Step 2: Write the screen**
+- [x] **Step 2: Write the screen**
 
 `app/src/main/java/com/dhikr/app/feature/routines/RoutineImportScreen.kt`:
 
@@ -1630,12 +1630,12 @@ private fun SecondaryButton(label: String, modifier: Modifier = Modifier, onClic
 
 Note: if `DhikrTheme.colors` has no `onSage` / `sage` / `surface` / `card` / `terra` / `dim` / `faint` member, check `app/src/main/java/com/dhikr/app/ui/theme/` and use the nearest equivalent the other screens use (`RoutinesScreen.kt` uses all of these names, so they exist). Same for `PillShape`, `headingSemantics()`, `minTapTarget()`.
 
-- [ ] **Step 3: Verify build**
+- [x] **Step 3: Verify build**
 
 Run: `./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/routines/RoutineImportScreen.kt app/src/main/res/values/strings.xml
@@ -1655,7 +1655,7 @@ git commit -m "feat: add routine import preview screen"
 
 The import entry is added in Task 11 to keep share and import independently reviewable.
 
-- [ ] **Step 1: Add the `shareViewModel` parameter and `onShare` to the action menu**
+- [x] **Step 1: Add the `shareViewModel` parameter and `onShare` to the action menu**
 
 Change the signature:
 
@@ -1699,7 +1699,7 @@ Inside its `Column`, between the Edit and Delete rows, add:
                 )
 ```
 
-- [ ] **Step 2: Wire the action-menu `onShare` and add share dialog state**
+- [x] **Step 2: Wire the action-menu `onShare` and add share dialog state**
 
 In the `RoutinesScreen` body, add state near `actionMenuTarget`:
 
@@ -1724,7 +1724,7 @@ In the `actionMenuTarget?.let { ... RoutineActionMenu(...) }` call, add:
             },
 ```
 
-- [ ] **Step 3: Add the checklist dialog + result sheet**
+- [x] **Step 3: Add the checklist dialog + result sheet**
 
 After the `deleteConfirmTarget?.let { ... }` block, add:
 
@@ -1792,7 +1792,7 @@ After the `deleteConfirmTarget?.let { ... }` block, add:
     }
 ```
 
-- [ ] **Step 4: Add the dialog composables + Android helpers**
+- [x] **Step 4: Add the dialog composables + Android helpers**
 
 At the bottom of `RoutinesScreen.kt`:
 
@@ -1959,14 +1959,14 @@ private fun copyToClipboard(context: Context, text: String) {
 
 Add the remaining imports to the file: `androidx.compose.material3.AlertDialog` (present), `androidx.compose.foundation.layout.heightIn` (present), `androidx.compose.foundation.lazy.LazyColumn` (present).
 
-- [ ] **Step 5: Verify build**
+- [x] **Step 5: Verify build**
 
 Run: `./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL. (`DhikrApp.kt` will not compile yet because `RoutinesScreen` now needs `shareViewModel` — that wiring is Task 11. If splitting across sessions, do Step 5's full build at the end of Task 11 instead and only `compileDebugKotlin` the isolated screen file here is not possible; accept a red build between Task 10 and Task 11, or land them as one commit.)
 
 **Recommendation:** land Task 10 + Task 11 as a single reviewed unit — the `RoutinesScreen` signature change forces `DhikrApp.kt` to change with it.
 
-- [ ] **Step 6: Commit (with Task 11) — see Task 11 Step 8.**
+- [x] **Step 6: Commit (with Task 11) — see Task 11 Step 8.**
 
 ---
 
@@ -1983,7 +1983,7 @@ Expected: BUILD SUCCESSFUL. (`DhikrApp.kt` will not compile yet because `Routine
 - Consumes: `RoutineImportScreen` (Task 9), `RoutineImportViewModel` (Task 8), `RoutineShareViewModel` (Task 7), `RoutineShareRepository` + `RoutineShareCodec` + `AndroidBase64` (Tasks 2/3/6).
 - Produces: `RoutinesScreen` gains `onImportRequested: (suspend () -> String) -> Unit`. `DhikrApp` gains `pendingShareUri: android.net.Uri? = null`, `onPendingShareConsumed: () -> Unit = {}`.
 
-- [ ] **Step 1: `file_paths.xml`**
+- [x] **Step 1: `file_paths.xml`**
 
 `app/src/main/res/xml/file_paths.xml`:
 
@@ -1994,7 +1994,7 @@ Expected: BUILD SUCCESSFUL. (`DhikrApp.kt` will not compile yet because `Routine
 </paths>
 ```
 
-- [ ] **Step 2: Manifest**
+- [x] **Step 2: Manifest**
 
 In `app/src/main/AndroidManifest.xml`, add to `MainActivity`'s element a second `intent-filter` (after the `MAIN`/`LAUNCHER` one, still inside `<activity>`):
 
@@ -2022,7 +2022,7 @@ And add a `<provider>` inside `<application>` (after the last `<receiver>`):
         </provider>
 ```
 
-- [ ] **Step 3: `MainActivity.pendingShareUri`**
+- [x] **Step 3: `MainActivity.pendingShareUri`**
 
 In `MainActivity.kt`:
 
@@ -2057,7 +2057,7 @@ In the `DhikrApp(...)` call, add:
                 onPendingShareConsumed = { pendingShareUri = null },
 ```
 
-- [ ] **Step 4: `DhikrApp` — repo wiring + app-version helper**
+- [x] **Step 4: `DhikrApp` — repo wiring + app-version helper**
 
 In `DhikrApp.kt` add imports:
 
@@ -2109,7 +2109,7 @@ After `backupRepository`:
 
 (Then in the `ROUTE_SETTINGS` composable, replace its local `appVersion` `remember { ... }` with the hoisted `appVersionName` to avoid duplication — pass `appVersionName` where it read `appVersion`.)
 
-- [ ] **Step 5: `DhikrApp` — pendingShareUri effect**
+- [x] **Step 5: `DhikrApp` — pendingShareUri effect**
 
 Add near the other `LaunchedEffect`s:
 
@@ -2129,7 +2129,7 @@ Add near the other `LaunchedEffect`s:
         }
 ```
 
-- [ ] **Step 6: `DhikrApp` — routines composable + import route**
+- [x] **Step 6: `DhikrApp` — routines composable + import route**
 
 Replace the `composable(ROUTE_ROUTINES) { ... }` block:
 
@@ -2177,7 +2177,7 @@ Replace the `composable(ROUTE_ROUTINES) { ... }` block:
                 }
 ```
 
-- [ ] **Step 7: `RoutinesScreen` — import entry in the header**
+- [x] **Step 7: `RoutinesScreen` — import entry in the header**
 
 Add the parameter:
 
@@ -2359,12 +2359,12 @@ Add the import menu + paste dialog near the other dialogs:
     }
 ```
 
-- [ ] **Step 8: Verify full build + tests**
+- [x] **Step 8: Verify full build + tests**
 
 Run: `./gradlew :app:assembleDebug :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all share tests green (Tasks 1/3/4/5), existing tests still green.
 
-- [ ] **Step 9: Commit (Tasks 10 + 11 together)**
+- [x] **Step 9: Commit (Tasks 10 + 11 together)**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/routines/RoutinesScreen.kt \
@@ -2381,16 +2381,16 @@ git commit -m "feat: wire routine share + import into the Routines screen"
 
 **Files:** none (verification + docs)
 
-- [ ] **Step 1: Clean build + all tests + lint**
+- [x] **Step 1: Clean build + all tests + lint**
 
 Run: `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug`
 Expected: BUILD SUCCESSFUL. Address any `lint` error introduced by the new manifest / xml / strings (unused-string warnings are acceptable if a string is genuinely referenced from code).
 
-- [ ] **Step 2: Confirm the "About" claims still hold**
+- [x] **Step 2: Confirm the "About" claims still hold**
 
 Read `app/src/main/res/values/strings.xml` settings-About entries ("works offline", "no account", "never uploads"). Sharing writes a local cache file the user explicitly sends and contacts no server — the claims stay accurate. No change needed; note it in the task report.
 
-- [ ] **Step 3: Manual two-device smoke (record results in the task report)**
+- [x] **Step 3: Manual two-device smoke (record results in the task report)**
 
 Two emulators, or one device sharing to itself via Files:
 1. Create a routine with at least one custom-tasbih step.
@@ -2399,11 +2399,11 @@ Two emulators, or one device sharing to itself via Files:
 4. Import the same payload a **second** time → a second routine is created, and no duplicate tasbih is added ("Adds 0 new tasbih" / `tasbihReused = 1`).
 5. Feed the importer a non-routine `.json` → `"This isn't a Dhikr routine file."`, no DB change.
 
-- [ ] **Step 4: Update the plan checkboxes and memory**
+- [x] **Step 4: Update the plan checkboxes and memory**
 
 Mark this plan's tasks complete. Update `C:\Users\azama\.claude\projects\d--Badhon-own-dhikr\memory\dhikr-project-status.md` to record Phase 6 (routine sharing) as implemented, QR sharing still deferred.
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git add -A

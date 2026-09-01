@@ -97,6 +97,11 @@ fun RoutinesScreen(
     var pasteDialogOpen by remember { mutableStateOf(false) }
     var pasteText by remember { mutableStateOf("") }
 
+    // Resolved at composition (configuration-aware) so the click lambdas below
+    // don't query resources off a bare Context.
+    val shareFileErrorText = stringResource(R.string.routines_share_file_error)
+    val shareCopiedText = stringResource(R.string.routines_share_copied)
+
     val pickFileLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
@@ -313,13 +318,13 @@ fun RoutinesScreen(
                     val ok = sendRoutineFile(context, status.payload)
                     shareDialogOpen = false
                     shareViewModel.dismiss()
-                    if (!ok) shareSnack = context.getString(R.string.routines_share_file_error)
+                    if (!ok) shareSnack = shareFileErrorText
                 },
                 onCopyText = {
                     copyToClipboard(context, status.payload.clipboardText)
                     shareDialogOpen = false
                     shareViewModel.dismiss()
-                    shareSnack = context.getString(R.string.routines_share_copied)
+                    shareSnack = shareCopiedText
                 },
                 onDismiss = {
                     shareDialogOpen = false
