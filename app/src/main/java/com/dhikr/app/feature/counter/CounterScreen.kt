@@ -149,6 +149,11 @@ fun CounterScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
                 viewModel.flushSession()
+                // Push the latest count to any placed widgets. flushSession()
+                // writes DataStore synchronously enough that the subsequent
+                // provider read (goAsync) sees it; a lost race just means the
+                // widget catches up on its next 30-min tick.
+                com.dhikr.app.core.widget.DhikrWidgets.refreshAll(view.context.applicationContext)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
