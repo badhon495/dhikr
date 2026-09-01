@@ -35,7 +35,10 @@ import com.dhikr.app.core.database.entity.TasbihEntity
     // fallbackToDestructiveMigration rebuilds + reseeds.
     // v6: added routine_progress table (per-day in-progress routine position).
     // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 6,
+    // v7: added RoutineEntity.reminderEnabled / reminderMinuteOfDay /
+    // reminderDays (per-routine local reminder). No hand migration —
+    // fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 7,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

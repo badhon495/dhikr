@@ -15,4 +15,9 @@ data class RoutineEntity(
     val isFavorite: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
+    val reminderEnabled: Boolean = false,
+    /** Local wall-clock minute of day, 0..1439. */
+    val reminderMinuteOfDay: Int = 0,
+    /** 7-bit weekday mask; bit 0 = Sunday .. bit 6 = Saturday. 0 = every day. */
+    val reminderDays: Int = 0,
 )

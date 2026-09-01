@@ -79,4 +79,16 @@ interface RoutineDao {
 
     @Query("SELECT COUNT(*) FROM routine")
     suspend fun count(): Int
+
+    @Query(
+        "UPDATE routine SET reminderEnabled = :enabled, reminderMinuteOfDay = :minuteOfDay, " +
+            "reminderDays = :days, updatedAt = :now WHERE id = :id"
+    )
+    suspend fun setReminder(id: String, enabled: Boolean, minuteOfDay: Int, days: Int, now: Long)
+
+    @Query("SELECT * FROM routine WHERE reminderEnabled = 1")
+    suspend fun routinesWithRemindersRaw(): List<RoutineEntity>
+
+    @Query("SELECT * FROM routine WHERE id = :id LIMIT 1")
+    suspend fun getRoutineRaw(id: String): RoutineEntity?
 }

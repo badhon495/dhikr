@@ -56,6 +56,14 @@ class RoutineRepository(
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.deleteRoutine(routine)
 
+    suspend fun setReminder(routineId: String, enabled: Boolean, minuteOfDay: Int, daysMask: Int) {
+        routineDao.setReminder(routineId, enabled, minuteOfDay, daysMask, System.currentTimeMillis())
+    }
+
+    suspend fun routinesWithReminders(): List<RoutineEntity> = routineDao.routinesWithRemindersRaw()
+
+    suspend fun getRoutine(id: String): RoutineEntity? = routineDao.getRoutineRaw(id)
+
     suspend fun toggleFavorite(id: String, currentlyFavorite: Boolean) {
         routineDao.setFavorite(id, !currentlyFavorite)
     }
