@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -60,6 +61,7 @@ object ReminderNotifications {
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_reminder)
+            .setLargeIcon(launcherBitmap(context))
             .setContentTitle(context.getString(R.string.reminder_notification_title, routineName))
             .setContentText(context.getString(R.string.reminder_notification_body))
             .setAutoCancel(true)
@@ -74,5 +76,21 @@ object ReminderNotifications {
 
     fun cancel(context: Context, routineId: String) {
         NotificationManagerCompat.from(context).cancel(routineId.hashCode())
+    }
+
+    /**
+     * The full-colour launcher icon as a bitmap, for [NotificationCompat.Builder.setLargeIcon]
+     * — shown in the expanded notification body. (The status-bar small icon
+     * can only ever be a white silhouette.)
+     */
+    private fun launcherBitmap(context: Context): android.graphics.Bitmap? {
+        val drawable = ContextCompat.getDrawable(context, R.mipmap.ic_launcher) ?: return null
+        if (drawable is BitmapDrawable) return drawable.bitmap
+        val size = drawable.intrinsicWidth.takeIf { it > 0 } ?: 108
+        val bitmap = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
     }
 }
