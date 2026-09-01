@@ -75,7 +75,7 @@
   - `TasbihDao.updateBenefits(id: String, text: String, generatedAt: Long)` — suspend.
   - `TasbihRepository.saveBenefits(id: String, text: String, generatedAt: Long)` — suspend.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/test/java/com/dhikr/app/core/database/TasbihBenefitsColumnsTest.kt`:
 
@@ -109,12 +109,12 @@ class TasbihBenefitsColumnsTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.database.TasbihBenefitsColumnsTest"`
 Expected: FAIL — compilation error, `benefitsText` / `benefitsGeneratedAt` unresolved.
 
-- [ ] **Step 3: Add the dependency and permission**
+- [x] **Step 3: Add the dependency and permission**
 
 In `gradle/libs.versions.toml`, add to `[versions]` (alphabetical-ish, after `room`):
 
@@ -142,7 +142,7 @@ In `app/src/main/AndroidManifest.xml`, add with the other `<uses-permission>` li
     <uses-permission android:name="android.permission.INTERNET" />
 ```
 
-- [ ] **Step 4: Add the entity columns**
+- [x] **Step 4: Add the entity columns**
 
 In `app/src/main/java/com/dhikr/app/core/database/entity/TasbihEntity.kt`, add two properties to the `data class TasbihEntity` constructor, immediately after `val isFavorite: Boolean = false,`:
 
@@ -153,7 +153,7 @@ In `app/src/main/java/com/dhikr/app/core/database/entity/TasbihEntity.kt`, add t
     val benefitsGeneratedAt: Long? = null,
 ```
 
-- [ ] **Step 5: Bump the database version**
+- [x] **Step 5: Bump the database version**
 
 In `app/src/main/java/com/dhikr/app/core/database/AppDatabase.kt`, add after the `// v8:` comment lines (before `version = 8,`):
 
@@ -165,7 +165,7 @@ In `app/src/main/java/com/dhikr/app/core/database/AppDatabase.kt`, add after the
 
 Change `version = 8,` to `version = 9,`.
 
-- [ ] **Step 6: Add the DAO and repository methods**
+- [x] **Step 6: Add the DAO and repository methods**
 
 In `app/src/main/java/com/dhikr/app/core/database/dao/TasbihDao.kt`, add after `setFavorite`:
 
@@ -185,17 +185,17 @@ In `app/src/main/java/com/dhikr/app/core/database/TasbihRepository.kt`, add afte
         tasbihDao.updateBenefits(id, text, generatedAt)
 ```
 
-- [ ] **Step 7: Run test to verify it passes**
+- [x] **Step 7: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.database.TasbihBenefitsColumnsTest"`
 Expected: PASS (both tests).
 
-- [ ] **Step 8: Verify the module still compiles**
+- [x] **Step 8: Verify the module still compiles**
 
 Run: `./gradlew :app:compileDebugKotlin`
 Expected: BUILD SUCCESSFUL (Room KSP processes the new column + query without error).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add gradle/libs.versions.toml app/build.gradle.kts app/src/main/AndroidManifest.xml \
@@ -234,7 +234,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   - `internal fun buildRequestBody(prompt: String): String` — pure, returns the JSON string.
   - `internal const val GEMINI_MODEL = "gemini-2.0-flash"`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/test/java/com/dhikr/app/core/ai/GeminiResponseParsingTest.kt`:
 
@@ -335,12 +335,12 @@ class GeminiResponseParsingTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.ai.GeminiResponseParsingTest"`
 Expected: FAIL — `parseGeminiResponse` / `buildRequestBody` / `GeminiResult` unresolved.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `app/src/main/java/com/dhikr/app/core/ai/GeminiClient.kt`:
 
@@ -476,12 +476,12 @@ class GeminiClient {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.ai.GeminiResponseParsingTest"`
 Expected: PASS (all 11 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/ai/GeminiClient.kt \
@@ -511,7 +511,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
     - `suspend fun setGeminiKey(value: String?)` — `null` or blank removes the entry.
     - `val hasKey: Boolean` — `true` when `getGeminiKey() != null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/androidTest/java/com/dhikr/app/core/ai/SecureKeyStoreTest.kt`:
 
@@ -569,7 +569,7 @@ class SecureKeyStoreTest {
 }
 ```
 
-- [ ] **Step 2: Check the androidTest deps exist**
+- [x] **Step 2: Check the androidTest deps exist**
 
 Run: `grep -n "androidTest\|espresso\|test.ext\|test.core\|runner" app/build.gradle.kts`
 Expected: If `androidx.test.ext:junit` and `androidx.test:core` are NOT already present as `androidTestImplementation`, add them. Add to `gradle/libs.versions.toml` `[versions]`:
@@ -596,12 +596,12 @@ androidx-test-core = { group = "androidx.test", name = "core", version.ref = "an
 
 Also confirm `defaultConfig` has `testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"`; add it if missing (and add `androidTestImplementation("androidx.test:runner:1.6.2")` via a `libs` entry if the runner class is not resolvable).
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `./gradlew :app:compileDebugAndroidTestKotlin`
 Expected: FAIL — `SecureKeyStore` unresolved.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 Create `app/src/main/java/com/dhikr/app/core/ai/SecureKeyStore.kt`:
 
@@ -654,12 +654,12 @@ class SecureKeyStore(context: Context) {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `./gradlew :app:connectedDebugAndroidTest --tests "com.dhikr.app.core.ai.SecureKeyStoreTest"`
 Expected: PASS (needs a connected device/emulator). If no device is available, run `./gradlew :app:compileDebugAndroidTestKotlin` and note the instrumented test as deferred to CI/device.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/ai/SecureKeyStore.kt \
@@ -696,7 +696,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   - `class GeminiClient : GeminiApi` (add `: GeminiApi` and `override` to the existing method).
   - `BenefitsRepository` depends on `GeminiApi`, not the concrete class.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/test/java/com/dhikr/app/core/ai/BenefitsRepositoryTest.kt`:
 
@@ -815,12 +815,12 @@ class BenefitsRepositoryTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.ai.BenefitsRepositoryTest"`
 Expected: FAIL — `BenefitsRepository`, `GeminiApi` unresolved.
 
-- [ ] **Step 3: Extract `GeminiApi` from `GeminiClient`**
+- [x] **Step 3: Extract `GeminiApi` from `GeminiClient`**
 
 In `app/src/main/java/com/dhikr/app/core/ai/GeminiClient.kt`, above `class GeminiClient`:
 
@@ -833,7 +833,7 @@ interface GeminiApi {
 
 Change the class declaration to `class GeminiClient : GeminiApi {` and mark the method `override suspend fun generateContent(...)`.
 
-- [ ] **Step 4: Write `BenefitsRepository`**
+- [x] **Step 4: Write `BenefitsRepository`**
 
 Create `app/src/main/java/com/dhikr/app/core/ai/BenefitsRepository.kt`:
 
@@ -906,17 +906,17 @@ internal fun buildBenefitsPrompt(tasbih: TasbihEntity): String = buildString {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.core.ai.BenefitsRepositoryTest"`
 Expected: PASS (6 tests).
 
-- [ ] **Step 6: Run the full unit-test suite**
+- [x] **Step 6: Run the full unit-test suite**
 
 Run: `./gradlew :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL — existing tests plus the three new AI test classes.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/core/ai/BenefitsRepository.kt \
@@ -950,7 +950,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   - `SettingsViewModel.clearGeminiKey()`
   - `SettingsViewModel.Factory` gains trailing param `secureKeyStore: SecureKeyStore`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/test/java/com/dhikr/app/feature/settings/SettingsKeyStateTest.kt`:
 
@@ -1009,12 +1009,12 @@ class SettingsKeyStateTest {
 > This test locks the trim/clear contract the ViewModel relies on. The
 > ViewModel wiring itself is verified by Step 5's compile + manual smoke.
 
-- [ ] **Step 2: Run test to verify it fails / passes trivially**
+- [x] **Step 2: Run test to verify it fails / passes trivially**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.feature.settings.SettingsKeyStateTest"`
 Expected: PASS (it documents the contract; it has no production dependency yet). Proceed.
 
-- [ ] **Step 3: Update `SettingsViewModel`**
+- [x] **Step 3: Update `SettingsViewModel`**
 
 In `SettingsViewModel.kt`:
 
@@ -1083,7 +1083,7 @@ Update `Factory`:
     }
 ```
 
-- [ ] **Step 4: Add the strings**
+- [x] **Step 4: Add the strings**
 
 In `app/src/main/res/values/strings.xml`, add near the other `settings_*` strings:
 
@@ -1099,7 +1099,7 @@ In `app/src/main/res/values/strings.xml`, add near the other `settings_*` string
     <string name="settings_ai_key_clear">Remove</string>
 ```
 
-- [ ] **Step 5: Add the "AI features" section to `SettingsScreen`**
+- [x] **Step 5: Add the "AI features" section to `SettingsScreen`**
 
 In `SettingsScreen.kt`, add a new section between the Accessibility and Backup sections (after line ~184):
 
@@ -1232,7 +1232,7 @@ private fun KeyActionPill(
 
 Add any missing imports to `SettingsScreen.kt`: `androidx.compose.foundation.text.KeyboardOptions`, `androidx.compose.ui.text.input.KeyboardType`, `androidx.compose.ui.text.TextStyle`, `androidx.compose.ui.graphics.SolidColor`, `androidx.compose.ui.graphics.Color`, `androidx.compose.foundation.layout.Row`, `androidx.compose.runtime.mutableStateOf`, `androidx.compose.runtime.saveable.rememberSaveable`, `androidx.compose.runtime.getValue`, `androidx.compose.runtime.setValue`. (Check which are already imported; `ListRowShape`, `PillShape`, `minTapTarget` already are.)
 
-- [ ] **Step 6: Wire the store in `DhikrApp.kt`**
+- [x] **Step 6: Wire the store in `DhikrApp.kt`**
 
 In `DhikrApp.kt`:
 
@@ -1254,12 +1254,12 @@ In the `composable(ROUTE_SETTINGS)` block, update the factory call:
                     )
 ```
 
-- [ ] **Step 7: Compile and run unit tests**
+- [x] **Step 7: Compile and run unit tests**
 
 Run: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/settings/SettingsViewModel.kt \
@@ -1299,7 +1299,7 @@ Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
   - `TasbihEditorViewModel.generateBenefits()`
   - `TasbihEditorViewModel.Factory` gains trailing nullable param `benefitsRepository: BenefitsRepository?` — nullable so a `null` (new-tasbih path, or tests) simply disables the feature.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `app/src/test/java/com/dhikr/app/feature/tasbih/BenefitsErrorMappingTest.kt`:
 
@@ -1325,12 +1325,12 @@ class BenefitsErrorMappingTest {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.feature.tasbih.BenefitsErrorMappingTest"`
 Expected: FAIL — `BenefitsError`, `toBenefitsError` unresolved.
 
-- [ ] **Step 3: Update `TasbihEditorViewModel`**
+- [x] **Step 3: Update `TasbihEditorViewModel`**
 
 In `TasbihEditorViewModel.kt`:
 
@@ -1429,12 +1429,12 @@ Update the `Factory`:
     }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `./gradlew :app:testDebugUnitTest --tests "com.dhikr.app.feature.tasbih.BenefitsErrorMappingTest"`
 Expected: PASS.
 
-- [ ] **Step 5: Add strings**
+- [x] **Step 5: Add strings**
 
 In `strings.xml`:
 
@@ -1460,7 +1460,7 @@ Update the existing footer string (`tasbih_editor_footer`, currently "Stored on 
     <string name="tasbih_editor_footer">Stored on this device. Generating benefits sends this dhikr\'s text to Google\'s Gemini API.</string>
 ```
 
-- [ ] **Step 6: Add the benefits block to `TasbihEditorScreen`**
+- [x] **Step 6: Add the benefits block to `TasbihEditorScreen`**
 
 In `TasbihEditorScreen.kt`, add imports as needed: `androidx.compose.material3.CircularProgressIndicator`, `androidx.compose.foundation.layout.Spacer`, `androidx.compose.foundation.layout.width`, `androidx.compose.runtime.getValue`.
 
@@ -1592,7 +1592,7 @@ private fun relativeTimeLabel(epochMillis: Long): String {
 > helper exists (`core/utilities/` has only `DayBounds`). If a shared
 > relative-time helper is added later, swap this for it.
 
-- [ ] **Step 7: Wire `BenefitsRepository` in `DhikrApp.kt`**
+- [x] **Step 7: Wire `BenefitsRepository` in `DhikrApp.kt`**
 
 Add imports:
 
@@ -1619,17 +1619,17 @@ In the `composable(ROUTE_TASBIH_EDITOR)` block, update the factory:
                     )
 ```
 
-- [ ] **Step 8: Compile and run the full unit suite**
+- [x] **Step 8: Compile and run the full unit suite**
 
 Run: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 9: Build the debug APK**
+- [x] **Step 9: Build the debug APK**
 
 Run: `./gradlew :app:assembleDebug`
 Expected: BUILD SUCCESSFUL.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add app/src/main/java/com/dhikr/app/feature/tasbih/TasbihEditorViewModel.kt \
@@ -1666,7 +1666,7 @@ Verify:
 6. Remove the key in Settings → editor Generate → inline "Add a Gemini API key in Settings" error.
 7. Airplane mode + valid key → Generate → "Couldn't reach Gemini…" error, any previously cached text stays visible.
 
-- [ ] **Step 2: Update README**
+- [x] **Step 2: Update README**
 
 In `README.md`, under `### Done`, add:
 
@@ -1674,7 +1674,7 @@ In `README.md`, under `### Done`, add:
 - AI benefits: user-supplied Gemini API key (encrypted on-device), per-tasbih virtues/benefits generation cached in Room
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add README.md
