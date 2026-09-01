@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
 import com.dhikr.app.ui.theme.supportsDynamicColor
@@ -22,6 +23,7 @@ data class SettingsUiState(
     val dailyGoalTarget: Int = 100,
     val dynamicColorEnabled: Boolean = false,
     val dynamicColorSupported: Boolean = supportsDynamicColor(),
+    val counterScript: CounterScript = CounterScript.PRONUNCIATION,
     val appVersion: String = "",
 ) {
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
@@ -63,6 +65,9 @@ class SettingsViewModel(
                 appVersion = appVersion,
             )
         }
+            .combine(preferencesRepository.counterScript) { state, counterScript ->
+                state.copy(counterScript = counterScript)
+            }
             .onEach { _uiState.value = it }
             .launchIn(viewModelScope)
     }
@@ -81,6 +86,10 @@ class SettingsViewModel(
 
     fun onDynamicColorChange(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setDynamicColorEnabled(enabled) }
+    }
+
+    fun onCounterScriptChange(value: CounterScript) {
+        viewModelScope.launch { preferencesRepository.setCounterScript(value) }
     }
 
     fun onDailyGoalChange(value: Int) {

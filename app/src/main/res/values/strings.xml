@@ -49,7 +49,7 @@
     <!-- Tasbih library screen -->
     <string name="tasbih_library_title">Tasbih</string>
     <string name="tasbih_library_new">+ New</string>
-    <string name="tasbih_library_search_placeholder">Search name, Arabic, transliteration</string>
+    <string name="tasbih_library_search_placeholder">Search name, Arabic, pronunciation</string>
     <string name="tasbih_library_search_content_description">Search</string>
     <string name="tasbih_library_result_count_all">%1$d built-in · %2$d custom</string>
     <string name="tasbih_library_result_count_filtered">%1$d of %2$d match \"%3$s\"</string>
@@ -77,6 +77,9 @@
     <string name="tasbih_editor_arabic_placeholder">اكتب الذكر</string>
     <string name="tasbih_editor_translation_label">Translation</string>
     <string name="tasbih_editor_translation_placeholder">What it means</string>
+    <string name="tasbih_editor_pronunciation_label">Pronunciation</string>
+    <string name="tasbih_editor_pronunciation_placeholder">How it sounds</string>
+    <string name="tasbih_editor_required_suffix">%1$s · required</string>
     <string name="tasbih_editor_note_label">Personal note</string>
     <string name="tasbih_editor_note_placeholder">Why you are reciting it</string>
     <string name="tasbih_editor_lap_target_label">Lap target</string>
@@ -161,6 +164,10 @@
     <string name="settings_haptics_lap_only">Lap complete</string>
     <string name="settings_daily_goal">Daily goal</string>
     <string name="settings_daily_goal_desc">Target shown on the Home ring</string>
+    <string name="settings_counter_script">Counter shows</string>
+    <string name="settings_counter_script_desc">Which script appears on the counter. The chosen one becomes required when adding a tasbih.</string>
+    <string name="settings_counter_script_pronunciation">Pronunciation</string>
+    <string name="settings_counter_script_arabic">Arabic</string>
     <string name="settings_daily_goal_custom">Custom</string>
     <string name="settings_daily_goal_custom_placeholder">Enter a number</string>
     <string name="settings_backup">Backup</string>

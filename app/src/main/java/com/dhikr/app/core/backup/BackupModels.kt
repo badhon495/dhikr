@@ -30,7 +30,8 @@ data class BackupTasbih(
     val id: String,
     val name: String,
     val arabic: String,
-    val transliteration: String,
+    // Renamed from `transliteration`; default keeps older backup files readable.
+    val pronunciation: String = "",
     val translation: String,
     val note: String = "",
     val source: String? = null,
@@ -46,7 +47,7 @@ data class BackupTasbih(
         id = id,
         name = name,
         arabic = arabic,
-        transliteration = transliteration,
+        pronunciation = pronunciation,
         translation = translation,
         note = note,
         source = source,
@@ -64,7 +65,7 @@ data class BackupTasbih(
             id = e.id,
             name = e.name,
             arabic = e.arabic,
-            transliteration = e.transliteration,
+            pronunciation = e.pronunciation,
             translation = e.translation,
             note = e.note,
             source = e.source,
@@ -155,6 +156,7 @@ data class BackupPreferences(
     @SerialName("hapticMode") val hapticMode: String? = null,
     @SerialName("reducedMotion") val reducedMotion: Boolean? = null,
     @SerialName("dynamicColor") val dynamicColor: Boolean? = null,
+    @SerialName("counterScript") val counterScript: String? = null,
 )
 
 /** Summary of what a restore actually wrote, surfaced to the user. */

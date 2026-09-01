@@ -3,6 +3,7 @@ package com.dhikr.app.core.backup
 import androidx.room.withTransaction
 import com.dhikr.app.core.database.AppDatabase
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
 import kotlinx.serialization.json.Json
@@ -64,6 +65,7 @@ class BackupRepository(
                 hapticMode = prefs.hapticMode.name,
                 reducedMotion = prefs.reducedMotion,
                 dynamicColor = prefs.dynamicColorEnabled,
+                counterScript = prefs.counterScript.name,
             ),
         )
         return json.encodeToString(BackupFile.serializer(), file)
@@ -116,6 +118,7 @@ class BackupRepository(
                 hapticMode = file.preferences.hapticMode.toHapticMode(),
                 reducedMotion = file.preferences.reducedMotion,
                 dynamicColorEnabled = file.preferences.dynamicColor,
+                counterScript = file.preferences.counterScript.toCounterScript(),
             )
         }.isSuccess
 
@@ -156,6 +159,12 @@ class BackupRepository(
         HapticMode.OFF.name -> HapticMode.OFF
         HapticMode.EVERY_TAP.name -> HapticMode.EVERY_TAP
         HapticMode.LAP_ONLY.name -> HapticMode.LAP_ONLY
+        else -> null
+    }
+
+    private fun String?.toCounterScript(): CounterScript? = when (this) {
+        CounterScript.PRONUNCIATION.name -> CounterScript.PRONUNCIATION
+        CounterScript.ARABIC.name -> CounterScript.ARABIC
         else -> null
     }
 }

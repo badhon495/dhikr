@@ -385,7 +385,7 @@ private fun TasbihRow(
                 modifier = Modifier.padding(top = 2.dp),
             )
             Text(
-                text = tasbih.transliteration,
+                text = tasbih.pronunciation,
                 fontSize = 12.sp,
                 color = colors.faint,
                 maxLines = 2,

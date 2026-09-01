@@ -110,7 +110,12 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
             )
         }
 
-        LabeledField(stringResource(R.string.tasbih_editor_arabic_label)) {
+        LabeledField(
+            maybeRequired(
+                stringResource(R.string.tasbih_editor_arabic_label),
+                state.arabicRequired,
+            ),
+        ) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 PillTextField(
                     value = state.arabic,
@@ -123,6 +128,19 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
                     ),
                 )
             }
+        }
+
+        LabeledField(
+            maybeRequired(
+                stringResource(R.string.tasbih_editor_pronunciation_label),
+                state.pronunciationRequired,
+            ),
+        ) {
+            PillTextField(
+                value = state.pronunciation,
+                onValueChange = viewModel::onPronunciationChange,
+                placeholder = stringResource(R.string.tasbih_editor_pronunciation_placeholder),
+            )
         }
 
         LabeledField(stringResource(R.string.tasbih_editor_translation_label)) {
@@ -222,6 +240,12 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
         )
     }
 }
+
+/** Appends a " · required" suffix to [label] when [required], for the one of
+ *  Arabic / Pronunciation that the current counter-script setting demands. */
+@Composable
+private fun maybeRequired(label: String, required: Boolean): String =
+    if (required) stringResource(R.string.tasbih_editor_required_suffix, label) else label
 
 @Composable
 private fun LabeledField(label: String, content: @Composable () -> Unit) {

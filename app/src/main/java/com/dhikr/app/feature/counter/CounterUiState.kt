@@ -31,7 +31,7 @@ data class CounterUiState(
     companion object {
         val Empty = CounterUiState(
             dhikr = TasbihEntity(
-                id = "", name = "", arabic = "", transliteration = "", translation = "",
+                id = "", name = "", arabic = "", pronunciation = "", translation = "",
                 lapTarget = 1, lapCount = 1, isBuiltIn = true, createdAt = 0, updatedAt = 0,
             ),
             count = 0, lap = 1, totalLaps = 1, canUndo = false, running = false,
