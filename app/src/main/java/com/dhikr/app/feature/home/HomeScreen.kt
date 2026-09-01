@@ -9,9 +9,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
@@ -65,7 +69,7 @@ fun HomeScreen(
             .background(colors.bg)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         // Greeting + goal ring
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -73,10 +77,15 @@ fun HomeScreen(
                 Text(
                     stringResource(R.string.home_greeting),
                     fontFamily = Caprasimo,
-                    fontSize = 24.sp,
+                    fontSize = 29.sp,
                     color = colors.text,
                 )
-                Text(state.dateLabel, fontSize = 12.5.sp, color = colors.dim)
+                Text(
+                    state.dateLabel,
+                    fontSize = 13.5.sp,
+                    color = colors.dim,
+                    modifier = Modifier.padding(top = 3.dp),
+                )
             }
             GoalRing(
                 progress = if (state.dailyGoalTarget > 0) state.todayTotal.toFloat() / state.dailyGoalTarget else 0f,
@@ -100,56 +109,92 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
+                    .clip(RoundedCornerShape(30.dp))
                     .background(colors.sageSoft)
-                    .border(1.dp, colors.line, RoundedCornerShape(28.dp))
+                    .border(1.dp, colors.line, RoundedCornerShape(30.dp))
                     .clickable { onContinueSession() }
                     .semantics(mergeDescendants = true) { contentDescription = continueDescription }
-                    .padding(16.dp),
+                    .padding(20.dp),
             ) {
                 Box(
-                    modifier = Modifier.size(42.dp).clip(CircleShape).background(colors.sage),
+                    modifier = Modifier.size(52.dp).clip(CircleShape).background(colors.sage),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = null,
                         tint = colors.onSage,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(26.dp),
                     )
                 }
-                Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                    Text(stringResource(R.string.home_continue_session_kicker), fontSize = 10.sp, color = colors.dim)
-                    Text(info.tasbihName, fontSize = 14.5.sp, color = colors.text)
+                Column(modifier = Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                    Text(
+                        stringResource(R.string.home_continue_session_kicker),
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp,
+                        color = colors.dim,
+                    )
+                    Text(
+                        info.tasbihName,
+                        fontSize = 17.sp,
+                        color = colors.text,
+                        modifier = Modifier.padding(top = 3.dp),
+                    )
                 }
-                Text("${info.count}/${info.target}", fontSize = 13.sp, color = colors.dim)
+                Text("${info.count}/${info.target}", fontSize = 14.5.sp, color = colors.dim)
+            }
+        }
+
+        // Routines — favorited ones if the user marked any, else the first few.
+        Column {
+            SectionHeader(
+                title = stringResource(R.string.home_routines_title),
+                actionLabel = stringResource(R.string.home_routines_manage),
+                onAction = onOpenRoutines,
+            )
+            Row(
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                state.routines.forEach { routineWithSteps ->
+                    val totalCount = routineWithSteps.steps.sumOf { it.targetCount }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(colors.surface)
+                            .border(1.dp, colors.line, RoundedCornerShape(18.dp))
+                            .clickable { onStartRoutine(routineWithSteps.routine.id) }
+                            .padding(14.dp),
+                    ) {
+                        Text(
+                            routineWithSteps.routine.name,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colors.text,
+                            maxLines = 2,
+                        )
+                        Text(
+                            stringResource(R.string.routines_step_count, routineWithSteps.steps.size, totalCount),
+                            fontSize = 10.5.sp,
+                            color = colors.dim,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                }
             }
         }
 
         // Favourites
         Column {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    stringResource(R.string.home_favorites_title),
-                    fontSize = 11.5.sp,
-                    color = colors.dim,
-                    modifier = Modifier.headingSemantics(),
-                )
-                Text(
-                    stringResource(R.string.home_favorites_all),
-                    fontSize = 11.5.sp,
-                    color = colors.terra,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .clickable(role = Role.Button) { onOpenLibrary() }
-                        .minTapTarget()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                )
-            }
+            SectionHeader(
+                title = stringResource(R.string.home_favorites_title),
+                actionLabel = stringResource(R.string.home_favorites_all),
+                onAction = onOpenLibrary,
+            )
             state.favorites.forEach { tasbih ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -169,54 +214,41 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
 
-        // Routines — favorited ones if the user marked any, else the first few.
-        Column {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(
-                    stringResource(R.string.home_routines_title),
-                    fontSize = 11.5.sp,
-                    color = colors.dim,
-                    modifier = Modifier.headingSemantics(),
-                )
-                Text(
-                    stringResource(R.string.home_routines_manage),
-                    fontSize = 11.5.sp,
-                    color = colors.terra,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .clickable(role = Role.Button) { onOpenRoutines() }
-                        .minTapTarget()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                )
-            }
-            Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.routines.forEach { routineWithSteps ->
-                    val totalCount = routineWithSteps.steps.sumOf { it.targetCount }
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(colors.surface)
-                            .border(1.dp, colors.line, RoundedCornerShape(16.dp))
-                            .clickable { onStartRoutine(routineWithSteps.routine.id) }
-                            .padding(12.dp),
-                    ) {
-                        Text(routineWithSteps.routine.name, fontSize = 13.sp, color = colors.text, maxLines = 2)
-                        Text(
-                            stringResource(R.string.routines_step_count, routineWithSteps.steps.size, totalCount),
-                            fontSize = 10.5.sp,
-                            color = colors.dim,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
-            }
-        }
+/** Section label + trailing action link, shared by the Home sections. */
+@Composable
+private fun SectionHeader(
+    title: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(
+            title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.3.sp,
+            color = colors.text,
+            modifier = Modifier.headingSemantics(),
+        )
+        Text(
+            actionLabel,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.terra,
+            modifier = Modifier
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(role = Role.Button) { onAction() }
+                .minTapTarget()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        )
     }
 }
 
@@ -237,12 +269,12 @@ private fun GoalRing(progress: Float, contentDescription: String) {
     )
     Box(
         modifier = Modifier
-            .size(74.dp)
+            .size(86.dp)
             .clearAndSetSemantics { this.contentDescription = contentDescription },
         contentAlignment = Alignment.Center,
     ) {
         androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 7.dp.toPx()
+            val strokeWidth = 8.dp.toPx()
             val inset = strokeWidth / 2
             drawArc(
                 color = colors.track,
@@ -259,6 +291,6 @@ private fun GoalRing(progress: Float, contentDescription: String) {
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
             )
         }
-        Text("${(animatedProgress * 100).toInt()}%", fontSize = 15.sp, color = colors.text)
+        Text("${(animatedProgress * 100).toInt()}%", fontSize = 17.sp, color = colors.text)
     }
 }

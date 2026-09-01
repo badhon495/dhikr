@@ -13,9 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -49,6 +50,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
@@ -322,7 +324,7 @@ private fun RoutineCard(
         else R.string.routines_favorite_state_off,
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
@@ -332,67 +334,87 @@ private fun RoutineCard(
                 // opens the Edit/Delete action menu (presets included).
                 onClick = onStart,
                 onLongClick = onLongPress,
-            )
-            .padding(16.dp),
+            ),
     ) {
-        Row(verticalAlignment = Alignment.Top) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(routineWithSteps.routine.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.text)
-                Text(
-                    stringResource(R.string.routines_step_count, steps.size, totalCount),
-                    fontSize = 12.5.sp,
-                    color = colors.dim,
-                )
-            }
-            // Nested clickable: a tap consumed here toggles the favorite and does
-            // not propagate to the card's combinedClickable (which starts the
-            // routine), matching TasbihRow's heart. Offset pulls the 48dp tap
-            // target into the card's top-right corner so the glyph lines up with
-            // the routine name.
-            Box(
-                modifier = Modifier
-                    .offset(x = 8.dp, y = (-8).dp)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
-                    .minTapTarget()
-                    .semantics {
-                        contentDescription = favoriteDescription
-                        stateDescription = favoriteState
-                    }
-                    .padding(6.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = null,
-                    tint = if (isFavorite) colors.terra else colors.faint,
-                    modifier = Modifier.size(20.dp),
-                )
+      Column(modifier = Modifier.padding(18.dp)) {
+        Column {
+            Text(
+                routineWithSteps.routine.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = colors.text,
+                // Keep long names clear of the corner heart.
+                modifier = Modifier.padding(end = 32.dp),
+            )
+            Text(
+                stringResource(R.string.routines_step_count, steps.size, totalCount),
+                fontSize = 12.5.sp,
+                color = colors.dim,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        Column(modifier = Modifier.padding(top = 6.dp)) {
+            steps.forEachIndexed { index, step ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawBehindLine(colors.line)
+                        .padding(vertical = 10.dp),
+                ) {
+                    Text(
+                        "${index + 1}",
+                        fontSize = 12.sp,
+                        color = colors.faint,
+                        modifier = Modifier.width(22.dp),
+                    )
+                    Text(
+                        text = tasbihNamesById[step.tasbihId] ?: step.tasbihId,
+                        fontSize = 13.5.sp,
+                        color = colors.text,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        "${step.targetCount}",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.terra,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .widthIn(min = 40.dp),
+                    )
+                }
             }
         }
-        steps.forEachIndexed { index, step ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .drawBehindLine(colors.line)
-                    .padding(top = 10.dp, bottom = 2.dp),
-            ) {
-                Text("${index + 1}", fontSize = 12.sp, color = colors.faint, modifier = Modifier.padding(end = 10.dp))
-                Text(
-                    text = tasbihNamesById[step.tasbihId] ?: step.tasbihId,
-                    fontSize = 13.5.sp,
-                    color = colors.text,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    "${step.targetCount}",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colors.terra,
-                )
-            }
-        }
+      }
+
+      // Favourite heart, pinned to the card's top-right corner as an overlay so
+      // it never distorts the header layout. Nested clickable: a tap here toggles
+      // the favourite and does not propagate to the card's combinedClickable
+      // (which starts the routine), matching TasbihRow's heart.
+      Box(
+          modifier = Modifier
+              // Sits near the right edge, vertically centred on the name +
+              // step-count block (top offset ≈ header centre − half the tap target).
+              .align(Alignment.TopEnd)
+              .padding(top = 12.dp, end = 4.dp)
+              .clip(CircleShape)
+              .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
+              .minTapTarget()
+              .semantics {
+                  contentDescription = favoriteDescription
+                  stateDescription = favoriteState
+              },
+          contentAlignment = Alignment.Center,
+      ) {
+          Icon(
+              imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+              contentDescription = null,
+              tint = if (isFavorite) colors.terra else colors.faint,
+              modifier = Modifier.size(20.dp),
+          )
+      }
     }
 }
 
