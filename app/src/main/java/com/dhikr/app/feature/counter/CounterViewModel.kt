@@ -168,7 +168,24 @@ class CounterViewModel(
         if (loaded == null) return // nothing to load; _uiState stays at Empty
         dhikr = loaded
         engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
-        applyRestoredCountIfMatching(savedSession, loaded.id)
+        // Per-Tasbih saved position for today (survives opening other Tasbih,
+        // cleared at local midnight). Authoritative; the single DataStore
+        // session is only a fallback for the pre-progress-row cold-start case.
+        val savedTasbihProgress = tasbihRepository.getSessionProgress(loaded.id)
+        if (savedTasbihProgress != null) {
+            val restoredLap = savedTasbihProgress.lap.coerceIn(1, loaded.lapCount + 1)
+            val restoredCount = savedTasbihProgress.count
+                .coerceIn(0, (loaded.lapTarget - 1).coerceAtLeast(0))
+            engine.restore(count = restoredCount, lap = restoredLap, previous = null)
+            loggedTotal = savedTasbihProgress.loggedInSession.coerceAtLeast(0)
+            if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
+                elapsedSeconds = savedSession.elapsedSeconds
+                locked = savedSession.locked
+                if (!savedSession.running) engine.pause()
+            }
+        } else {
+            applyRestoredCountIfMatching(savedSession, loaded.id)
+        }
         sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
             System.currentTimeMillis() - elapsedSeconds * 1000L
         } else {
@@ -347,6 +364,13 @@ class CounterViewModel(
         // fresh taps after a reset would be swallowed until they pass the old total.
         loggedTotal = 0
         elapsedSeconds = 0
+        // Drop the saved position immediately so the card's green fill clears
+        // without waiting for the debounced persist. (Routine steps keep their
+        // row — reset there only rewinds the current step.)
+        if (activeRoutine == null) {
+            val tasbihId = dhikr.id
+            viewModelScope.launch { tasbihRepository.clearSessionProgress(tasbihId) }
+        }
         _uiState.value = buildState()
     }
 
@@ -444,6 +468,16 @@ class CounterViewModel(
                 stepIndex = routineStepIndex.coerceAtLeast(0),
                 countInStep = snap.count,
                 loggedInStep = loggedTotal,
+            )
+        } else if (routineId == null) {
+            // Per-Tasbih progress row — the part that survives opening a
+            // different Tasbih. Kept even once the goal is reached (fraction
+            // 1f = full green card) until it ages out at local midnight.
+            tasbihRepository.saveSessionProgress(
+                tasbihId = s.dhikr.id,
+                count = snap.count,
+                lap = snap.lap,
+                loggedInSession = loggedTotal,
             )
         }
     }

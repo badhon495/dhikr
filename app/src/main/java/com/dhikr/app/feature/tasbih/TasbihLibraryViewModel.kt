@@ -22,6 +22,9 @@ data class TasbihLibraryUiState(
     val results: List<TasbihEntity> = emptyList(),
     val builtInCount: Int = 0,
     val customCount: Int = 0,
+    // tasbihId -> 0f..1f of today's counting position toward the Tasbih's total
+    // goal; drives the row's green fill. Clears on its own the next day.
+    val progressByTasbihId: Map<String, Float> = emptyMap(),
 )
 
 /** One-shot event for TasbihLibraryScreen to show when a delete is blocked
@@ -52,12 +55,14 @@ class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewMod
             if (q.isBlank()) repository.observeAll() else repository.search(q)
         },
         repository.observeAll(), // stable built-in/custom counts, independent of the filter
-    ) { q, results, all ->
+        repository.observeSessionProgressToday(),
+    ) { q, results, all, progress ->
         TasbihLibraryUiState(
             query = q,
             results = results,
             builtInCount = all.count { it.isBuiltIn },
             customCount = all.count { !it.isBuiltIn },
+            progressByTasbihId = progress,
         )
     }.stateIn(
         scope = viewModelScope,

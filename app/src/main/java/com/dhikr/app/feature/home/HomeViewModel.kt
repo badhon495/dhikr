@@ -37,6 +37,9 @@ data class HomeUiState(
     // routineId -> 0f..1f of today's in-progress position; drives the card's
     // green fill. Both clear on their own the next day.
     val routineProgress: Map<String, Float> = emptyMap(),
+    // tasbihId -> 0f..1f of today's counting position toward its total goal;
+    // drives the favourite row's green fill. Clears on its own the next day.
+    val tasbihProgress: Map<String, Float> = emptyMap(),
 )
 
 /**
@@ -73,7 +76,10 @@ class HomeViewModel(
             .combine(routineRepository.observeDayProgress()) { inputs, dayProgress ->
                 inputs to dayProgress
             }
-            .mapLatest { (inputs, dayProgress) ->
+            .combine(tasbihRepository.observeSessionProgressToday()) { (inputs, dayProgress), tasbihProgress ->
+                Triple(inputs, dayProgress, tasbihProgress)
+            }
+            .mapLatest { (inputs, dayProgress, tasbihProgress) ->
                 val continueInfo = inputs.session?.let { s ->
                     tasbihRepository.getById(s.activeDhikrId)?.let { tasbih ->
                         ContinueSessionInfo(tasbihName = tasbih.name, count = s.count, target = tasbih.lapTarget)
@@ -94,6 +100,7 @@ class HomeViewModel(
                         .take(4),
                     completedRoutineIds = dayProgress.completedRoutineIds,
                     routineProgress = dayProgress.fractionByRoutineId,
+                    tasbihProgress = tasbihProgress,
                 )
             }
             .onEach { _uiState.value = it }

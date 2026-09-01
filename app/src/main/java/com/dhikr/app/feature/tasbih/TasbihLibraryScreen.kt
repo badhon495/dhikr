@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -205,6 +206,7 @@ fun TasbihLibraryScreen(
                 items(state.results, key = { it.id }) { tasbih ->
                     TasbihRow(
                         tasbih = tasbih,
+                        progress = state.progressByTasbihId[tasbih.id] ?: 0f,
                         onClick = { onOpenTasbih(tasbih.id) },
                         onToggleFavorite = {
                             viewModel.onToggleFavorite(tasbih.id, tasbih.isFavorite)
@@ -346,6 +348,7 @@ private fun TasbihActionMenu(
 @Composable
 private fun TasbihRow(
     tasbih: TasbihEntity,
+    progress: Float,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
     onLongPress: (() -> Unit)?,
@@ -356,9 +359,9 @@ private fun TasbihRow(
         if (tasbih.isFavorite) R.string.tasbih_library_favorite_state_on
         else R.string.tasbih_library_favorite_state_off,
     )
+    val fill = progress.coerceIn(0f, 1f)
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
         // The row's own tap target (opens the Dhikr) is this outer
         // combinedClickable. The favorite heart below sits in its own nested
         // `clickable` Box; a click consumed by a nested clickable region does
@@ -372,9 +375,26 @@ private fun TasbihRow(
             .fillMaxWidth()
             .clip(ListRowShape)
             .background(colors.card)
-            .combinedClickable(onClick = onClick, onLongClick = onLongPress)
-            .padding(14.dp),
+            .combinedClickable(onClick = onClick, onLongClick = onLongPress),
     ) {
+        // Green fill growing left-to-right with today's counting progress
+        // toward this Tasbih's total goal.
+        if (fill > 0f) {
+            Box(modifier = Modifier.matchParentSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(fill)
+                        .background(colors.sageSoft),
+                )
+            }
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+        ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = tasbih.name,
@@ -430,6 +450,7 @@ private fun TasbihRow(
                 tint = if (tasbih.isFavorite) colors.terra else colors.faint,
                 modifier = Modifier.size(20.dp),
             )
+        }
         }
     }
 }

@@ -98,7 +98,13 @@ fun DhikrApp(
         val app = context.applicationContext as DhikrApplication
 
         val sessionRepository = remember { SessionRepository(context.applicationContext) }
-        val tasbihRepository = remember { TasbihRepository(app.database.tasbihDao(), app.database.routineDao()) }
+        val tasbihRepository = remember {
+            TasbihRepository(
+                app.database.tasbihDao(),
+                app.database.routineDao(),
+                app.database.tasbihProgressDao(),
+            )
+        }
         val routineRepository = remember {
             RoutineRepository(
                 app.database.routineDao(),

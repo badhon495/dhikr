@@ -220,21 +220,39 @@ fun HomeScreen(
                 onAction = onOpenLibrary,
             )
             state.favorites.forEach { tasbih ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                val fill = (state.tasbihProgress[tasbih.id] ?: 0f).coerceIn(0f, 1f)
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                         .clip(RoundedCornerShape(22.dp))
                         .background(colors.card)
-                        .clickable { onOpenTasbih(tasbih.id) }
-                        .padding(14.dp),
+                        .clickable { onOpenTasbih(tasbih.id) },
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(tasbih.name, fontSize = 14.5.sp, color = colors.text)
-                        Text(tasbih.pronunciation, fontSize = 12.sp, color = colors.faint, maxLines = 1)
+                    // Green fill growing left-to-right with today's counting
+                    // progress toward this Tasbih's total goal.
+                    if (fill > 0f) {
+                        Box(modifier = Modifier.matchParentSize()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(fill)
+                                    .background(colors.sageSoft),
+                            )
+                        }
                     }
-                    Text(tasbih.arabic, fontSize = 14.sp, color = colors.dim)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(tasbih.name, fontSize = 14.5.sp, color = colors.text)
+                            Text(tasbih.pronunciation, fontSize = 12.sp, color = colors.faint, maxLines = 1)
+                        }
+                        Text(tasbih.arabic, fontSize = 14.sp, color = colors.dim)
+                    }
                 }
             }
         }
