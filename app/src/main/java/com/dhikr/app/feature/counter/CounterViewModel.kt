@@ -238,6 +238,7 @@ class CounterViewModel(
             _uiState.value = buildState().copy(isRoutineComplete = true)
             viewModelScope.launch {
                 logCurrentSessionIfNonZero()
+                routineRepository.markRoutineComplete(routine.routine.id)
                 sessionStartedAtMillis = System.currentTimeMillis()
             }
             return

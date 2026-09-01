@@ -1,5 +1,7 @@
 package com.dhikr.app.feature.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,9 +48,15 @@ import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.ListRowShape
 import com.dhikr.app.ui.theme.PillShape
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    backupViewModel: BackupViewModel,
+) {
     val state by viewModel.uiState.collectAsState()
     val colors = DhikrTheme.colors
 
@@ -140,6 +149,11 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 checked = state.reducedMotion,
                 onCheckedChange = viewModel::onReducedMotionChange,
             )
+        }
+
+        // ---- Backup ----
+        SettingsSection(stringResource(R.string.settings_backup)) {
+            BackupControls(backupViewModel)
         }
 
         // ---- About ----
@@ -377,4 +391,130 @@ private fun AboutLine(text: String) {
         color = colors.dim,
         modifier = Modifier.padding(vertical = 3.dp),
     )
+}
+
+/**
+ * Export/import rows for the Backup section. Owns the Storage Access Framework
+ * dialogs — a create-document dialog for export, an open-document dialog for
+ * import — and passes plain read/write lambdas over the chosen file to
+ * [BackupViewModel], which never sees a Uri or a Context.
+ */
+@Composable
+private fun BackupControls(viewModel: BackupViewModel) {
+    val colors = DhikrTheme.colors
+    val context = LocalContext.current
+    val status by viewModel.status.collectAsState()
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri == null) {
+            viewModel.clearStatus()
+        } else {
+            viewModel.export { bytes ->
+                context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    ?: error("no output stream")
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null) {
+            viewModel.clearStatus()
+        } else {
+            viewModel.restore {
+                context.contentResolver.openInputStream(uri)?.use {
+                    it.readBytes().toString(Charsets.UTF_8)
+                } ?: error("no input stream")
+            }
+        }
+    }
+
+    Text(
+        stringResource(R.string.settings_backup_desc),
+        fontSize = 12.sp,
+        color = colors.faint,
+        modifier = Modifier.padding(bottom = 12.dp),
+    )
+
+    val working = status is BackupViewModel.Status.Working
+    BackupActionRow(
+        label = stringResource(R.string.settings_backup_export),
+        enabled = !working,
+        onClick = {
+            val stamp = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            exportLauncher.launch(
+                context.getString(R.string.settings_backup_filename, stamp),
+            )
+        },
+    )
+    BackupActionRow(
+        label = stringResource(R.string.settings_backup_import),
+        enabled = !working,
+        onClick = { importLauncher.launch(arrayOf("application/json")) },
+    )
+
+    Text(
+        stringResource(R.string.settings_backup_import_note),
+        fontSize = 11.5.sp,
+        color = colors.faint,
+        modifier = Modifier.padding(top = 10.dp),
+    )
+
+    val message: String? = when (val s = status) {
+        BackupViewModel.Status.Idle -> null
+        BackupViewModel.Status.Working -> stringResource(R.string.settings_backup_working)
+        is BackupViewModel.Status.ExportDone -> stringResource(R.string.settings_backup_export_done)
+        is BackupViewModel.Status.RestoreDone -> {
+            val r = s.result
+            val base = if (r.sessionsSkipped > 0) {
+                stringResource(
+                    R.string.settings_backup_restore_done_skipped,
+                    r.tasbihRestored, r.routinesRestored, r.sessionsRestored, r.sessionsSkipped,
+                )
+            } else {
+                stringResource(
+                    R.string.settings_backup_restore_done,
+                    r.tasbihRestored, r.routinesRestored, r.sessionsRestored,
+                )
+            }
+            if (r.preferencesApplied) base
+            else base + " " + stringResource(R.string.settings_backup_settings_not_restored)
+        }
+        is BackupViewModel.Status.Error -> s.message
+    }
+    if (message != null) {
+        val isError = status is BackupViewModel.Status.Error
+        Text(
+            message,
+            fontSize = 12.sp,
+            color = if (isError) colors.text else colors.dim,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun BackupActionRow(label: String, enabled: Boolean, onClick: () -> Unit) {
+    val colors = DhikrTheme.colors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp)
+            .clip(PillShape)
+            .background(if (enabled) colors.sage else colors.surface)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .minTapTarget()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = if (enabled) colors.onSage else colors.faint,
+        )
+    }
 }

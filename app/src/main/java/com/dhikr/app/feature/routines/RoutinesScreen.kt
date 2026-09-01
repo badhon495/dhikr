@@ -175,6 +175,7 @@ fun RoutinesScreen(
                     RoutineCard(
                         routineWithSteps = routineWithSteps,
                         tasbihNamesById = state.tasbihNamesById,
+                        completedToday = routineWithSteps.routine.id in state.completedTodayIds,
                         onStart = { onStartRoutine(routineWithSteps.routine.id) },
                         onLongPress = { actionMenuTarget = routineWithSteps },
                     )
@@ -291,6 +292,7 @@ private fun RoutineActionMenu(
 private fun RoutineCard(
     routineWithSteps: RoutineWithSteps,
     tasbihNamesById: Map<String, String>,
+    completedToday: Boolean,
     onStart: () -> Unit,
     onLongPress: () -> Unit,
 ) {
@@ -302,7 +304,7 @@ private fun RoutineCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
-            .background(colors.card)
+            .background(if (completedToday) colors.sageSoft else colors.card)
             .combinedClickable(
                 // Card body tap starts the routine in the counter. Long-press
                 // opens the Edit/Delete action menu (presets included).

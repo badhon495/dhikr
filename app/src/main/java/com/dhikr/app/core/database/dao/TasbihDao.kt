@@ -39,6 +39,20 @@ interface TasbihDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(tasbih: List<TasbihEntity>)
 
+    /** Backup restore: an id already present is overwritten by the backup row
+     *  (merge semantics, backup wins). */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(tasbih: List<TasbihEntity>)
+
+    @Query("SELECT * FROM tasbih WHERE isBuiltIn = 0")
+    suspend fun getAllCustom(): List<TasbihEntity>
+
+    @Query("SELECT id FROM tasbih WHERE isBuiltIn = 1 AND isFavorite = 1")
+    suspend fun getBuiltInFavoriteIds(): List<String>
+
+    @Query("SELECT id FROM tasbih")
+    suspend fun getAllIds(): List<String>
+
     @Update
     suspend fun update(tasbih: TasbihEntity)
 
