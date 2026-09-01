@@ -338,10 +338,7 @@ private fun ReminderSection(
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = "%02d:%02d".format(
-                    state.reminderMinuteOfDay / 60,
-                    state.reminderMinuteOfDay % 60,
-                ),
+                text = formatTime12Hour(state.reminderMinuteOfDay),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.text,
@@ -397,7 +394,7 @@ private fun ReminderSection(
         val picker = rememberTimePickerState(
             initialHour = state.reminderMinuteOfDay / 60,
             initialMinute = state.reminderMinuteOfDay % 60,
-            is24Hour = true,
+            is24Hour = false,
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
@@ -417,6 +414,17 @@ private fun ReminderSection(
             },
         )
     }
+}
+
+private fun formatTime12Hour(minuteOfDay: Int): String {
+    val hour24 = minuteOfDay / 60
+    val minute = minuteOfDay % 60
+    val hour12 = when (hour24 % 12) {
+        0 -> 12
+        else -> hour24 % 12
+    }
+    val period = if (hour24 < 12) "AM" else "PM"
+    return "%d:%02d %s".format(hour12, minute, period)
 }
 
 @Composable
