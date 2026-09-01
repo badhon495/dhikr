@@ -36,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.dhikr.app.R
+import com.dhikr.app.core.backup.BackupRepository
 import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
@@ -55,6 +56,7 @@ import com.dhikr.app.feature.routines.RoutineEditorScreen
 import com.dhikr.app.feature.routines.RoutineEditorViewModel
 import com.dhikr.app.feature.routines.RoutinesScreen
 import com.dhikr.app.feature.routines.RoutinesViewModel
+import com.dhikr.app.feature.settings.BackupViewModel
 import com.dhikr.app.feature.settings.SettingsScreen
 import com.dhikr.app.feature.settings.SettingsViewModel
 import com.dhikr.app.feature.tasbih.TasbihEditorScreen
@@ -92,6 +94,7 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
         val routineRepository = remember { RoutineRepository(app.database.routineDao()) }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
+        val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
         val hapticMode by preferencesRepository.hapticMode.collectAsState(initial = HapticMode.EVERY_TAP)
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
 
@@ -235,7 +238,10 @@ fun DhikrApp(themeMode: ThemeMode = ThemeMode.SYSTEM, dynamicColor: Boolean = fa
                     val viewModel: SettingsViewModel = viewModel(
                         factory = SettingsViewModel.Factory(preferencesRepository, appVersion),
                     )
-                    SettingsScreen(viewModel = viewModel)
+                    val backupViewModel: BackupViewModel = viewModel(
+                        factory = BackupViewModel.Factory(backupRepository, appVersion),
+                    )
+                    SettingsScreen(viewModel = viewModel, backupViewModel = backupViewModel)
                 }
             }
         }

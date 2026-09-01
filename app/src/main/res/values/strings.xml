@@ -163,6 +163,17 @@
     <string name="settings_daily_goal_desc">Target shown on the Home ring</string>
     <string name="settings_daily_goal_custom">Custom</string>
     <string name="settings_daily_goal_custom_placeholder">Enter a number</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_desc">Save everything — your tasbih, routines, history and settings — to a file you can keep or move to another device.</string>
+    <string name="settings_backup_export">Export backup</string>
+    <string name="settings_backup_import">Import backup</string>
+    <string name="settings_backup_import_note">Importing merges the file into what’s already here. Items with the same identity are replaced by the file; anything else is kept.</string>
+    <string name="settings_backup_working">Working…</string>
+    <string name="settings_backup_export_done">Backup saved.</string>
+    <string name="settings_backup_restore_done">Restored %1$d tasbih, %2$d routines, %3$d sessions.</string>
+    <string name="settings_backup_restore_done_skipped">Restored %1$d tasbih, %2$d routines, %3$d sessions (%4$d skipped).</string>
+    <string name="settings_backup_settings_not_restored">Settings in the file could not be applied.</string>
+    <string name="settings_backup_filename">dhikr-backup-%1$s.json</string>
     <string name="settings_about">About</string>
     <string name="settings_about_offline">Works fully offline.</string>
     <string name="settings_about_no_account">No account needed.</string>

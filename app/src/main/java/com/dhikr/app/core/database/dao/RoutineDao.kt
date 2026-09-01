@@ -33,6 +33,14 @@ interface RoutineDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRoutine(routine: RoutineEntity)
 
+    /** Backup restore: an id already present is overwritten by the backup row. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertRoutine(routine: RoutineEntity)
+
+    @Transaction
+    @Query("SELECT * FROM routine WHERE isPreset = 0")
+    suspend fun getAllCustomWithSteps(): List<RoutineWithSteps>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRoutines(routines: List<RoutineEntity>)
 

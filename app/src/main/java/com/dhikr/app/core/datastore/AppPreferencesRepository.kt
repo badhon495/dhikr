@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.preferencesDataStore by preferencesDataStore(name = "preferences")
@@ -82,4 +83,42 @@ class AppPreferencesRepository(private val context: Context) {
     suspend fun setDynamicColorEnabled(value: Boolean) {
         context.preferencesDataStore.edit { it[dynamicColorKey] = value }
     }
+
+    /** One-shot read of every user-facing preference, for a backup export. */
+    suspend fun snapshot(): PreferencesSnapshot = PreferencesSnapshot(
+        dailyGoalTarget = dailyGoalTarget.first(),
+        themeMode = themeMode.first(),
+        hapticMode = hapticMode.first(),
+        reducedMotion = reducedMotion.first(),
+        dynamicColorEnabled = dynamicColorEnabled.first(),
+    )
+
+    /**
+     * Apply a snapshot from a restored backup. Each field is optional: a null
+     * leaves the current value untouched, so a backup written by an older app
+     * version that lacked a field is harmless.
+     */
+    suspend fun restore(
+        dailyGoalTarget: Int?,
+        themeMode: ThemeMode?,
+        hapticMode: HapticMode?,
+        reducedMotion: Boolean?,
+        dynamicColorEnabled: Boolean?,
+    ) {
+        context.preferencesDataStore.edit { prefs ->
+            dailyGoalTarget?.let { prefs[dailyGoalKey] = it }
+            themeMode?.let { prefs[themeModeKey] = it.name }
+            hapticMode?.let { prefs[hapticModeKey] = it.name }
+            reducedMotion?.let { prefs[reducedMotionKey] = it }
+            dynamicColorEnabled?.let { prefs[dynamicColorKey] = it }
+        }
+    }
 }
+
+data class PreferencesSnapshot(
+    val dailyGoalTarget: Int,
+    val themeMode: ThemeMode,
+    val hapticMode: HapticMode,
+    val reducedMotion: Boolean,
+    val dynamicColorEnabled: Boolean,
+)
