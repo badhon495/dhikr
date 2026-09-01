@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -334,7 +335,7 @@ private fun RoutineCard(
             )
             .padding(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(routineWithSteps.routine.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colors.text)
                 Text(
@@ -345,9 +346,12 @@ private fun RoutineCard(
             }
             // Nested clickable: a tap consumed here toggles the favorite and does
             // not propagate to the card's combinedClickable (which starts the
-            // routine), matching TasbihRow's heart.
+            // routine), matching TasbihRow's heart. Offset pulls the 48dp tap
+            // target into the card's top-right corner so the glyph lines up with
+            // the routine name.
             Box(
                 modifier = Modifier
+                    .offset(x = 8.dp, y = (-8).dp)
                     .clip(CircleShape)
                     .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
                     .minTapTarget()
