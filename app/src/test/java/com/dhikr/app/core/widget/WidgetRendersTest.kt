@@ -33,6 +33,13 @@ class WidgetRendersTest {
     }
 
     @Test
+    fun formatGroupedCountOfTarget_groupsBothNumbers() {
+        assertEquals("1,500 / 5,000", WidgetRenders.formatGroupedCountOfTarget(1500, 5000))
+        assertEquals("0 / 100", WidgetRenders.formatGroupedCountOfTarget(0, 100))
+        assertEquals("12,345 / 1,000,000", WidgetRenders.formatGroupedCountOfTarget(12_345, 1_000_000))
+    }
+
+    @Test
     fun formatGrouped_insertsThousandsSeparators() {
         assertEquals("1,234", WidgetRenders.formatGrouped(1234))
         assertEquals("1,000,000", WidgetRenders.formatGrouped(1_000_000))

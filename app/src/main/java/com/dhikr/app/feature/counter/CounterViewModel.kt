@@ -420,10 +420,16 @@ class CounterViewModel(
     /**
      * Immediately persist the current session, bypassing the 500ms save debounce.
      * Called from CounterScreen's ON_STOP lifecycle observer so a session is never
-     * lost to process death inside the debounce window.
+     * lost to process death inside the debounce window. [onDone] runs after the
+     * persist coroutine completes — callers that need to read the just-written
+     * session back (e.g. a widget refresh) must use it rather than assuming
+     * flushSession() finished synchronously on return.
      */
-    fun flushSession() {
-        viewModelScope.launch { persist() }
+    fun flushSession(onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            persist()
+            onDone()
+        }
     }
 
     private suspend fun persist() {

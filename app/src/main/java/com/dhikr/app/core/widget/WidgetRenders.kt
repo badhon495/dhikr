@@ -3,6 +3,7 @@ package com.dhikr.app.core.widget
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.TypedValue
 import android.widget.RemoteViews
 import com.dhikr.app.MainActivity
 import com.dhikr.app.R
@@ -12,15 +13,24 @@ import java.text.NumberFormat
 import java.util.Locale
 
 /**
- * Pure formatting/layout helpers for both widgets. The RemoteViews builders
- * (added alongside the providers) call these; the helpers are split out so they
- * unit-test without an Android runtime.
+ * Widget rendering for both home-screen widgets. The pure formatting helpers
+ * ([formatCountOfTarget], [formatGroupedCountOfTarget], [clampProgress],
+ * [formatGrouped]) are unit-tested without an Android runtime; the
+ * RemoteViews/PendingIntent builders ([buildCounter], [buildInsights]) touch
+ * the Android framework and are manual-test-only.
  */
 object WidgetRenders {
 
     data class Progress(val progress: Int, val max: Int)
 
     fun formatCountOfTarget(count: Int, target: Int): String = "$count / $target"
+
+    /**
+     * Like [formatCountOfTarget] but with thousands grouping on both numbers —
+     * used by the insights widget, whose "today" value routinely runs past 1000.
+     */
+    fun formatGroupedCountOfTarget(count: Int, target: Int): String =
+        "${formatGrouped(count)} / ${formatGrouped(target)}"
 
     /**
      * A ProgressBar needs max >= 1 and progress in 0..max. Clamp so goal <= 0
@@ -54,13 +64,15 @@ object WidgetRenders {
      * @param session the active session, or null for the "no session" state.
      * @param tasbihName resolved name for [session] (null when no session or
      *   the Tasbih was deleted).
-     * @param lapTarget the active Tasbih's per-lap target (0 when unknown).
+     * @param target the engine target for [session]: the active Tasbih's
+     *   per-lap target for a plain session, or the current routine step's
+     *   `targetCount` for a routine session (0 when unknown).
      */
     fun buildCounter(
         context: Context,
         session: CounterSessionState?,
         tasbihName: String?,
-        lapTarget: Int,
+        target: Int,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_counter)
         val isRoutine = session?.routineId != null
@@ -80,9 +92,9 @@ object WidgetRenders {
         views.setTextViewText(R.id.widget_counter_name, tasbihName)
         views.setTextViewText(
             R.id.widget_counter_value,
-            formatCountOfTarget(session.count, lapTarget),
+            formatCountOfTarget(session.count, target),
         )
-        val p = clampProgress(session.count, lapTarget)
+        val p = clampProgress(session.count, target)
         views.setProgressBar(R.id.widget_counter_progress, p.max, p.progress, false)
 
         val bodyIntent = if (isRoutine) {
@@ -96,6 +108,15 @@ object WidgetRenders {
             // Routine sessions render but [+] opens the app (guided flow).
             views.setViewVisibility(R.id.widget_counter_plus, android.view.View.VISIBLE)
             views.setTextViewText(R.id.widget_counter_plus, context.getString(R.string.widget_routine_hint))
+            // Smaller text so "Open to continue" fits the full-width button
+            // without clipping (the layout sizes "+" at 22sp).
+            views.setTextViewTextSize(R.id.widget_counter_plus, TypedValue.COMPLEX_UNIT_SP, 13f)
+            // The layout hardcodes the "Add one count" description; this button
+            // opens the app instead, so override it per branch.
+            views.setContentDescription(
+                R.id.widget_counter_plus,
+                context.getString(R.string.widget_routine_hint),
+            )
             views.setOnClickPendingIntent(
                 R.id.widget_counter_plus,
                 openActivityIntent(context, MainActivity.OPEN_COUNTER, session.routineId),
@@ -103,6 +124,11 @@ object WidgetRenders {
         } else {
             views.setViewVisibility(R.id.widget_counter_plus, android.view.View.VISIBLE)
             views.setTextViewText(R.id.widget_counter_plus, "+")
+            views.setTextViewTextSize(R.id.widget_counter_plus, TypedValue.COMPLEX_UNIT_SP, 22f)
+            views.setContentDescription(
+                R.id.widget_counter_plus,
+                context.getString(R.string.widget_increment_content_description),
+            )
             val incIntent = Intent(context, CounterWidgetReceiver::class.java)
                 .setAction(CounterWidgetReceiver.ACTION_INCREMENT)
             val incPending = PendingIntent.getBroadcast(
@@ -122,7 +148,7 @@ object WidgetRenders {
         allTime: Int,
     ): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.widget_insights)
-        views.setTextViewText(R.id.widget_insights_today_value, formatCountOfTarget(today, goal))
+        views.setTextViewText(R.id.widget_insights_today_value, formatGroupedCountOfTarget(today, goal))
         val p = clampProgress(today, goal)
         views.setProgressBar(R.id.widget_insights_progress, p.max, p.progress, false)
         views.setTextViewText(R.id.widget_insights_week_value, formatGrouped(week))

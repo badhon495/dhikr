@@ -1,9 +1,11 @@
 package com.dhikr.app.feature.settings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.datastore.AppPreferencesRepository
+import com.dhikr.app.core.widget.DhikrWidgets
 import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
@@ -43,6 +45,7 @@ data class SettingsUiState(
 class SettingsViewModel(
     private val preferencesRepository: AppPreferencesRepository,
     private val appVersion: String,
+    private val appContext: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState(appVersion = appVersion))
@@ -97,15 +100,19 @@ class SettingsViewModel(
             preferencesRepository.setDailyGoalTarget(
                 value.coerceIn(SettingsUiState.DAILY_GOAL_MIN, SettingsUiState.DAILY_GOAL_MAX),
             )
+            // The insights widget's "Today / goal" line is otherwise stale until
+            // its next 30-min tick — push a refresh now that the goal changed.
+            DhikrWidgets.refreshAll(appContext)
         }
     }
 
     class Factory(
         private val preferencesRepository: AppPreferencesRepository,
         private val appVersion: String,
+        private val appContext: Context,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            SettingsViewModel(preferencesRepository, appVersion) as T
+            SettingsViewModel(preferencesRepository, appVersion, appContext) as T
     }
 }

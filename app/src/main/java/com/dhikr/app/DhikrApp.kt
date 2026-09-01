@@ -303,7 +303,7 @@ fun DhikrApp(
                         }.getOrNull().orEmpty()
                     }
                     val viewModel: SettingsViewModel = viewModel(
-                        factory = SettingsViewModel.Factory(preferencesRepository, appVersion),
+                        factory = SettingsViewModel.Factory(preferencesRepository, appVersion, context.applicationContext),
                     )
                     val backupViewModel: BackupViewModel = viewModel(
                         factory = BackupViewModel.Factory(backupRepository, appVersion),

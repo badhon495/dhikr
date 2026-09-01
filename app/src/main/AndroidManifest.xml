@@ -42,7 +42,8 @@
 
         <receiver
             android:name=".core.widget.CounterWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_counter_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -53,7 +54,8 @@
 
         <receiver
             android:name=".core.widget.InsightsWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_insights_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
