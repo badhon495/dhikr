@@ -91,6 +91,8 @@ fun DhikrApp(
     dynamicColor: Boolean = false,
     pendingRoutineId: String? = null,
     onPendingRoutineConsumed: () -> Unit = {},
+    pendingOpen: String? = null,
+    onPendingOpenConsumed: () -> Unit = {},
 ) {
     DhikrTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
         val navController = rememberNavController()
@@ -145,6 +147,24 @@ fun DhikrApp(
             val id = pendingRoutineId ?: return@LaunchedEffect
             navController.navigate("counter?routineId=$id")
             onPendingRoutineConsumed()
+        }
+
+        // Widget body tap: open the counter or insights tab. routineId (from a
+        // reminder notification or a routine-state widget) takes precedence, so
+        // when both are set this effect defers and lets the routine effect run.
+        LaunchedEffect(pendingOpen) {
+            val target = pendingOpen ?: return@LaunchedEffect
+            if (pendingRoutineId == null) {
+                val route = when (target) {
+                    MainActivity.OPEN_INSIGHTS -> ROUTE_INSIGHTS
+                    else -> ROUTE_COUNTER.substringBefore("?")
+                }
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id)
+                    launchSingleTop = true
+                }
+            }
+            onPendingOpenConsumed()
         }
 
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
