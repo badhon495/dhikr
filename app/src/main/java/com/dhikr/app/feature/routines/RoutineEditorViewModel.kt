@@ -24,6 +24,9 @@ data class RoutineEditorUiState(
     val canSave: Boolean = false,
     // True when editing an existing routine (preset or custom) rather than creating one.
     val isEditing: Boolean = false,
+    val reminderEnabled: Boolean = false,
+    val reminderMinuteOfDay: Int = 8 * 60, // default 08:00
+    val reminderDays: Int = 0, // 0 = every day
 )
 
 /**
@@ -37,6 +40,7 @@ class RoutineEditorViewModel(
     private val routineRepository: RoutineRepository,
     private val tasbihRepository: TasbihRepository,
     private val editingRoutineId: String? = null,
+    private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RoutineEditorUiState())
@@ -61,6 +65,9 @@ class RoutineEditorViewModel(
                                 .sortedBy { s -> s.stepOrder }
                                 .map { s -> StepDraft(s.tasbihId, s.targetCount) },
                             isEditing = true,
+                            reminderEnabled = existing.routine.reminderEnabled,
+                            reminderMinuteOfDay = existing.routine.reminderMinuteOfDay,
+                            reminderDays = existing.routine.reminderDays,
                         ).withCanSave()
                     }
                 }
@@ -69,6 +76,15 @@ class RoutineEditorViewModel(
     }
 
     fun onNameChange(value: String) = update { it.copy(name = value).withCanSave() }
+
+    fun onReminderEnabledChange(value: Boolean) = update { it.copy(reminderEnabled = value) }
+
+    fun onReminderTimeChange(minuteOfDay: Int) =
+        update { it.copy(reminderMinuteOfDay = minuteOfDay.coerceIn(0, 24 * 60 - 1)) }
+
+    fun onReminderDayToggle(dayBit: Int) = update { state ->
+        state.copy(reminderDays = state.reminderDays xor (1 shl dayBit))
+    }
 
     fun onAddStep(tasbihId: String) = update { state ->
         val defaultCount = state.availableTasbih.firstOrNull { it.id == tasbihId }?.lapTarget ?: 33
@@ -107,6 +123,13 @@ class RoutineEditorViewModel(
             } else {
                 routineRepository.createRoutine(name = s.name.trim(), steps = steps)
             }
+            val daysMask = s.reminderDays and 0x7F
+            routineRepository.setReminder(id, s.reminderEnabled, s.reminderMinuteOfDay, daysMask)
+            if (s.reminderEnabled) {
+                reminderScheduler.schedule(id, s.reminderMinuteOfDay, daysMask)
+            } else {
+                reminderScheduler.cancel(id)
+            }
             onSaved(id)
         }
     }
@@ -122,9 +145,10 @@ class RoutineEditorViewModel(
         private val routineRepository: RoutineRepository,
         private val tasbihRepository: TasbihRepository,
         private val editingRoutineId: String? = null,
+        private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RoutineEditorViewModel(routineRepository, tasbihRepository, editingRoutineId) as T
+            RoutineEditorViewModel(routineRepository, tasbihRepository, editingRoutineId, reminderScheduler) as T
     }
 }

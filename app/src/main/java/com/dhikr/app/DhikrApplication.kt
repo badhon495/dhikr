@@ -25,6 +25,7 @@ class DhikrApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        com.dhikr.app.core.notifications.ReminderNotifications.ensureChannel(this)
         applicationScope.launch {
             if (database.tasbihDao().count() == 0) {
                 database.tasbihDao().insertAll(SeedData.builtInTasbih)

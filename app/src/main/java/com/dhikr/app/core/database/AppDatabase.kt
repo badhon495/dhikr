@@ -7,12 +7,14 @@ import com.dhikr.app.core.database.dao.RoutineDao
 import com.dhikr.app.core.database.dao.RoutineProgressDao
 import com.dhikr.app.core.database.dao.SessionDao
 import com.dhikr.app.core.database.dao.TasbihDao
+import com.dhikr.app.core.database.dao.TasbihProgressDao
 import com.dhikr.app.core.database.entity.RoutineCompletionEntity
 import com.dhikr.app.core.database.entity.RoutineEntity
 import com.dhikr.app.core.database.entity.RoutineProgressEntity
 import com.dhikr.app.core.database.entity.RoutineStepEntity
 import com.dhikr.app.core.database.entity.SessionEntity
 import com.dhikr.app.core.database.entity.TasbihEntity
+import com.dhikr.app.core.database.entity.TasbihProgressEntity
 
 @Database(
     entities = [
@@ -22,6 +24,7 @@ import com.dhikr.app.core.database.entity.TasbihEntity
         SessionEntity::class,
         RoutineCompletionEntity::class,
         RoutineProgressEntity::class,
+        TasbihProgressEntity::class,
     ],
     // v2: no schema change from v1, but the version had been left at 1 across
     // several real schema edits (session/routine tables added without a bump).
@@ -35,7 +38,12 @@ import com.dhikr.app.core.database.entity.TasbihEntity
     // fallbackToDestructiveMigration rebuilds + reseeds.
     // v6: added routine_progress table (per-day in-progress routine position).
     // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 6,
+    // v7: added RoutineEntity.reminderEnabled / reminderMinuteOfDay /
+    // reminderDays (per-routine local reminder). No hand migration —
+    // fallbackToDestructiveMigration rebuilds + reseeds.
+    // v8: added tasbih_progress table (per-day in-progress counting position).
+    // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 8,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -44,4 +52,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
     abstract fun routineCompletionDao(): RoutineCompletionDao
     abstract fun routineProgressDao(): RoutineProgressDao
+    abstract fun tasbihProgressDao(): TasbihProgressDao
 }

@@ -1,0 +1,16 @@
+<!-- Status-bar icon: the app-mark glyph (matches ic_launcher_foreground),
+     drawn tight in a 24dp viewport. Android tints it white in the status bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M12,2 A7,7 0 1,1 11.99,2 Z M12,5.5 A3.5,3.5 0 1,0 12.01,5.5 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.4,9h3.2v13h-3.2z" />
+</vector>

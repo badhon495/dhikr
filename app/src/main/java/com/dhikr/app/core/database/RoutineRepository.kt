@@ -9,9 +9,24 @@ import com.dhikr.app.core.database.entity.RoutineEntity
 import com.dhikr.app.core.database.entity.RoutineProgressEntity
 import com.dhikr.app.core.database.entity.RoutineStepEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 import java.util.UUID
+
+/**
+ * Today's routine display state, shared by the Routines tab and the Home
+ * screen so both render the same green fill / completed tint.
+ */
+data class RoutineDayProgress(
+    /** Routines whose last step was completed today. */
+    val completedRoutineIds: Set<String> = emptySet(),
+    /**
+     * routineId -> fraction 0f..1f of today's in-progress position (taps done
+     * / total taps). Completed routines are excluded (they use the full tint).
+     */
+    val fractionByRoutineId: Map<String, Float> = emptyMap(),
+)
 
 class RoutineRepository(
     private val routineDao: RoutineDao,
@@ -55,6 +70,14 @@ class RoutineRepository(
     }
 
     suspend fun deleteRoutine(routine: RoutineEntity) = routineDao.deleteRoutine(routine)
+
+    suspend fun setReminder(routineId: String, enabled: Boolean, minuteOfDay: Int, daysMask: Int) {
+        routineDao.setReminder(routineId, enabled, minuteOfDay, daysMask, System.currentTimeMillis())
+    }
+
+    suspend fun routinesWithReminders(): List<RoutineEntity> = routineDao.routinesWithRemindersRaw()
+
+    suspend fun getRoutine(id: String): RoutineEntity? = routineDao.getRoutineRaw(id)
 
     suspend fun toggleFavorite(id: String, currentlyFavorite: Boolean) {
         routineDao.setFavorite(id, !currentlyFavorite)
@@ -115,6 +138,36 @@ class RoutineRepository(
      */
     fun observeProgressToday(): Flow<List<RoutineProgressEntity>> =
         progressDao.observeForDay(startOfTodayMillis())
+
+    /**
+     * Combined per-day routine display state: which routines are done today and
+     * how far every in-progress routine has got (as a 0f..1f fraction of its
+     * total taps). "Today" is resolved once when the flow is created — see
+     * [observeCompletedToday].
+     */
+    fun observeDayProgress(): Flow<RoutineDayProgress> {
+        val today = startOfTodayMillis()
+        return combine(
+            routineDao.observeAllWithSteps(),
+            completionDao.observeCompletedOn(today),
+            progressDao.observeForDay(today),
+        ) { routines, completedList, progressRows ->
+            val completed = completedList.toSet()
+            val stepsById = routines.associate { rws ->
+                rws.routine.id to rws.steps.sortedBy { it.stepOrder }
+            }
+            val fractions = progressRows.mapNotNull { row ->
+                if (row.routineId in completed) return@mapNotNull null
+                val steps = stepsById[row.routineId] ?: return@mapNotNull null
+                val total = steps.sumOf { it.targetCount }
+                if (total <= 0) return@mapNotNull null
+                val idx = row.stepIndex.coerceIn(0, steps.lastIndex)
+                val doneBefore = steps.take(idx).sumOf { it.targetCount }
+                row.routineId to ((doneBefore + row.countInStep).toFloat() / total).coerceIn(0f, 1f)
+            }.toMap()
+            RoutineDayProgress(completed, fractions)
+        }
+    }
 
     fun newId(): String = UUID.randomUUID().toString()
 

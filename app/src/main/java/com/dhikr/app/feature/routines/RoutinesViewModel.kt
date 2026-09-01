@@ -38,6 +38,7 @@ data class RoutinesUiState(
 class RoutinesViewModel(
     private val repository: RoutineRepository,
     private val tasbihRepository: TasbihRepository,
+    private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -46,27 +47,13 @@ class RoutinesViewModel(
         query,
         repository.observeAllWithSteps(),
         tasbihRepository.observeAll(),
-        repository.observeCompletedToday(),
-        repository.observeProgressToday(),
-    ) { q, routines, tasbihs, completedToday, progressRows ->
+        repository.observeDayProgress(),
+    ) { q, routines, tasbihs, dayProgress ->
         val filtered = if (q.isBlank()) {
             routines
         } else {
             routines.filter { it.routine.name.contains(q.trim(), ignoreCase = true) }
         }
-        val stepsByRoutine = routines.associate { rws ->
-            rws.routine.id to rws.steps.sortedBy { it.stepOrder }
-        }
-        val progress = progressRows.mapNotNull { row ->
-            if (row.routineId in completedToday) return@mapNotNull null
-            val steps = stepsByRoutine[row.routineId] ?: return@mapNotNull null
-            val total = steps.sumOf { it.targetCount }
-            if (total <= 0) return@mapNotNull null
-            val stepIndex = row.stepIndex.coerceIn(0, steps.lastIndex)
-            val doneBefore = steps.take(stepIndex).sumOf { it.targetCount }
-            val fraction = (doneBefore + row.countInStep).toFloat() / total
-            row.routineId to fraction.coerceIn(0f, 1f)
-        }.toMap()
         RoutinesUiState(
             query = q,
             routines = filtered,
@@ -74,8 +61,8 @@ class RoutinesViewModel(
             builtInCount = routines.count { it.routine.isPreset },
             customCount = routines.count { !it.routine.isPreset },
             tasbihNamesById = tasbihs.associate { it.id to it.name },
-            completedTodayIds = completedToday,
-            progressByRoutineId = progress,
+            completedTodayIds = dayProgress.completedRoutineIds,
+            progressByRoutineId = dayProgress.fractionByRoutineId,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
 
@@ -84,7 +71,10 @@ class RoutinesViewModel(
     }
 
     fun onDeleteRoutine(routine: RoutineEntity) {
-        viewModelScope.launch { repository.deleteRoutine(routine) }
+        viewModelScope.launch {
+            repository.deleteRoutine(routine)
+            reminderScheduler.cancel(routine.id)
+        }
     }
 
     fun onToggleFavorite(routineId: String, currentlyFavorite: Boolean) {
@@ -98,9 +88,10 @@ class RoutinesViewModel(
     class Factory(
         private val repository: RoutineRepository,
         private val tasbihRepository: TasbihRepository,
+        private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RoutinesViewModel(repository, tasbihRepository) as T
+            RoutinesViewModel(repository, tasbihRepository, reminderScheduler) as T
     }
 }
