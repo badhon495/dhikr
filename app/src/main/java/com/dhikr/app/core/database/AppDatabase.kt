@@ -43,7 +43,10 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // fallbackToDestructiveMigration rebuilds + reseeds.
     // v8: added tasbih_progress table (per-day in-progress counting position).
     // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 8,
+    // v9: added TasbihEntity.benefitsText / benefitsGeneratedAt (cached
+    // Gemini-generated fada'il, per-tasbih). No hand migration —
+    // fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 9,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

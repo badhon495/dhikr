@@ -41,6 +41,10 @@ class TasbihRepository(
         tasbihDao.setFavorite(id, !currentlyFavorite)
     }
 
+    /** Persist a freshly generated benefits write-up for [id]. */
+    suspend fun saveBenefits(id: String, text: String, generatedAt: Long) =
+        tasbihDao.updateBenefits(id, text, generatedAt)
+
     suspend fun delete(tasbih: TasbihEntity): DeleteResult {
         val blockingRoutineNames = routineDao.routineNamesUsingTasbih(tasbih.id)
         if (blockingRoutineNames.isNotEmpty()) {

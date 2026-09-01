@@ -66,6 +66,12 @@ interface TasbihDao {
     @Query("UPDATE tasbih SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun setFavorite(id: String, isFavorite: Boolean)
 
+    @Query(
+        "UPDATE tasbih SET benefitsText = :text, benefitsGeneratedAt = :generatedAt, " +
+            "updatedAt = :generatedAt WHERE id = :id",
+    )
+    suspend fun updateBenefits(id: String, text: String, generatedAt: Long)
+
     @Delete
     suspend fun delete(tasbih: TasbihEntity)
 

@@ -20,6 +20,10 @@ data class TasbihEntity(
     val lapCount: Int,
     val dailyGoal: Int? = null,
     val isFavorite: Boolean = false,
+    /** Cached Gemini-generated virtues/benefits text for this dhikr; null until generated. */
+    val benefitsText: String? = null,
+    /** Epoch millis when [benefitsText] was generated; null when absent. */
+    val benefitsGeneratedAt: Long? = null,
     val isBuiltIn: Boolean,
     val createdAt: Long,
     val updatedAt: Long,

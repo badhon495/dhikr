@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
     implementation(libs.datastore.preferences)
+    implementation(libs.security.crypto)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
