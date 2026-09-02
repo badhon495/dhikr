@@ -38,6 +38,11 @@ data class SettingsUiState(
     val benefitsLanguage: BenefitsLanguage = BenefitsLanguage.ENGLISH,
     // null = no user override; the built-in template for [benefitsLanguage] is used.
     val benefitsPromptOverride: String? = null,
+    // False for the synthetic default emitted before DataStore's first read
+    // lands. The screen holds off painting the choice rows until this is true so
+    // a non-default saved choice (e.g. Theme = Dark) never flashes the default
+    // pill for a frame on the way in.
+    val loaded: Boolean = false,
 ) {
     /** What the "Customize prompt" field shows: the user's override if set,
      *  otherwise the built-in template for the current language. */
@@ -99,6 +104,7 @@ class SettingsViewModel(
                 appVersion = appVersion,
                 hasGeminiKey = secureKeyStore.hasKey,
                 autoCounterSupported = autoCounterSupported,
+                loaded = true,
             )
         }
             .combine(preferencesRepository.counterScript) { state, counterScript ->

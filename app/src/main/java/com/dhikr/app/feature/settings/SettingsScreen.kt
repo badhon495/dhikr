@@ -85,6 +85,14 @@ fun SettingsScreen(
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
         )
 
+        // A fresh SettingsViewModel is built on every visit to this screen and
+        // its DataStore-backed values arrive one frame after the synthetic
+        // default. Painting the sections before then flashes the default choice
+        // (e.g. Theme = System) for a frame before it snaps to the saved one.
+        // The first read is effectively instant, so gating the body on it costs
+        // nothing visible while removing the jump.
+        if (!state.loaded) return@Column
+
         // ---- Language ----
         SettingsSection(stringResource(R.string.settings_language)) {
             Text(
