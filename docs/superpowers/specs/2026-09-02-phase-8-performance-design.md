@@ -480,6 +480,11 @@ Until that pass:
 - C2 fullMode is not adopted (needs the device smoke pass); C5 flags are
   verified and kept.
 
+`:app:lintDebug` has 4 errors — all pre-existing on `main` (Haptics
+`NewApi`, `ReminderNotifications` `MissingPermission`, `SettingsScreen`
+`LocalContextGetResourceValueCall`) and out of scope; Phase 8 adds no new
+lint error. `:app:testDebugUnitTest` and `:app:assembleRelease` are green.
+
 Net expected effect once measured: lower cold-start work (B4, B7,
 Baseline Profile), no per-second recomposition of an idle counter screen
 (B2), fewer per-tap allocations in a routine (B1), a leaner dependency
