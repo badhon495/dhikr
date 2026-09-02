@@ -129,7 +129,14 @@ class CounterViewModel(
                 // routines, cleared at local midnight). Authoritative for
                 // routines; the single DataStore session is only a fallback.
                 val savedProgress = routineRepository.getProgress(routineIdToLoad)
-                routineStepIndex = (savedProgress?.stepIndex ?: savedSession?.routineStep ?: 0)
+                // The DataStore session is one global slot: its routineStep only
+                // means anything for THIS routine. Falling back to it for any
+                // other routine is what made a fresh routine open on a
+                // half-done / fully-checked step just because the last routine
+                // counted left off there.
+                val savedStepForThisRoutine = savedSession?.routineStep
+                    ?.takeIf { savedSession.routineId == routineIdToLoad }
+                routineStepIndex = (savedProgress?.stepIndex ?: savedStepForThisRoutine ?: 0)
                     .coerceIn(0, sortedSteps.lastIndex)
                 val currentStep = sortedSteps[routineStepIndex]
                 val stepTasbih = tasbihRepository.getById(currentStep.tasbihId)
