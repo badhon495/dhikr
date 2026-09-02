@@ -268,6 +268,27 @@ fun CounterScreen(
         }
         lastLap = state.lap
     }
+
+    // A routine step boundary is a lap boundary too, but each step runs its own
+    // single-lap engine so `state.lap` never rolls over across steps — the guard
+    // above misses it. Buzz here when the routine's current-step index advances,
+    // and when the whole routine completes, so every step transition gets the
+    // same emphatic feedback as a lap rollover.
+    var lastRoutineStepIndex by remember { mutableStateOf(state.currentRoutineStepIndex) }
+    var routineStepBaselineSynced by remember { mutableStateOf(false) }
+    LaunchedEffect(state.sessionReady, state.currentRoutineStepIndex, state.isRoutineComplete) {
+        if (!state.sessionReady) return@LaunchedEffect
+        if (!routineStepBaselineSynced) {
+            lastRoutineStepIndex = state.currentRoutineStepIndex
+            routineStepBaselineSynced = true
+            return@LaunchedEffect
+        }
+        val stepAdvanced = state.currentRoutineStepIndex == lastRoutineStepIndex + 1
+        if (stepAdvanced || state.isRoutineComplete) {
+            if (hapticMode != HapticMode.OFF) haptics.lapTick()
+        }
+        lastRoutineStepIndex = state.currentRoutineStepIndex
+    }
     val progressArcColor = lerp(colors.terra, colors.sage, lapPulse.value)
 
     Column(

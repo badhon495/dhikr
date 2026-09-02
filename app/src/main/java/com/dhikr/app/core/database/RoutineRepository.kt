@@ -129,6 +129,10 @@ class RoutineRepository(
     suspend fun getProgress(routineId: String): RoutineProgressEntity? =
         progressDao.getForRoutine(routineId, startOfTodayMillis())
 
+    /** True if [routineId]'s last step was already completed today (local time). */
+    suspend fun isCompletedToday(routineId: String): Boolean =
+        completionDao.isCompleteOn(routineId, startOfTodayMillis())
+
     /** Clears [routineId]'s saved position (routine finished, or reset). */
     suspend fun clearProgress(routineId: String) = progressDao.deleteForRoutine(routineId)
 

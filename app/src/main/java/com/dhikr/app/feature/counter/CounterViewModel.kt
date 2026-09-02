@@ -145,8 +145,19 @@ class CounterViewModel(
                 // counted left off there.
                 val savedStepForThisRoutine = savedSession?.routineStep
                     ?.takeIf { savedSession.routineId == routineIdToLoad }
-                routineStepIndex = (savedProgress?.stepIndex ?: savedStepForThisRoutine ?: 0)
-                    .coerceIn(0, sortedSteps.lastIndex)
+                // If this routine's last step was already completed today,
+                // start fresh at step 0 regardless of any leftover session
+                // pointer. Covers the race where the app dies after
+                // markRoutineComplete() (progress row gone) but before the
+                // debounced persist() drops the routine pointer from the
+                // global session slot.
+                val alreadyCompletedToday = routineRepository.isCompletedToday(routineIdToLoad)
+                routineStepIndex = if (alreadyCompletedToday) {
+                    0
+                } else {
+                    (savedProgress?.stepIndex ?: savedStepForThisRoutine ?: 0)
+                        .coerceIn(0, sortedSteps.lastIndex)
+                }
                 val currentStep = sortedSteps[routineStepIndex]
                 val stepTasbih = tasbihRepository.getById(currentStep.tasbihId)
                 if (stepTasbih != null) {
@@ -502,6 +513,14 @@ class CounterViewModel(
         // undo state round-trips correctly across process death.
         val snap = engine.snapshot()
         val s = _uiState.value
+        // Once the routine's last step is done, drop the routine pointer from
+        // the single global session slot. markRoutineComplete() already deletes
+        // the per-routine progress row, but this slot is a separate fallback
+        // (initializeSession reads routineStep from it when no progress row
+        // exists) — leaving a finished routine's last-step index here made a
+        // fresh reopen of that routine resume on its last step instead of
+        // starting over at step 0.
+        val persistRoutineId = activeRoutine?.routine?.id.takeUnless { s.isRoutineComplete }
         sessionRepository.save(
             CounterSessionState(
                 activeDhikrId = s.dhikr.id,
@@ -512,8 +531,8 @@ class CounterViewModel(
                 running = s.running,
                 elapsedSeconds = _elapsedSeconds.value, // B2: flow, not _uiState
                 locked = s.locked,
-                routineId = activeRoutine?.routine?.id,
-                routineStep = routineStepIndex.coerceAtLeast(0),
+                routineId = persistRoutineId,
+                routineStep = if (persistRoutineId != null) routineStepIndex.coerceAtLeast(0) else 0,
                 loggedTotal = loggedTotal,
             )
         )

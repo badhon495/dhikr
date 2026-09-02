@@ -16,4 +16,10 @@ interface RoutineCompletionDao {
 
     @Query("SELECT routineId FROM routine_completion WHERE dayStartMillis = :dayStartMillis")
     fun observeCompletedOn(dayStartMillis: Long): Flow<List<String>>
+
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM routine_completion " +
+            "WHERE routineId = :routineId AND dayStartMillis = :dayStartMillis)",
+    )
+    suspend fun isCompleteOn(routineId: String, dayStartMillis: Long): Boolean
 }
