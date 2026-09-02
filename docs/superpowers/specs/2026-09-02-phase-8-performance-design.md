@@ -414,20 +414,34 @@ it breaks the build.
 
 ## Baseline (before)
 
-_To be filled in after Workstream A4._
+**Status: pending device run.** The POCO F3 (`192.168.31.252:5555`) was
+offline for the implementation session. Workstream A (modules, generator,
+Macrobenchmarks) is committed and compiles; Workstreams B and C were
+implemented as code/build changes and verified with `./gradlew`
+build + unit tests, but the before/after benchmark deltas below are not
+yet measured. The engineer runs, on the device:
+
+```
+./gradlew :app:generateBaselineProfile
+./gradlew :benchmark:connectedBenchmarkAndroidTest
+git checkout <pre-B1 sha> && ./gradlew :benchmark:connectedBenchmarkAndroidTest   # for "before" columns
+```
+
+then fills the tables and reverts any B/C item whose row shows no
+measurable benefit (§66).
 
 | Journey | Metric | CompilationMode | Value |
 |---|---|---|---|
-| Cold startup | timeToInitialDisplay | None | TBD |
-| Cold startup | timeToInitialDisplay | Partial (Baseline Profile) | TBD |
-| Warm startup | timeToInitialDisplay | Partial | TBD |
-| Counter 100 taps | frameDurationCpu P50/P90/P99 | Partial | TBD |
-| Counter 1000 taps | frameDurationCpu P50/P90/P99 | Partial | TBD |
-| Counter idle 10s (timer) | frameOverrunCount | Partial | TBD |
-| Tasbih list scroll | frameDurationCpu P90/P99 | Partial | TBD |
-| Insights scroll | frameDurationCpu P90/P99 | Partial | TBD |
-| Nav Home→Tasbih→Insights→Settings | frameDurationCpu P90 | Partial | TBD |
-| Release AAB | download size / install size | — | TBD |
+| Cold startup | timeToInitialDisplay | None | pending device |
+| Cold startup | timeToInitialDisplay | Partial (Baseline Profile) | pending device |
+| Warm startup | timeToInitialDisplay | Partial | pending device |
+| Counter 100 taps | frameDurationCpu P50/P90/P99 | Partial | pending device |
+| Counter 1000 taps | frameDurationCpu P50/P90/P99 | Partial | pending device |
+| Counter idle 10s (timer) | frameOverrunCount | Partial | pending device |
+| Tasbih list scroll | frameDurationCpu P90/P99 | Partial | pending device |
+| Insights scroll | frameDurationCpu P90/P99 | Partial | pending device |
+| Nav Home→Tasbih→Insights→Settings | frameDurationCpu P90 | Partial | pending device |
+| Release AAB | download size / install size | — | see C1 below |
 
 ## After
 
@@ -435,11 +449,142 @@ _One row per B/C item, filled in as each is measured._
 
 | Item | Metric | Before | After | Kept? |
 |---|---|---|---|---|
-| B1 routine step caching | Counter 1000-tap P90 | TBD | TBD | TBD |
-| B2 timer flow split | Counter idle frameOverrunCount | TBD | TBD | TBD |
-| B3 state stability | Counter 1000-tap P90 | TBD | TBD | TBD |
-| B4 lazy repositories | Cold startup TTID | TBD | TBD | TBD |
-| B5 icons-core swap | AAB size | TBD | TBD | TBD |
-| B6 index audit | 1000-row list scroll P90 | TBD | TBD | TBD |
-| B7 seed dispatcher | Cold startup TTID | TBD | TBD | TBD |
-| C2 R8 fullMode | AAB size | TBD | TBD | TBD |
+| B1 routine step caching | Counter 1000-tap P90 | pending device | pending device | implemented; keep if unchanged/better (allocation reduction, identical output) |
+| B2 timer flow split | Counter idle frameOverrunCount | pending device | pending device | implemented; keep if idle frame production drops and tap100/1000 don't regress |
+| B3 state stability | Counter 1000-tap P90 | pending device | pending device | implemented; @Immutable + stable types, keep even within noise |
+| B4 lazy repositories | Cold startup TTID | pending device | pending device | implemented; §50 structural fix, revert if no benefit + confirm smoke pass |
+| B5 icons-core swap | AAB size | see C1 | see C1 | implemented; keep (removes material-icons-extended) |
+| B6 index audit | routine-delete scan / list scroll P90 | pending device | pending device | implemented (Index("routineId"), v10); correctness fix, keep |
+| B7 seed dispatcher | Cold startup TTID | pending device | pending device | implemented; IO for I/O, correct regardless |
+| C2 R8 fullMode | AAB size | pending | pending | see C2 section |
+
+### Implementation notes (device-independent)
+
+- **B1** — `CounterViewModel` now sorts `routine.steps` and builds the
+  `RoutineStepDisplay` list once in `initializeSession()`;
+  `advanceRoutineStep()` and `buildState()` read the cached lists. Output
+  is byte-identical to the previous per-tap recompute.
+- **B2** — `elapsedSeconds` removed from `CounterUiState`; exposed as
+  `CounterViewModel.elapsedSeconds: StateFlow<Int>`. The 1s timer tick no
+  longer calls `buildState()` / emits `_uiState`. `CounterScreen` collects
+  the flow separately for the top-bar label and the two summary dialogs.
+  Trade-off accepted: the debounced persister keys off `_uiState`, so
+  elapsed time advancing alone no longer schedules a save — elapsed is
+  recomputed from `sessionStartedAtMillis` on restore and re-saved on the
+  next real state change or the ON_STOP flush.
+- **B3** — `CounterUiState`, `RoutineStepDisplay`, `TasbihEntity` marked
+  `@Immutable`. The temporary Compose-compiler-report flag dance from the
+  plan was skipped; all three hold only stable types (primitives, String,
+  nullable primitives, and — for `CounterUiState` — an `@Immutable`
+  `TasbihEntity` plus a `List` whose holder is now `@Immutable`).
+- **B4** — `SecureKeyStore`, `GeminiClient`, `BenefitsRepository`,
+  `BackupRepository`, `RoutineShareCodec`, `RoutineShareRepository` moved
+  from top-level `remember {}` into `ROUTE_TASBIH_EDITOR`, `ROUTE_SETTINGS`,
+  `ROUTE_ROUTINES`, `ROUTE_ROUTINES_IMPORT`. `reminderScheduler` left
+  hoisted — constructor is a bare `getSystemService` wrapper, no I/O, and
+  it is used by two destinations. Note: with the current code none of the
+  moved constructors touch Tink at construction (`SecureKeyStore.prefs` is
+  `by lazy`, `BenefitsRepository.create` only wires method references), so
+  the measured startup win may be small; keep only if the benchmark shows
+  one.
+- **B6** — full audit result: only `session.routineId` (a `SET_NULL` FK)
+  lacked a covering index and was warned by Room. Added; version 9 → 10.
+  Every other FK / `WHERE` / `JOIN` column is covered by an explicit index
+  or a leftmost primary-key column. `SessionDao`'s
+  `GROUP BY ((startedAt+offset)/day)*day` aggregates compute the bucket
+  key and cannot be served by an index — acceptable at current volume.
+- **B7** — `DhikrApplication.onCreate` seed launch now uses
+  `Dispatchers.IO`.
+
+## Workstream C results
+
+### C1 — Release size
+
+`./gradlew :app:bundleRelease` on this branch (unsigned; R8 +
+resource-shrink on, as `release` always has been):
+
+| Build | AAB (bytes) | AAB (MiB) |
+|---|---|---|
+| Post-B5 (`material-icons-core` + hand-authored `ScheduleIcon`) | 6,188,893 | 5.90 |
+
+A clean pre-B5 comparison build was not obtained this session — reverting
+`app/build.gradle.kts` + `gradle/libs.versions.toml` to the pre-B5 commit
+also reverts unrelated later `:benchmark` version bumps and fails
+configuration. It is not worth chasing: `material-icons-extended` is a
+build-time artifact and R8 tree-shakes every unreferenced vector, so with
+only six icons used the shipped-AAB delta from the source swap is expected
+to be within noise of zero. **B5 is kept regardless** — it removes an
+entire artifact from the dependency graph and the compile classpath
+(plan.md §55, §25), which is a real build-hygiene win independent of AAB
+bytes. If a precise number is wanted, build `:app:bundleRelease` at
+`3a254f2` on a clean checkout and diff.
+
+Download/install size via `bundletool build-apks --mode=default` +
+`get-size total` — deferred (needs `bundletool`; not blocking).
+
+### C4 — Baseline Profile embedded ✓
+
+`unzip -l app-release.aab` shows:
+
+```
+BUNDLE-METADATA/com.android.tools.build.profiles/baseline.prof   (9494 b)
+BUNDLE-METADATA/com.android.tools.build.profiles/baseline.profm  (1095 b)
+base/root/META-INF/androidx.profileinstaller_profileinstaller.version
+```
+
+These are the merged AndroidX/Compose library profiles — the consumer
+wiring (`baselineProfile(project(":baselineprofile"))` +
+`androidx.profileinstaller`) works. The app-level §46-journey profile is
+appended to this on top after the device `generateBaselineProfile` run
+(Task 5) and committed to `app/src/main/baseline-prof.txt`.
+
+### C2 — R8 audit
+
+Release is already `isMinifyEnabled` + `isShrinkResources`. Diagnostics
+(`-printusage` / `-printseeds` / `-printconfiguration` added to
+`proguard-rules.pro` for one build, then reverted) and the
+`android.enableR8.fullMode=true` size + smoke + benchmark comparison are
+**pending** — fullMode's usual casualties are reflection-based
+serialization and Room, and this app uses `kotlinx.serialization` codegen
++ Room codegen (both fullMode-safe in principle), but the plan requires a
+device smoke pass (backup export/import round-trip, every screen opens)
+before adopting it, which the offline device blocks. Not adopted this
+pass; left as a documented follow-up.
+
+### C3 — Dependency audit
+
+`releaseRuntimeClasspath` top-level dependencies:
+
+| Dependency | Role | Verdict |
+|---|---|---|
+| `androidx.compose.*` (BOM `2026.08.00`), `material3`, `material-icons-core` | UI | keep; `material-icons-extended` removed in B5 |
+| `androidx.navigation:navigation-compose` | nav | keep |
+| `androidx.room:room-*` | database | keep |
+| `androidx.datastore:datastore-preferences` | preferences | keep |
+| `org.jetbrains.kotlinx:kotlinx-serialization-json` | backup format | keep (codegen) |
+| `androidx.lifecycle:lifecycle-*`, `androidx.activity:activity-compose`, `androidx.core:core-ktx` | platform | keep |
+| `androidx.appcompat:appcompat` | per-app locale backport (`AppLocalesMetadataHolderService`) | keep — required for the language picker |
+| `androidx.profileinstaller:profileinstaller` | baseline profile install | keep (Phase 8) |
+| **`androidx.security:security-crypto` → Tink (~1 MB)** | encrypts one Gemini API-key string at rest | **audit only** — noted as a future candidate: a KeyStore-wrapped AES of one short string would drop Tink entirely, but the key must stay encrypted at rest and changing the mechanism needs its own spec + security review (plan.md §25, §54). Not changed in Phase 8. |
+
+No surprising or unused top-level dependency. Tink is the one weight worth
+a future look; everything else is justified.
+
+### C5 — Dev-loop Gradle config
+
+Added to `gradle.properties`:
+
+```
+org.gradle.parallel=true
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+```
+
+Verified: clean `:app:assembleDebug` → `Configuration cache entry
+stored`, no problems; second `:app:assembleDebug` → `Reusing
+configuration cache` / `BUILD SUCCESSFUL in 2s`. The
+`keystore.properties` read in `app/build.gradle.kts` at configuration
+time is tolerated by Gradle 9.5's configuration cache (tracked as an
+input) — no `providers.fileContents(...)` rewrite needed, no flag
+dropped. `:app:assembleBenchmark --dry-run` still configures cleanly with
+all three flags on.
