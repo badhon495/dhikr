@@ -33,11 +33,24 @@ class StartupBenchmark {
     @Test
     fun startupFullCompilation() = startup(CompilationMode.Full())
 
-    private fun startup(mode: CompilationMode) = rule.measureRepeated(
+    // Warm startup (spec A2 requires both cold and warm).
+    @Test
+    fun startupWarmNoCompilation() = startup(CompilationMode.None(), StartupMode.WARM)
+
+    @Test
+    fun startupWarmBaselineProfile() = startup(
+        CompilationMode.Partial(BaselineProfileMode.Require),
+        StartupMode.WARM,
+    )
+
+    private fun startup(
+        mode: CompilationMode,
+        startupMode: StartupMode = StartupMode.COLD,
+    ) = rule.measureRepeated(
         packageName = PACKAGE,
         metrics = listOf(StartupTimingMetric()),
         compilationMode = mode,
-        startupMode = StartupMode.COLD,
+        startupMode = startupMode,
         iterations = 10,
         setupBlock = { pressHome() },
     ) {
