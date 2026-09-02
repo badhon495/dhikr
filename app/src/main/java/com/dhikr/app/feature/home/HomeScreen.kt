@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.dao.RoutineWithSteps
+import com.dhikr.app.ui.HOME_SCREEN_TEST_TAG
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.headingSemantics
@@ -74,6 +76,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(scrollState)
+            .testTag(HOME_SCREEN_TEST_TAG)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

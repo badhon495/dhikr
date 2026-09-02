@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -36,6 +37,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.INSIGHTS_SCREEN_TEST_TAG
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.Caprasimo
@@ -113,6 +115,7 @@ fun InsightsScreen(
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(scrollState)
+            .testTag(INSIGHTS_SCREEN_TEST_TAG)
             .padding(16.dp),
     ) {
         val monthName = remember {

@@ -26,9 +26,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -101,6 +104,7 @@ private const val ROUTE_ROUTINES_IMPORT = "routines/import"
 private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DhikrApp(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -218,7 +222,7 @@ fun DhikrApp(
             onPendingShareConsumed()
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(
             containerColor = DhikrTheme.colors.bg,
