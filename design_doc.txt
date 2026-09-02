@@ -1,0 +1,66 @@
+xplored enough. Here's the design — 6 sections. Tell me where it's wrong.
+
+1. Schema (AppDatabase v11 → v12)
+New table daily_total:
+
+col	type	
+dayStartMillis	INTEGER	local-midnight bucket
+tasbihId	TEXT	
+total	INTEGER	sum of count for that day+tasbih
+PK (dayStartMillis, tasbihId). No FK to tasbih (rows must outlive a deleted custom tasbih — history is history).
+
+Plus Index("dayStartMillis") on routine_completion (your item 3).
+
+Migration policy flip:
+
+DhikrApplication: replace fallbackToDestructiveMigration(dropAllTables = true) with .addMigrations(MIGRATION_11_12) + .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true).
+exportSchema = true (currently false) + commit app/schemas/ JSON — needed for MigrationTestHelper tests. Every future schema change now ships a hand-written Migration.
+MIGRATION_11_12 = two CREATE statements only. It does not backfill (SQL can't compute the local-tz bucket). Backfill happens on next app start via reconcile (§2), which detects daily_total empty + session non-empty and does a full rebuild.
+New MIGRATIONS.kt file under core/database/.
+
+2. Rollup upkeep — RollupRepository
+New core/database/RollupRepository.kt + DailyTotalDao.
+
+Incremental (on write): HistoryRepository.logSession() also does an upsert-add:
+
+
+INSERT INTO daily_total(dayStartMillis, tasbihId, total) VALUES(:day, :id, :count)
+ON CONFLICT(dayStartMillis, tasbihId) DO UPDATE SET total = total + :count
+:day = bucket of startedAt at current local offset. Same for WidgetCounter's log path (shares HistoryRepository, so free).
+
+Reconcile + prune (on app start): in DhikrApplication.onCreate's existing applicationScope.launch(IO), after seeding:
+
+oldestRawDay = bucket of MIN(session.startedAt).
+Recompute every closed day (< startOfToday) from raw at current offset, DELETE FROM daily_total WHERE dayStartMillis >= :oldestRawDay then re-insert — authoritative overwrite. Heals missed writes, DST/timezone drift. Rollup rows older than oldestRawDay (already-pruned archive) untouched.
+Prune: DELETE FROM session WHERE startedAt < :cutoff where cutoff = now − 12 months. (All closed days are safely in rollup after step 2.)
+Store lastRollupReconcileDay in DataStore; also run reconcile lazily if a logSession sees the day rolled over since then (covers an app kept open past midnight).
+Reads never trust today's rollup row — see §3.
+
+3. Read-path rewiring
+Only 3 aggregates actually scan unbounded history. Rewire to rollup(closed days) + raw(today):
+
+method	before	after
+allTimeTotalFlow()	totalSince(0) full scan	combine(dailyTotalDao.grandTotalBefore(today)Flow, sessionDao.totalSince(today)) summed
+monthlySummaries()	allDailyTotals full scan	group dailyTotalDao.allClosedRows() by month + current month's raw
+historyByTasbih() lifetime part	lifetimeTotalsByTasbih full scan	dailyTotalDao.totalsByTasbih() GROUP BY + today raw; last-7-day part stays raw
+InsightsWidgetProvider all-time	totalSince(0)	shared all-time helper
+Unchanged (bounded by the 12-month prune, stay on raw): todayTotalFlow, weekTotalFlow, monthTotalFlow, last7DaysTotals, calendarIntensity, previousMonthSummary, TasbihRepository.observeSessionProgressToday.
+
+4. Backup / restore
+session export now only carries 12 months → history would bleed on backup/restore. Fix:
+
+BackupModels: add dailyTotals: List<BackupDailyTotal>.
+Export: dailyTotalDao.getAll().
+Restore: insert daily_total rows in the existing withTransaction, then run one reconcile pass so incremental raw + archived rollup stay consistent. Backward-compatible parse (missing field → empty → reconcile rebuilds from restored raw sessions).
+5. Not doing
+DataStore lifetime counter — dropped (§ your call; rollup SUM over a few thousand tiny rows is sub-ms).
+WorkManager — not needed, no new dependency; app-start job matches the existing deleteStale/seed pattern.
+Touching the ((startedAt+offset)/day)*day bucket math — reused as-is.
+6. Testing
+MigrationTest — MigrationTestHelper 11→12: seed v11 with sessions, migrate, assert table+index exist, assert reconcile backfills correct per-day totals.
+RollupRepositoryTest — incremental add; reconcile overwrites a drifted row; prune deletes raw but keeps rollup; offset change between writes heals on reconcile.
+HistoryRepositoryTest (update existing) — all-time / monthly / per-tasbih-lifetime = rollup + today raw, with mixed seeded rollup and raw.
+BackupRepositoryTest — round-trip carries dailyTotals; legacy backup with no field restores via reconcile.
+New files: MIGRATIONS.kt, RollupRepository.kt, DailyTotalDao.kt, DailyTotalEntity.kt, BackupDailyTotal (in BackupModels). Touched: AppDatabase, DhikrApplication, HistoryRepository, SessionDao (add minStartedAt, closed-day variants), InsightsWidgetProvider, BackupRepository, AppPreferencesRepository, build config (exportSchema).
+
+Approve, or say what to change. Then I write the spec.
