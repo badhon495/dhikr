@@ -206,11 +206,6 @@ fun RoutinesScreen(
             }
         }
 
-        // Counts and the routine list come from the DAO a frame after the
-        // synthetic default; holding them back keeps an empty list from
-        // flashing before the real cards land on the way in.
-        if (!state.loaded) return@Column
-
         // ---- Result-count line ----
         Text(
             text = if (state.query.isBlank()) {

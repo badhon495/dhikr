@@ -38,11 +38,6 @@ data class SettingsUiState(
     val benefitsLanguage: BenefitsLanguage = BenefitsLanguage.ENGLISH,
     // null = no user override; the built-in template for [benefitsLanguage] is used.
     val benefitsPromptOverride: String? = null,
-    // False for the synthetic default emitted before DataStore's first read
-    // lands. The screen holds off painting the choice rows until this is true so
-    // a non-default saved choice (e.g. Theme = Dark) never flashes the default
-    // pill for a frame on the way in.
-    val loaded: Boolean = false,
 ) {
     /** What the "Customize prompt" field shows: the user's override if set,
      *  otherwise the built-in template for the current language. */
@@ -77,13 +72,28 @@ class SettingsViewModel(
     // Flow, since it can't change while the app is running.
     private val autoCounterSupported = AutoCounterSensorListener(appContext).isSupported
 
+    // Seed the state with the persisted values read synchronously, so the first
+    // frame the screen paints already shows the saved choices. A default-valued
+    // SettingsUiState here would make every pill, toggle and value-sized section
+    // snap to its real state one frame later, reflowing the page on each visit.
     private val _uiState = MutableStateFlow(
-        SettingsUiState(
-            appVersion = appVersion,
-            hasGeminiKey = secureKeyStore.hasKey,
-            autoCounterSupported = autoCounterSupported,
-            appLanguage = AppLanguage.current,
-        ),
+        preferencesRepository.settingsInitialValues().let { p ->
+            SettingsUiState(
+                themeMode = p.themeMode,
+                hapticMode = p.hapticMode,
+                reducedMotion = p.reducedMotion,
+                dailyGoalTarget = p.dailyGoalTarget,
+                dynamicColorEnabled = p.dynamicColorEnabled,
+                counterScript = p.counterScript,
+                autoCounterEnabled = p.autoCounterEnabled,
+                benefitsLanguage = p.benefitsLanguage,
+                benefitsPromptOverride = p.benefitsPromptOverride,
+                appVersion = appVersion,
+                hasGeminiKey = secureKeyStore.hasKey,
+                autoCounterSupported = autoCounterSupported,
+                appLanguage = AppLanguage.current,
+            )
+        },
     )
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
@@ -104,7 +114,6 @@ class SettingsViewModel(
                 appVersion = appVersion,
                 hasGeminiKey = secureKeyStore.hasKey,
                 autoCounterSupported = autoCounterSupported,
-                loaded = true,
             )
         }
             .combine(preferencesRepository.counterScript) { state, counterScript ->

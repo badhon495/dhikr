@@ -62,15 +62,6 @@ fun InsightsScreen(
         if (scrollToTopSignal > 0) scrollState.animateScrollTo(0)
     }
 
-    // isEmpty defaults to true, so without this gate the empty state flashes
-    // for a frame before the real totals arrive — which is every time the tab
-    // is opened afresh. A bare background while the first read lands reads as
-    // nothing rather than as "you have no data".
-    if (!state.loaded) {
-        Box(modifier = Modifier.fillMaxSize().background(colors.bg))
-        return
-    }
-
     if (state.isEmpty) {
         Column(
             modifier = Modifier.fillMaxSize().background(colors.bg).padding(32.dp),

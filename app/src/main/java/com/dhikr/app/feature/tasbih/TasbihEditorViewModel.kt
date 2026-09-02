@@ -30,10 +30,6 @@ internal fun GeminiResult.Kind.toBenefitsError(): BenefitsError = when (this) {
 
 data class TasbihEditorUiState(
     val isEditingExisting: Boolean = false,
-    // False while an existing Tasbih is still being read from the DB. The screen
-    // holds off painting the form fields until this is true (new Tasbih: true
-    // immediately) so an edit doesn't flash blank fields before they populate.
-    val loaded: Boolean = false,
     val name: String = "",
     val arabic: String = "",
     val pronunciation: String = "",
@@ -63,23 +59,17 @@ class TasbihEditorViewModel(
 ) : ViewModel() {
 
     private var loadedEntity: TasbihEntity? = null
-    // A new Tasbih has nothing to load, so its form is ready to paint at once.
-    private val _uiState = MutableStateFlow(TasbihEditorUiState(loaded = editingId == null))
+    private val _uiState = MutableStateFlow(TasbihEditorUiState())
     val uiState: StateFlow<TasbihEditorUiState> = _uiState.asStateFlow()
 
     init {
         if (editingId != null) {
             viewModelScope.launch {
-                val entity = repository.getById(editingId)
-                if (entity == null) {
-                    // Nothing to load (stale id) — unblock the screen anyway.
-                    update { it.copy(loaded = true) }
-                } else {
+                repository.getById(editingId)?.let { entity ->
                     loadedEntity = entity
                     update {
                         it.copy(
                             isEditingExisting = true,
-                            loaded = true,
                             name = entity.name,
                             arabic = entity.arabic,
                             pronunciation = entity.pronunciation,

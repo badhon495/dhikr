@@ -115,11 +115,6 @@ fun RoutineEditorScreen(
             )
         }
 
-        // When editing, the existing routine's name and steps land a frame
-        // after the blank default — hold the form back until then so it doesn't
-        // flash empty. A new routine has nothing to load (loaded true at once).
-        if (state.isEditingExisting && !state.loaded) return@Column
-
         FieldLabel(stringResource(R.string.routine_editor_name_label))
         Box(
             modifier = Modifier

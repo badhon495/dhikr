@@ -24,12 +24,6 @@ data class RoutineEditorUiState(
     val canSave: Boolean = false,
     // True when editing an existing routine (preset or custom) rather than creating one.
     val isEditing: Boolean = false,
-    // Known synchronously from the nav arg: are we opening an existing routine?
-    val isEditingExisting: Boolean = false,
-    // False while that existing routine is still being read. The screen holds
-    // off painting the form until this is true (new routine: true immediately)
-    // so an edit doesn't flash a blank name and empty step list first.
-    val loaded: Boolean = false,
     val reminderEnabled: Boolean = false,
     val reminderMinuteOfDay: Int = 8 * 60, // default 08:00
     val reminderDays: Int = 0, // 0 = every day
@@ -49,9 +43,7 @@ class RoutineEditorViewModel(
     private val reminderScheduler: com.dhikr.app.core.notifications.ReminderScheduler,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        RoutineEditorUiState(isEditingExisting = editingRoutineId != null),
-    )
+    private val _uiState = MutableStateFlow(RoutineEditorUiState())
     val uiState: StateFlow<RoutineEditorUiState> = _uiState.asStateFlow()
 
     init {
@@ -80,8 +72,6 @@ class RoutineEditorViewModel(
                     }
                 }
             }
-            // Both paths done (or the id was stale) — let the screen paint.
-            update { it.copy(loaded = true) }
         }
     }
 

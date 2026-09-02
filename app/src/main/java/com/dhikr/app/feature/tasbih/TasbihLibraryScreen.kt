@@ -168,11 +168,6 @@ fun TasbihLibraryScreen(
             }
         }
 
-        // Counts and results come from the DAO a frame after the synthetic
-        // default; holding them back keeps "0 built-in, 0 custom" and an empty
-        // list from flashing on the way in.
-        if (!state.loaded) return@Column
-
         // ---- Result-count line: switches wording depending on query state ----
         Text(
             text = if (state.query.isBlank()) {

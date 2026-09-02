@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.dhikr.app.core.ai.BenefitsLanguage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
 private val Context.preferencesDataStore by preferencesDataStore(name = "preferences")
 
@@ -151,6 +152,31 @@ class AppPreferencesRepository(private val context: Context) {
         context.preferencesDataStore.edit { it[hasSeenOnboardingKey] = value }
     }
 
+    /**
+     * Synchronous read of every preference the Settings screen shows. It seeds
+     * its initial UI state with this so the first frame already reflects the
+     * saved choices rather than the data-class defaults — otherwise every pill
+     * and toggle (and the sections whose height depends on a value) visibly
+     * snaps once the Flows emit, reflowing the page on each visit.
+     *
+     * Safe to block here: by the time Settings is reachable the DataStore file
+     * has already been read (MainActivity opens the same store on launch), so
+     * every `first()` returns from the in-memory cache without disk I/O.
+     */
+    fun settingsInitialValues(): SettingsInitialValues = runBlocking {
+        SettingsInitialValues(
+            themeMode = themeMode.first(),
+            hapticMode = hapticMode.first(),
+            reducedMotion = reducedMotion.first(),
+            dailyGoalTarget = dailyGoalTarget.first(),
+            dynamicColorEnabled = dynamicColorEnabled.first(),
+            counterScript = counterScript.first(),
+            autoCounterEnabled = autoCounterEnabled.first(),
+            benefitsLanguage = benefitsLanguage.first(),
+            benefitsPromptOverride = benefitsPromptOverride.first(),
+        )
+    }
+
     /** One-shot read of every user-facing preference, for a backup export. */
     suspend fun snapshot(): PreferencesSnapshot = PreferencesSnapshot(
         dailyGoalTarget = dailyGoalTarget.first(),
@@ -190,6 +216,20 @@ class AppPreferencesRepository(private val context: Context) {
         }
     }
 }
+
+/** The Settings screen's initial UI values, read synchronously at construction
+ *  — see [AppPreferencesRepository.settingsInitialValues]. */
+data class SettingsInitialValues(
+    val themeMode: ThemeMode,
+    val hapticMode: HapticMode,
+    val reducedMotion: Boolean,
+    val dailyGoalTarget: Int,
+    val dynamicColorEnabled: Boolean,
+    val counterScript: CounterScript,
+    val autoCounterEnabled: Boolean,
+    val benefitsLanguage: BenefitsLanguage,
+    val benefitsPromptOverride: String?,
+)
 
 data class PreferencesSnapshot(
     val dailyGoalTarget: Int,
