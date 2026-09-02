@@ -246,6 +246,16 @@
     <string name="settings_ai_key_save">সংরক্ষণ</string>
     <string name="settings_ai_key_change">পরিবর্তন</string>
     <string name="settings_ai_key_clear">সরান</string>
+    <string name="settings_ai_lang_label">বেনিফিট ভাষা</string>
+    <string name="settings_ai_lang_desc">এআই যে ভাষায় ফযিলত ও উপকারিতা লিখবে। প্রম্পট এই ভাষায় পাঠানো হয় এবং উত্তরও এই ভাষায় আসে।</string>
+    <string name="settings_ai_lang_english">English</string>
+    <string name="settings_ai_lang_bangla">বাংলা</string>
+    <string name="settings_ai_prompt_label">প্রম্পট কাস্টমাইজ করুন</string>
+    <string name="settings_ai_prompt_desc">অ্যাপ এআইকে যা জিজ্ঞাসা করে। বেনিফিট তৈরি করার সময় %1$s প্লেসহোল্ডারগুলোতে যিকিরের তথ্য বসানো হয়।</string>
+    <string name="settings_ai_prompt_placeholder">প্রম্পটের লেখা</string>
+    <string name="settings_ai_prompt_save">প্রম্পট সংরক্ষণ করুন</string>
+    <string name="settings_ai_prompt_reset">ডিফল্টে ফিরিয়ে দিন</string>
+    <string name="settings_ai_prompt_custom">একটি কাস্টম প্রম্পট ব্যবহার করা হচ্ছে</string>
     <string name="settings_backup">ব্যাকআপ</string>
     <string name="settings_backup_desc">সবকিছু — আপনার তাসবিহ, রুটিন, ইতিহাস ও সেটিংস — একটি ফাইলে সংরক্ষণ করুন যা আপনি রাখতে বা অন্য ডিভাইসে নিতে পারেন।</string>
     <string name="settings_backup_export">ব্যাকআপ এক্সপোর্ট</string>

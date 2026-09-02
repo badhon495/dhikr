@@ -2,6 +2,7 @@ package com.dhikr.app.core.backup
 
 import androidx.room.withTransaction
 import com.dhikr.app.core.database.AppDatabase
+import com.dhikr.app.core.ai.BenefitsLanguage
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
@@ -67,6 +68,8 @@ class BackupRepository(
                 reducedMotion = prefs.reducedMotion,
                 dynamicColor = prefs.dynamicColorEnabled,
                 counterScript = prefs.counterScript.name,
+                benefitsLanguage = prefs.benefitsLanguage.name,
+                benefitsPromptOverride = prefs.benefitsPromptOverride,
             ),
         )
         return json.encodeToString(BackupFile.serializer(), file)
@@ -120,6 +123,8 @@ class BackupRepository(
                 reducedMotion = file.preferences.reducedMotion,
                 dynamicColorEnabled = file.preferences.dynamicColor,
                 counterScript = file.preferences.counterScript.toCounterScript(),
+                benefitsLanguage = file.preferences.benefitsLanguage.toBenefitsLanguage(),
+                benefitsPromptOverride = file.preferences.benefitsPromptOverride?.takeIf { it.isNotBlank() },
             )
         }.isSuccess
 
@@ -166,6 +171,12 @@ class BackupRepository(
     private fun String?.toCounterScript(): CounterScript? = when (this) {
         CounterScript.PRONUNCIATION.name -> CounterScript.PRONUNCIATION
         CounterScript.ARABIC.name -> CounterScript.ARABIC
+        else -> null
+    }
+
+    private fun String?.toBenefitsLanguage(): BenefitsLanguage? = when (this) {
+        BenefitsLanguage.ENGLISH.name -> BenefitsLanguage.ENGLISH
+        BenefitsLanguage.BANGLA.name -> BenefitsLanguage.BANGLA
         else -> null
     }
 }

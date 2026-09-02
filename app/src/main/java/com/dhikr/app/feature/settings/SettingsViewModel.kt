@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.dhikr.app.core.ai.BenefitsLanguage
 import com.dhikr.app.core.ai.SecureKeyStore
+import com.dhikr.app.core.ai.defaultBenefitsTemplate
 import com.dhikr.app.core.counter.AutoCounterSensorListener
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.widget.DhikrWidgets
@@ -33,7 +35,17 @@ data class SettingsUiState(
     val hasGeminiKey: Boolean = false,
     val autoCounterEnabled: Boolean = false,
     val autoCounterSupported: Boolean = true,
+    val benefitsLanguage: BenefitsLanguage = BenefitsLanguage.ENGLISH,
+    // null = no user override; the built-in template for [benefitsLanguage] is used.
+    val benefitsPromptOverride: String? = null,
 ) {
+    /** What the "Customize prompt" field shows: the user's override if set,
+     *  otherwise the built-in template for the current language. */
+    val effectiveBenefitsPrompt: String
+        get() = benefitsPromptOverride ?: defaultBenefitsTemplate(benefitsLanguage)
+
+    val hasBenefitsPromptOverride: Boolean get() = benefitsPromptOverride != null
+
     /** Common tasbih counts offered as quick-pick daily-goal targets. */
     val dailyGoalOptions: List<Int> get() = DAILY_GOAL_OPTIONS
 
@@ -95,6 +107,12 @@ class SettingsViewModel(
             .combine(preferencesRepository.autoCounterEnabled) { state, autoCounterEnabled ->
                 state.copy(autoCounterEnabled = autoCounterEnabled)
             }
+            .combine(preferencesRepository.benefitsLanguage) { state, benefitsLanguage ->
+                state.copy(benefitsLanguage = benefitsLanguage)
+            }
+            .combine(preferencesRepository.benefitsPromptOverride) { state, override ->
+                state.copy(benefitsPromptOverride = override)
+            }
             // Language lives outside DataStore (AppCompatDelegate owns it), so
             // carry the value read at construction through each rebuild.
             .onEach { _uiState.value = it.copy(appLanguage = _uiState.value.appLanguage) }
@@ -145,6 +163,24 @@ class SettingsViewModel(
             // its next 30-min tick — push a refresh now that the goal changed.
             DhikrWidgets.refreshAll(appContext)
         }
+    }
+
+    fun onBenefitsLanguageChange(value: BenefitsLanguage) {
+        viewModelScope.launch { preferencesRepository.setBenefitsLanguage(value) }
+    }
+
+    /** Persists an edited prompt template. Blank / equal-to-default clears the
+     *  override so the built-in template is used again. */
+    fun onBenefitsPromptChange(value: String) {
+        viewModelScope.launch {
+            val cleared = value.isBlank() ||
+                value.trim() == defaultBenefitsTemplate(_uiState.value.benefitsLanguage).trim()
+            preferencesRepository.setBenefitsPromptOverride(if (cleared) null else value)
+        }
+    }
+
+    fun onResetBenefitsPrompt() {
+        viewModelScope.launch { preferencesRepository.setBenefitsPromptOverride(null) }
     }
 
     fun saveGeminiKey(raw: String) {

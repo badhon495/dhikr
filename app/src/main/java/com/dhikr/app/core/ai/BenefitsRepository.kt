@@ -15,6 +15,8 @@ class BenefitsRepository internal constructor(
     private val gemini: GeminiApi,
     private val getTasbih: suspend (String) -> TasbihEntity?,
     private val saveBenefits: suspend (id: String, text: String, generatedAt: Long) -> Unit,
+    private val getLanguage: suspend () -> BenefitsLanguage,
+    private val getPromptOverride: suspend () -> String?,
 ) {
 
     suspend fun generate(tasbihId: String): GeminiResult {
@@ -23,7 +25,8 @@ class BenefitsRepository internal constructor(
         val tasbih = getTasbih(tasbihId)
             ?: return GeminiResult.Error(GeminiResult.Kind.UNKNOWN, "tasbih not found")
 
-        return when (val result = gemini.generateContent(key, buildBenefitsPrompt(tasbih))) {
+        val prompt = buildBenefitsPrompt(tasbih, getLanguage(), getPromptOverride())
+        return when (val result = gemini.generateContent(key, prompt)) {
             is GeminiResult.Success -> {
                 saveBenefits(tasbihId, result.text, System.currentTimeMillis())
                 result
@@ -38,29 +41,15 @@ class BenefitsRepository internal constructor(
             keyStore: SecureKeyStore,
             gemini: GeminiApi,
             tasbihRepository: TasbihRepository,
+            getLanguage: suspend () -> BenefitsLanguage,
+            getPromptOverride: suspend () -> String?,
         ): BenefitsRepository = BenefitsRepository(
             getKey = keyStore::getGeminiKey,
             gemini = gemini,
             getTasbih = tasbihRepository::getById,
             saveBenefits = tasbihRepository::saveBenefits,
+            getLanguage = getLanguage,
+            getPromptOverride = getPromptOverride,
         )
     }
-}
-
-internal fun buildBenefitsPrompt(tasbih: TasbihEntity): String = buildString {
-    appendLine("You are an Islamic knowledge assistant. For the following dhikr, describe its")
-    appendLine("virtues and benefits (fada'il) as reported in the Qur'an and authentic Sunnah.")
-    appendLine()
-    appendLine("Name: ${tasbih.name}")
-    appendLine("Arabic: ${tasbih.arabic}")
-    appendLine("Pronunciation: ${tasbih.pronunciation}")
-    appendLine("Translation: ${tasbih.translation}")
-    tasbih.source?.takeIf { it.isNotBlank() }?.let { appendLine("Source: $it") }
-    appendLine()
-    appendLine("Rules:")
-    appendLine("- Only cite what is established in authentic sources; name the source (surah/ayah,")
-    appendLine("  or hadith collection) where possible.")
-    appendLine("- If a commonly-attributed benefit is weak or fabricated, say so briefly.")
-    appendLine("- 4-8 short bullet points. No greeting, no preamble.")
-    append("- If you cannot verify benefits for this specific wording, say that plainly.")
 }

@@ -249,6 +249,16 @@
     <string name="settings_ai_key_save">Save</string>
     <string name="settings_ai_key_change">Change</string>
     <string name="settings_ai_key_clear">Remove</string>
+    <string name="settings_ai_lang_label">Benefits language</string>
+    <string name="settings_ai_lang_desc">The language the AI writes the virtues &amp; benefits in. The prompt is sent in this language and the response comes back in it.</string>
+    <string name="settings_ai_lang_english">English</string>
+    <string name="settings_ai_lang_bangla">বাংলা</string>
+    <string name="settings_ai_prompt_label">Customize prompt</string>
+    <string name="settings_ai_prompt_desc">What the app asks the AI. Placeholders %1$s are filled in with the dhikr\'s details when you generate benefits.</string>
+    <string name="settings_ai_prompt_placeholder">Prompt text</string>
+    <string name="settings_ai_prompt_save">Save prompt</string>
+    <string name="settings_ai_prompt_reset">Reset to default</string>
+    <string name="settings_ai_prompt_custom">Using a custom prompt</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_desc">Save everything — your tasbih, routines, history and settings — to a file you can keep or move to another device.</string>
     <string name="settings_backup_export">Export backup</string>

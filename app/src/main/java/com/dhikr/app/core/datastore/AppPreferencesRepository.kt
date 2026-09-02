@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.dhikr.app.core.ai.BenefitsLanguage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -36,6 +37,8 @@ class AppPreferencesRepository(private val context: Context) {
     private val counterScriptKey = stringPreferencesKey("counter_script")
     private val autoCounterEnabledKey = booleanPreferencesKey("auto_counter_enabled")
     private val hasSeenOnboardingKey = booleanPreferencesKey("has_seen_onboarding")
+    private val benefitsLanguageKey = stringPreferencesKey("benefits_language")
+    private val benefitsPromptOverrideKey = stringPreferencesKey("benefits_prompt_override")
 
     val dailyGoalTarget = context.preferencesDataStore.data.map { it[dailyGoalKey] ?: 100 }
 
@@ -110,6 +113,33 @@ class AppPreferencesRepository(private val context: Context) {
         context.preferencesDataStore.edit { it[autoCounterEnabledKey] = value }
     }
 
+    /** Language the AI benefits write-up is generated in. Absent/unknown falls
+     *  back to ENGLISH. Only touches the Gemini prompt/response, not the app UI. */
+    val benefitsLanguage = context.preferencesDataStore.data.map { prefs ->
+        when (prefs[benefitsLanguageKey]) {
+            BenefitsLanguage.BANGLA.name -> BenefitsLanguage.BANGLA
+            else -> BenefitsLanguage.ENGLISH
+        }
+    }
+
+    suspend fun setBenefitsLanguage(value: BenefitsLanguage) {
+        context.preferencesDataStore.edit { it[benefitsLanguageKey] = value.name }
+    }
+
+    /** User's edited benefits prompt template, or null to use the built-in
+     *  template for [benefitsLanguage]. Blank is stored as "cleared" (null). */
+    val benefitsPromptOverride = context.preferencesDataStore.data.map {
+        it[benefitsPromptOverrideKey]?.takeIf { s -> s.isNotBlank() }
+    }
+
+    suspend fun setBenefitsPromptOverride(value: String?) {
+        context.preferencesDataStore.edit { prefs ->
+            val trimmed = value?.takeIf { it.isNotBlank() }
+            if (trimmed == null) prefs.remove(benefitsPromptOverrideKey)
+            else prefs[benefitsPromptOverrideKey] = trimmed
+        }
+    }
+
     /** One-shot UX flag, not a real preference — never wired into backup/restore
      *  (plan.md §25 onboarding is per-device, not something worth carrying
      *  across a backup). Absent (fresh install) means false: show onboarding. */
@@ -127,6 +157,8 @@ class AppPreferencesRepository(private val context: Context) {
         reducedMotion = reducedMotion.first(),
         dynamicColorEnabled = dynamicColorEnabled.first(),
         counterScript = counterScript.first(),
+        benefitsLanguage = benefitsLanguage.first(),
+        benefitsPromptOverride = benefitsPromptOverride.first(),
     )
 
     /**
@@ -141,6 +173,8 @@ class AppPreferencesRepository(private val context: Context) {
         reducedMotion: Boolean?,
         dynamicColorEnabled: Boolean?,
         counterScript: CounterScript?,
+        benefitsLanguage: BenefitsLanguage?,
+        benefitsPromptOverride: String?,
     ) {
         context.preferencesDataStore.edit { prefs ->
             dailyGoalTarget?.let { prefs[dailyGoalKey] = it }
@@ -149,6 +183,8 @@ class AppPreferencesRepository(private val context: Context) {
             reducedMotion?.let { prefs[reducedMotionKey] = it }
             dynamicColorEnabled?.let { prefs[dynamicColorKey] = it }
             counterScript?.let { prefs[counterScriptKey] = it.name }
+            benefitsLanguage?.let { prefs[benefitsLanguageKey] = it.name }
+            benefitsPromptOverride?.takeIf { it.isNotBlank() }?.let { prefs[benefitsPromptOverrideKey] = it }
         }
     }
 }
@@ -160,4 +196,6 @@ data class PreferencesSnapshot(
     val reducedMotion: Boolean,
     val dynamicColorEnabled: Boolean,
     val counterScript: CounterScript,
+    val benefitsLanguage: BenefitsLanguage,
+    val benefitsPromptOverride: String?,
 )

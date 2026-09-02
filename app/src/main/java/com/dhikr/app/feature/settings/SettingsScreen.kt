@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.core.ai.BenefitsLanguage
 import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.datastore.ThemeMode
@@ -227,6 +228,35 @@ fun SettingsScreen(
                 hasKey = state.hasGeminiKey,
                 onSave = viewModel::saveGeminiKey,
                 onClear = viewModel::clearGeminiKey,
+            )
+
+            Text(
+                stringResource(R.string.settings_ai_lang_label),
+                fontSize = 14.sp,
+                color = colors.text,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(top = 20.dp),
+            )
+            Text(
+                stringResource(R.string.settings_ai_lang_desc),
+                fontSize = 12.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+            )
+            ChoiceRow(
+                options = listOf(
+                    BenefitsLanguage.ENGLISH to stringResource(R.string.settings_ai_lang_english),
+                    BenefitsLanguage.BANGLA to stringResource(R.string.settings_ai_lang_bangla),
+                ),
+                selected = state.benefitsLanguage,
+                onSelect = viewModel::onBenefitsLanguageChange,
+            )
+
+            BenefitsPromptEditor(
+                effectivePrompt = state.effectiveBenefitsPrompt,
+                isCustom = state.hasBenefitsPromptOverride,
+                onSave = viewModel::onBenefitsPromptChange,
+                onReset = viewModel::onResetBenefitsPrompt,
             )
         }
 
@@ -558,6 +588,84 @@ private fun GeminiKeyControls(
                 onSave(draft)
                 draft = ""
                 editing = false
+            }
+        }
+    }
+}
+
+/**
+ * Multiline editor for the AI benefits prompt template. Shows the effective
+ * prompt (user override, or the built-in template for the current language).
+ * "Save prompt" persists edits; "Reset to default" drops the override.
+ *
+ * [effectivePrompt] is re-seeded into the local draft whenever it changes from
+ * outside — i.e. when the user switches benefits language and hasn't overridden
+ * the prompt, so the field follows the new language's default.
+ */
+@Composable
+private fun BenefitsPromptEditor(
+    effectivePrompt: String,
+    isCustom: Boolean,
+    onSave: (String) -> Unit,
+    onReset: () -> Unit,
+) {
+    val colors = DhikrTheme.colors
+    var draft by rememberSaveable(effectivePrompt) { mutableStateOf(effectivePrompt) }
+    val dirty = draft.trim() != effectivePrompt.trim()
+
+    Text(
+        stringResource(R.string.settings_ai_prompt_label),
+        fontSize = 14.sp,
+        color = colors.text,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(top = 20.dp),
+    )
+    Text(
+        stringResource(R.string.settings_ai_prompt_desc, "{name} {arabic} {pronunciation} {translation} {source}"),
+        fontSize = 12.sp,
+        color = colors.faint,
+        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+    )
+    if (isCustom) {
+        Text(
+            stringResource(R.string.settings_ai_prompt_custom),
+            fontSize = 11.5.sp,
+            color = colors.dim,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 120.dp)
+            .clip(ListRowShape)
+            .background(colors.card)
+            .border(1.dp, colors.line, ListRowShape)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        BasicTextField(
+            value = draft,
+            onValueChange = { draft = it },
+            textStyle = TextStyle(fontSize = 12.5.sp, color = colors.text),
+            cursorBrush = SolidColor(colors.text),
+            keyboardOptions = KeyboardOptions(autoCorrectEnabled = false),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(top = 10.dp),
+    ) {
+        KeyActionPill(
+            label = stringResource(R.string.settings_ai_prompt_save),
+            bg = if (dirty) colors.sage else colors.surface,
+            fg = if (dirty) colors.onSage else colors.faint,
+        ) {
+            if (dirty) onSave(draft)
+        }
+        if (isCustom) {
+            KeyActionPill(stringResource(R.string.settings_ai_prompt_reset), colors.surface, colors.text) {
+                onReset()
             }
         }
     }

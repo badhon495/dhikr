@@ -45,11 +45,15 @@ class BenefitsRepositoryTest {
         keyStore: FakeKeyStore,
         gemini: FakeGemini,
         store: FakeTasbihStore,
+        language: BenefitsLanguage = BenefitsLanguage.ENGLISH,
+        override: String? = null,
     ) = BenefitsRepository(
         getKey = keyStore::getGeminiKey,
         gemini = gemini,
         getTasbih = store::getById,
         saveBenefits = store::saveBenefits,
+        getLanguage = { language },
+        getPromptOverride = { override },
     )
 
     @Test
@@ -108,5 +112,21 @@ class BenefitsRepositoryTest {
         val store = FakeTasbihStore(tasbih(source = "Sahih Muslim 2691"))
         repo(FakeKeyStore("k"), gemini, store).generate("t1")
         assertTrue(gemini.lastPrompt!!.contains("Source: Sahih Muslim 2691"))
+    }
+
+    @Test
+    fun bangla_language_appends_bangla_directive_to_prompt() = runTest {
+        val gemini = FakeGemini(GeminiResult.Success("ok"))
+        val store = FakeTasbihStore(tasbih())
+        repo(FakeKeyStore("k"), gemini, store, language = BenefitsLanguage.BANGLA).generate("t1")
+        assertTrue(gemini.lastPrompt!!.trimEnd().endsWith(BANGLA_DIRECTIVE))
+    }
+
+    @Test
+    fun prompt_override_is_used_instead_of_default_template() = runTest {
+        val gemini = FakeGemini(GeminiResult.Success("ok"))
+        val store = FakeTasbihStore(tasbih())
+        repo(FakeKeyStore("k"), gemini, store, override = "Just describe {name}.").generate("t1")
+        assertTrue(gemini.lastPrompt!!.startsWith("Just describe Tasbih."))
     }
 }

@@ -91,6 +91,7 @@ import com.dhikr.app.ui.NavTasbihIcon
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.theme.DhikrTheme
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val ROUTE_HOME = "home"
@@ -286,6 +287,8 @@ fun DhikrApp(
                             SecureKeyStore(context.applicationContext),
                             GeminiClient(),
                             tasbihRepository,
+                            getLanguage = { preferencesRepository.benefitsLanguage.first() },
+                            getPromptOverride = { preferencesRepository.benefitsPromptOverride.first() },
                         )
                     }
                     val viewModel: TasbihEditorViewModel = viewModel(

@@ -160,6 +160,8 @@ data class BackupPreferences(
     @SerialName("reducedMotion") val reducedMotion: Boolean? = null,
     @SerialName("dynamicColor") val dynamicColor: Boolean? = null,
     @SerialName("counterScript") val counterScript: String? = null,
+    @SerialName("benefitsLanguage") val benefitsLanguage: String? = null,
+    @SerialName("benefitsPromptOverride") val benefitsPromptOverride: String? = null,
 )
 
 /** Summary of what a restore actually wrote, surfaced to the user. */
