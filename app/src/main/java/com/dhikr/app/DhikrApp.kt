@@ -160,10 +160,11 @@ fun DhikrApp(
         val reducedMotion by preferencesRepository.reducedMotion.collectAsState(initial = false)
         val counterScript by preferencesRepository.counterScript.collectAsState(initial = CounterScript.PRONUNCIATION)
         val autoCounterEnabled by preferencesRepository.autoCounterEnabled.collectAsState(initial = false)
-        // Same pattern as every other preference above: default to the "off"
-        // reading (not yet seen) while DataStore's first value loads, matching
-        // reducedMotion/autoCounterEnabled's own initial=false above.
-        val hasSeenOnboarding by preferencesRepository.hasSeenOnboarding.collectAsState(initial = false)
+        // Unlike the preferences above, this one gates a full-screen overlay, so
+        // an initial=false here flashes the onboarding screen on every Activity
+        // recreation (e.g. rotation) until DataStore's real value loads. Start
+        // null and treat null as "still loading" — render nothing until known.
+        val hasSeenOnboarding by preferencesRepository.hasSeenOnboarding.collectAsState(initial = null)
         val coroutineScope = rememberCoroutineScope()
 
         // Hoisted here rather than read off CounterViewModel directly: this
@@ -234,7 +235,7 @@ fun DhikrApp(
                 // too so a stale true from a just-left session can't hide
                 // the bar elsewhere in the app. Also hidden while onboarding
                 // is showing, so its overlay is the only interactive surface.
-                if (!(counterLocked && onCounterRoute) && hasSeenOnboarding) {
+                if (!(counterLocked && onCounterRoute) && hasSeenOnboarding == true) {
                     DhikrBottomNav(
                         navController = navController,
                         onReselect = { base -> scrollTopSignals[base] = signalOf(base) + 1 },
@@ -427,7 +428,7 @@ fun DhikrApp(
         }
         }
 
-        if (!hasSeenOnboarding) {
+        if (hasSeenOnboarding == false) {
             OnboardingScreen(
                 onFinished = {
                     coroutineScope.launch { preferencesRepository.setHasSeenOnboarding(true) }
