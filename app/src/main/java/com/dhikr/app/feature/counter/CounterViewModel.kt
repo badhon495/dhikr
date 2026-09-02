@@ -148,9 +148,18 @@ class CounterViewModel(
                             savedSession.routineId == routineIdToLoad
                         } ?: 0
                     } else {
-                        applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
+                        // The single DataStore session is one global slot. Only
+                        // adopt its count/lap/elapsed here if it actually belongs
+                        // to THIS routine — otherwise counting a dhikr in one
+                        // routine bleeds into every other routine that has the
+                        // same dhikr as its current step (they share activeDhikrId
+                        // but not routineId).
+                        applyRestoredCountIfMatching(savedSession, currentStep.tasbihId, routineIdToLoad)
                     }
-                    sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == currentStep.tasbihId) {
+                    sessionStartedAtMillis = if (savedSession != null &&
+                        savedSession.routineId == routineIdToLoad &&
+                        savedSession.activeDhikrId == currentStep.tasbihId
+                    ) {
                         System.currentTimeMillis() - _elapsedSeconds.value * 1000L
                     } else {
                         System.currentTimeMillis()
@@ -196,13 +205,13 @@ class CounterViewModel(
                 .coerceIn(0, (loaded.lapTarget - 1).coerceAtLeast(0))
             engine.restore(count = restoredCount, lap = restoredLap, previous = null)
             loggedTotal = savedTasbihProgress.loggedInSession.coerceAtLeast(0)
-            if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
+            if (savedSession != null && savedSession.activeDhikrId == loaded.id && savedSession.routineId == null) {
                 _elapsedSeconds.value = savedSession.elapsedSeconds
                 locked = savedSession.locked
                 if (!savedSession.running) engine.pause()
             }
         } else {
-            applyRestoredCountIfMatching(savedSession, loaded.id)
+            applyRestoredCountIfMatching(savedSession, loaded.id, expectedRoutineId = null)
         }
         sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
             System.currentTimeMillis() - _elapsedSeconds.value * 1000L
@@ -213,8 +222,19 @@ class CounterViewModel(
         _uiState.value = buildState()
     }
 
-    private fun applyRestoredCountIfMatching(savedSession: CounterSessionState?, loadedTasbihId: String) {
-        if (savedSession != null && savedSession.activeDhikrId == loadedTasbihId) {
+    private fun applyRestoredCountIfMatching(
+        savedSession: CounterSessionState?,
+        loadedTasbihId: String,
+        expectedRoutineId: String?,
+    ) {
+        // Match on routineId too, not just the dhikr id — the saved session is a
+        // single global slot, so a session left behind by a different routine
+        // (or a standalone Tasbih) that happens to use the same dhikr must not
+        // be restored into this one.
+        if (savedSession != null &&
+            savedSession.activeDhikrId == loadedTasbihId &&
+            savedSession.routineId == expectedRoutineId
+        ) {
             // Engine has no public state setter beyond increment/undo/reset by
             // design (keeps it a minimal state machine) — for restore we
             // reconstruct via the package-private restore hook instead of
