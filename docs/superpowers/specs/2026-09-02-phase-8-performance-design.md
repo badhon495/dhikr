@@ -458,6 +458,33 @@ _One row per B/C item, filled in as each is measured._
 | B7 seed dispatcher | Cold startup TTID | pending device | pending device | implemented; IO for I/O, correct regardless |
 | C2 R8 fullMode | AAB size | pending | pending | see C2 section |
 
+### Summary
+
+Workstream A (both `com.android.test` modules, the §46-journey Baseline
+Profile generator, and the four Macrobenchmark classes) is complete and
+compiles. Workstreams B and C were implemented as code and build changes,
+each verified with `./gradlew` build + the existing unit-test suite
+(all green), and documented here.
+
+What is **not** done: the on-device before/after measurement pass. The
+POCO F3 was offline for the whole implementation session, and per project
+convention (build-only verification) benchmarks are the user's to run.
+Until that pass:
+
+- B3, B6, B7 are correctness / architecture improvements and are kept on
+  their merits regardless of the delta.
+- B1, B2, B4, B5 are kept pending measurement — the user runs
+  `:benchmark:connectedBenchmarkAndroidTest` before/after and reverts any
+  whose row shows no benefit (§66). B4 additionally needs the manual
+  smoke pass (every destination opens; AI / backup / share flows work).
+- C2 fullMode is not adopted (needs the device smoke pass); C5 flags are
+  verified and kept.
+
+Net expected effect once measured: lower cold-start work (B4, B7,
+Baseline Profile), no per-second recomposition of an idle counter screen
+(B2), fewer per-tap allocations in a routine (B1), a leaner dependency
+graph (B5), and one fewer Room full-table-scan risk (B6).
+
 ### Implementation notes (device-independent)
 
 - **B1** — `CounterViewModel` now sorts `routine.steps` and builds the
