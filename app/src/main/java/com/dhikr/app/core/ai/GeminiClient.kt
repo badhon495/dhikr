@@ -1,5 +1,6 @@
 package com.dhikr.app.core.ai
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -9,10 +10,16 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal const val GEMINI_MODEL = "gemini-2.0-flash"
+// Flash-Lite: lowest-latency tier, minimal thinking — enough for a short
+// fada'il write-up and keeps the non-streaming call well under the timeout.
+internal const val GEMINI_MODEL = "gemini-3.5-flash-lite"
 private const val GEMINI_BASE =
     "https://generativelanguage.googleapis.com/v1beta/models"
-private const val TIMEOUT_MS = 30_000
+private const val CONNECT_TIMEOUT_MS = 15_000
+
+// Non-streaming generateContent blocks until the model finishes; current flash
+// models "think" first, so first byte can land well after 30s.
+private const val READ_TIMEOUT_MS = 90_000
 
 /** Outcome of a benefits generation call. */
 sealed interface GeminiResult {
@@ -115,8 +122,8 @@ class GeminiClient : GeminiApi {
             val conn = url.openConnection() as HttpURLConnection
             try {
                 conn.requestMethod = "POST"
-                conn.connectTimeout = TIMEOUT_MS
-                conn.readTimeout = TIMEOUT_MS
+                conn.connectTimeout = CONNECT_TIMEOUT_MS
+                conn.readTimeout = READ_TIMEOUT_MS
                 conn.doOutput = true
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 conn.outputStream.use { it.write(buildRequestBody(prompt).toByteArray(Charsets.UTF_8)) }
@@ -124,8 +131,12 @@ class GeminiClient : GeminiApi {
                 val status = conn.responseCode
                 val stream = if (status in 200..299) conn.inputStream else conn.errorStream
                 val body = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
+                if (status !in 200..299) {
+                    Log.w("GeminiClient", "HTTP $status from $GEMINI_MODEL: ${body.take(600)}")
+                }
                 parseGeminiResponse(status, body)
             } catch (e: IOException) {
+                Log.w("GeminiClient", "network failure calling $GEMINI_MODEL", e)
                 GeminiResult.Error(GeminiResult.Kind.NETWORK, e.message ?: "network error")
             } finally {
                 conn.disconnect()

@@ -41,7 +41,9 @@ class RoutineRepository(
     suspend fun createRoutine(name: String, steps: List<Pair<String, Int>>): String {
         val id = newId()
         val now = System.currentTimeMillis()
-        routineDao.insertRoutine(RoutineEntity(id = id, name = name, isPreset = false, createdAt = now, updatedAt = now))
+        // Favorited on creation so it shows on Home right away; the user unstars
+        // it on the Routines page to remove it from Home.
+        routineDao.insertRoutine(RoutineEntity(id = id, name = name, isPreset = false, isFavorite = true, createdAt = now, updatedAt = now))
         routineDao.insertSteps(steps.mapIndexed { index, (tasbihId, targetCount) ->
             RoutineStepEntity(routineId = id, tasbihId = tasbihId, stepOrder = index, targetCount = targetCount)
         })

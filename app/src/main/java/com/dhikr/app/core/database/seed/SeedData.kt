@@ -104,11 +104,13 @@ object SeedData {
         ),
     )
 
+    // Presets seed as favorites so they appear on Home out of the box; the user
+    // unstars one on the Routines page to remove it from Home.
     val presetRoutines: List<RoutineEntity> = listOf(
-        RoutineEntity(id = "morning", name = "Morning Dhikr", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
-        RoutineEntity(id = "evening", name = "Evening Dhikr", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
-        RoutineEntity(id = "after_salah", name = "After Salah", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
-        RoutineEntity(id = "before_sleep", name = "Before Sleep", isPreset = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "morning", name = "Morning Dhikr", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "evening", name = "Evening Dhikr", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "after_salah", name = "After Salah", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "before_sleep", name = "Before Sleep", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
     )
 
     val presetRoutineSteps: List<RoutineStepEntity> = listOf(

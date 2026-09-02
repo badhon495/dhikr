@@ -49,7 +49,10 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // v10: added Index("routineId") on session (it is a SET_NULL foreign key
     // and was triggering a full-table-scan warning). No hand migration —
     // fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 10,
+    // v11: preset routines now seed with isFavorite = true (Home shows favorited
+    // routines only). No schema change; bump reseeds so existing installs pick
+    // up the new seed. No hand migration — fallbackToDestructiveMigration.
+    version = 11,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

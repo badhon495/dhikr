@@ -154,16 +154,24 @@ fun HomeScreen(
             }
         }
 
-        // Routines — favorited ones if the user marked any, else all of them.
-        // Full-width cards, one per row: matches the Favourites list width but
-        // reads heavier — a step-count chip leads each card and the first step
-        // names preview the plan, so the two sections stay visually distinct.
+        // Routines — the favorited ones. Full-width cards, one per row: matches
+        // the Favourites list width but reads heavier — a step-count chip leads
+        // each card and the first step names preview the plan, so the two
+        // sections stay visually distinct. Empty = a hint pointing at Routines.
         Column {
             SectionHeader(
                 title = stringResource(R.string.home_routines_title),
                 actionLabel = stringResource(R.string.home_routines_manage),
                 onAction = onOpenRoutines,
             )
+            if (state.routines.isEmpty()) {
+                Text(
+                    stringResource(R.string.home_routines_empty_hint),
+                    fontSize = 13.sp,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
             state.routines.forEach { routineWithSteps ->
                 val done = routineWithSteps.routine.id in state.completedRoutineIds
                 val fraction = if (done) 0f

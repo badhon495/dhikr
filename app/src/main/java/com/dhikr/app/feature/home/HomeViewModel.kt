@@ -97,12 +97,10 @@ class HomeViewModel(
                     continueSession = continueInfo,
                     favorites = inputs.favorites,
                     tasbihNamesById = tasbihNamesById,
-                    // Favorited routines if the user has marked any; otherwise
-                    // fall back to all of them so the section is never empty.
-                    // Rendered as a full-width card list, so no cap.
-                    routines = inputs.routines
-                        .filter { it.routine.isFavorite }
-                        .ifEmpty { inputs.routines },
+                    // Home shows exactly the favorited routines. Unstarring the
+                    // last one on the Routines page clears the section (Home then
+                    // renders a hint). Full-width card list, so no cap.
+                    routines = inputs.routines.filter { it.routine.isFavorite },
                     completedRoutineIds = dayProgress.completedRoutineIds,
                     routineProgress = dayProgress.fractionByRoutineId,
                     tasbihProgress = tasbihProgress,
