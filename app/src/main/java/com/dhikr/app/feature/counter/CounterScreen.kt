@@ -108,6 +108,9 @@ fun CounterScreen(
     onLockedChanged: (Boolean) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
+    // B2: collected separately so a 1s timer tick recomposes only the nodes
+    // that read it (top-bar label, summary dialogs), not the whole screen.
+    val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
     val colors = DhikrTheme.colors
     val haptics = rememberHaptics()
     val reducedMotion = LocalReducedMotion.current
@@ -310,7 +313,7 @@ fun CounterScreen(
                     maxLines = 1,
                 )
                 Text(
-                    text = formatSessionLabel(state.elapsedSeconds, state.totalCount),
+                    text = formatSessionLabel(elapsedSeconds, state.totalCount),
                     fontSize = 11.5.sp,
                     color = colors.faint,
                     maxLines = 1,
@@ -702,7 +705,7 @@ fun CounterScreen(
                             R.string.routine_complete_body,
                             state.routineName ?: state.dhikr.name,
                             state.totalCount,
-                            formatDuration(state.elapsedSeconds),
+                            formatDuration(elapsedSeconds),
                         ),
                         fontSize = 13.5.sp,
                         color = colors.dim,
@@ -728,7 +731,7 @@ fun CounterScreen(
     if (showSessionSummary) {
         SessionSummaryDialog(
             startedAtMillis = state.sessionStartedAtMillis,
-            elapsedSeconds = state.elapsedSeconds,
+            elapsedSeconds = elapsedSeconds,
             totalCount = state.totalCount,
             onDismiss = { showSessionSummary = false },
         )
