@@ -336,6 +336,10 @@ class CounterViewModel(
             // a Compose-level dialog in CounterScreen, not a state reset here).
             // The UI update is synchronous so it is never gated behind the
             // Room write; logging runs in a separate, detached coroutine.
+            // Pause the engine so the session timer (startTimer() gates on
+            // engine.isRunning()) stops the moment the routine is done —
+            // increment() marks the engine complete but never pauses it.
+            engine.pause()
             _uiState.value = buildState().copy(isRoutineComplete = true)
             viewModelScope.launch {
                 logCurrentSessionIfNonZero()
@@ -408,9 +412,32 @@ class CounterViewModel(
     }
 
     /** Dismisses the "Routine complete" dialog. The routine's steps are all
-     * already done at this point, so there is nothing else to reset. */
+     * already done at this point, so there is nothing else to reset. The
+     * caller ("Done") also navigates away. */
     fun onRoutineCompleteAcknowledged() {
         _uiState.value = _uiState.value.copy(isRoutineComplete = false)
+    }
+
+    /**
+     * "Again" on the routine-complete dialog: replay the routine from its
+     * first step. Counts, session timer, and logged-watermark all reset for
+     * the new run; the "completed today" record from the finished run is left
+     * intact (a replay adds bonus taps, it does not un-complete the day).
+     */
+    fun onRoutineRestart() {
+        if (activeRoutine == null) return
+        val firstStep = sortedRoutineSteps.firstOrNull() ?: return
+        viewModelScope.launch {
+            logCurrentSessionIfNonZero()
+            val firstTasbih = tasbihRepository.getById(firstStep.tasbihId) ?: return@launch
+            routineStepIndex = 0
+            dhikr = firstTasbih
+            engine = TasbihCounter(firstStep.targetCount, 1)
+            loggedTotal = 0
+            _elapsedSeconds.value = 0
+            sessionStartedAtMillis = System.currentTimeMillis()
+            _uiState.value = buildState().copy(isRoutineComplete = false)
+        }
     }
 
     fun onUndo() {

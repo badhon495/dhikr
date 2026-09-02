@@ -733,15 +733,34 @@ fun CounterScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 6.dp),
                     )
-                    TextButton(
-                        onClick = { viewModel.onRoutineCompleteAcknowledged() },
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.padding(top = 14.dp),
                     ) {
-                        Text(
-                            text = stringResource(R.string.routine_complete_done),
-                            color = colors.sage,
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        // "Again" replays the routine from step 1 in place — no
+                        // navigation, the dialog just closes and counting resumes.
+                        TextButton(onClick = { viewModel.onRoutineRestart() }) {
+                            Text(
+                                text = stringResource(R.string.routine_complete_again),
+                                color = colors.dim,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        // "Done" clears the flag and pops back (Home when the
+                        // counter was opened from a notification, otherwise the
+                        // originating screen).
+                        TextButton(
+                            onClick = {
+                                viewModel.onRoutineCompleteAcknowledged()
+                                onBack()
+                            },
+                        ) {
+                            Text(
+                                text = stringResource(R.string.routine_complete_done),
+                                color = colors.sage,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     }
                 }
             },

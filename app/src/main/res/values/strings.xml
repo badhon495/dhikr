@@ -30,6 +30,7 @@
     <string name="routine_complete_title">Routine complete</string>
     <string name="routine_complete_body">%1$s finished — %2$d counts in %3$s.</string>
     <string name="routine_complete_done">Done</string>
+    <string name="routine_complete_again">Again</string>
     <string name="routine_complete_check_content_description">Routine complete</string>
 
     <!-- Session summary dialog (tap the elapsed-time label) -->

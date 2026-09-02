@@ -30,6 +30,7 @@
     <string name="routine_complete_title">রুটিন সম্পন্ন</string>
     <string name="routine_complete_body">%1$s শেষ হয়েছে — %3$s এ %2$d টি গণনা।</string>
     <string name="routine_complete_done">সম্পন্ন</string>
+    <string name="routine_complete_again">আবার</string>
     <string name="routine_complete_check_content_description">রুটিন সম্পন্ন</string>
 
     <!-- Session summary dialog (tap the elapsed-time label) -->
