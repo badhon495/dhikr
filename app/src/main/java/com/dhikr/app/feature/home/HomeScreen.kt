@@ -154,6 +154,11 @@ fun HomeScreen(
             }
         }
 
+        // The routines/favourites lists come from Room and land a frame after
+        // the synthetic default. Holding them back until then keeps the
+        // "nothing here yet" hint from flashing before the real cards.
+        if (!state.loaded) return@Column
+
         // Routines — the favorited ones. Full-width cards, one per row: matches
         // the Favourites list width but reads heavier — a step-count chip leads
         // each card and the first step names preview the plan, so the two

@@ -42,6 +42,11 @@ data class HomeUiState(
     // tasbihId -> 0f..1f of today's counting position toward its total goal;
     // drives the favourite row's green fill. Clears on its own the next day.
     val tasbihProgress: Map<String, Float> = emptyMap(),
+    // False for the synthetic default emitted before the Room/DataStore combine
+    // produces its first value. The routines/favourites sections stay unpainted
+    // until this is true so their "nothing here yet" hint doesn't flash for a
+    // frame before the real lists arrive.
+    val loaded: Boolean = false,
 )
 
 /**
@@ -104,6 +109,7 @@ class HomeViewModel(
                     completedRoutineIds = dayProgress.completedRoutineIds,
                     routineProgress = dayProgress.fractionByRoutineId,
                     tasbihProgress = tasbihProgress,
+                    loaded = true,
                 )
             }
             .onEach { _uiState.value = it }

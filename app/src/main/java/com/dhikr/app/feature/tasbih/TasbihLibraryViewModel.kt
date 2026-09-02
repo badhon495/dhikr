@@ -25,6 +25,10 @@ data class TasbihLibraryUiState(
     // tasbihId -> 0f..1f of today's counting position toward the Tasbih's total
     // goal; drives the row's green fill. Clears on its own the next day.
     val progressByTasbihId: Map<String, Float> = emptyMap(),
+    // False for the synthetic default stateIn emits before the DAO combine
+    // produces its first value. The result-count line and list stay unpainted
+    // until this is true so the counts don't snap from "0 built-in, 0 custom".
+    val loaded: Boolean = false,
 )
 
 /** One-shot event for TasbihLibraryScreen to show when a delete is blocked
@@ -63,6 +67,7 @@ class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewMod
             builtInCount = all.count { it.isBuiltIn },
             customCount = all.count { !it.isBuiltIn },
             progressByTasbihId = progress,
+            loaded = true,
         )
     }.stateIn(
         scope = viewModelScope,

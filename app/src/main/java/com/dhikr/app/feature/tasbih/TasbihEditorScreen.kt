@@ -105,6 +105,11 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
             )
         }
 
+        // When editing, the existing Tasbih's fields land a frame after the
+        // blank default — hold the form back until then so it doesn't flash
+        // empty. A new Tasbih has nothing to load (loaded is true at once).
+        if (state.isEditingExisting && !state.loaded) return@Column
+
         LabeledField(stringResource(R.string.tasbih_editor_name_label)) {
             PillTextField(
                 value = state.name,

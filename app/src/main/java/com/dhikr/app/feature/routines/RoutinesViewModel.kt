@@ -33,6 +33,10 @@ data class RoutinesUiState(
     // completedTodayIds are not included here. Drives the card's growing green
     // fill; clears on its own the next day.
     val progressByRoutineId: Map<String, Float> = emptyMap(),
+    // False for the synthetic default stateIn emits before the DAO combine
+    // produces its first value. The result-count line and list stay unpainted
+    // until this is true so the list doesn't snap from empty to populated.
+    val loaded: Boolean = false,
 )
 
 class RoutinesViewModel(
@@ -63,6 +67,7 @@ class RoutinesViewModel(
             tasbihNamesById = tasbihs.associate { it.id to it.name },
             completedTodayIds = dayProgress.completedRoutineIds,
             progressByRoutineId = dayProgress.fractionByRoutineId,
+            loaded = true,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoutinesUiState())
 

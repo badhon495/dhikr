@@ -28,6 +28,11 @@ data class InsightsUiState(
     val historyByTasbih: List<TasbihHistoryGroup> = emptyList(),
     val previousMonth: MonthSummary? = null,
     val isEmpty: Boolean = true,
+    // False for the synthetic default emitted before the totals Flow produces
+    // its first value. The screen paints nothing until this is true so the
+    // "no data yet" empty state doesn't flash for a frame before real totals
+    // arrive (which is every time the Insights tab is opened afresh).
+    val loaded: Boolean = false,
 )
 
 /**
@@ -64,6 +69,7 @@ class InsightsViewModel(private val repository: HistoryRepository) : ViewModel()
                     month = totals.month,
                     allTime = totals.allTime,
                     isEmpty = totals.allTime == 0,
+                    loaded = true,
                 )
                 if (totals.allTime == 0) return@mapLatest
 
