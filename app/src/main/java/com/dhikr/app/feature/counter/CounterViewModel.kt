@@ -8,6 +8,7 @@ import com.dhikr.app.core.database.HistoryRepository
 import com.dhikr.app.core.database.RoutineRepository
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.dao.RoutineWithSteps
+import com.dhikr.app.core.database.entity.RoutineStepEntity
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.model.CounterSessionState
@@ -36,7 +37,6 @@ class CounterViewModel(
     private lateinit var dhikr: TasbihEntity
     private lateinit var engine: TasbihCounter
     private var locked = false
-    private var elapsedSeconds = 0
 
     // Wall-clock start of the current in-progress session, used as the
     // `startedAt` field of the History row logged when this session ends
@@ -68,8 +68,22 @@ class CounterViewModel(
     private var routineStepIndex = -1
     private var routineStepNames: List<String> = emptyList()
 
+    // B1: routine steps sorted by stepOrder, and the derived display list, are
+    // invariant for the life of a loaded routine. Computed once in
+    // initializeSession() instead of re-sorting/re-mapping on every tap in
+    // buildState().
+    private var sortedRoutineSteps: List<RoutineStepEntity> = emptyList()
+    private var cachedRoutineStepDisplays: List<RoutineStepDisplay> = emptyList()
+
     private val _uiState = MutableStateFlow(CounterUiState.Empty)
     val uiState: StateFlow<CounterUiState> = _uiState.asStateFlow()
+
+    // B2: elapsed session time as its own flow. The 1s timer tick updates only
+    // this, so an idle running session no longer rebuilds CounterUiState (and
+    // recomposes the whole counter screen) every second. persist() reads
+    // `_elapsedSeconds.value` directly.
+    private val _elapsedSeconds = MutableStateFlow(0)
+    val elapsedSeconds: StateFlow<Int> = _elapsedSeconds.asStateFlow()
 
     private val requestedStartingId = startingDhikrId
     private val requestedRoutineId = startingRoutineId
@@ -107,6 +121,10 @@ class CounterViewModel(
                 routineStepNames = sortedSteps.map { step ->
                     tasbihRepository.getById(step.tasbihId)?.name ?: step.tasbihId
                 }
+                sortedRoutineSteps = sortedSteps
+                cachedRoutineStepDisplays = sortedSteps.mapIndexed { i, step ->
+                    RoutineStepDisplay(routineStepNames[i], step.targetCount)
+                }
                 // Per-routine saved position for today (survives opening other
                 // routines, cleared at local midnight). Authoritative for
                 // routines; the single DataStore session is only a fallback.
@@ -126,14 +144,14 @@ class CounterViewModel(
                         // taps History recorded when the screen was last left are
                         // not logged a second time on resume.
                         loggedTotal = savedProgress.loggedInStep.coerceIn(0, restoredCount)
-                        elapsedSeconds = savedSession?.elapsedSeconds?.takeIf {
+                        _elapsedSeconds.value = savedSession?.elapsedSeconds?.takeIf {
                             savedSession.routineId == routineIdToLoad
                         } ?: 0
                     } else {
                         applyRestoredCountIfMatching(savedSession, currentStep.tasbihId)
                     }
                     sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == currentStep.tasbihId) {
-                        System.currentTimeMillis() - elapsedSeconds * 1000L
+                        System.currentTimeMillis() - _elapsedSeconds.value * 1000L
                     } else {
                         System.currentTimeMillis()
                     }
@@ -179,7 +197,7 @@ class CounterViewModel(
             engine.restore(count = restoredCount, lap = restoredLap, previous = null)
             loggedTotal = savedTasbihProgress.loggedInSession.coerceAtLeast(0)
             if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
-                elapsedSeconds = savedSession.elapsedSeconds
+                _elapsedSeconds.value = savedSession.elapsedSeconds
                 locked = savedSession.locked
                 if (!savedSession.running) engine.pause()
             }
@@ -187,7 +205,7 @@ class CounterViewModel(
             applyRestoredCountIfMatching(savedSession, loaded.id)
         }
         sessionStartedAtMillis = if (savedSession != null && savedSession.activeDhikrId == loaded.id) {
-            System.currentTimeMillis() - elapsedSeconds * 1000L
+            System.currentTimeMillis() - _elapsedSeconds.value * 1000L
         } else {
             System.currentTimeMillis()
         }
@@ -209,7 +227,7 @@ class CounterViewModel(
                 } else null,
             )
             locked = savedSession.locked
-            elapsedSeconds = savedSession.elapsedSeconds
+            _elapsedSeconds.value = savedSession.elapsedSeconds
             // Progress carried in on restore was already logged to History when
             // the previous screen visit ended (or is tracked as un-logged via
             // the persisted value) — either way, adopt it so we never re-log it.
@@ -223,8 +241,9 @@ class CounterViewModel(
             while (true) {
                 delay(1000)
                 if (sessionReady && engine.isRunning()) {
-                    elapsedSeconds += 1
-                    _uiState.value = buildState()
+                    // B2: only the elapsed flow — no buildState()/_uiState
+                    // emission, so the tick doesn't recompose the whole screen.
+                    _elapsedSeconds.value += 1
                 }
             }
         }
@@ -262,7 +281,7 @@ class CounterViewModel(
 
     private fun advanceRoutineStep() {
         val routine = activeRoutine ?: return
-        val sortedSteps = routine.steps.sortedBy { it.stepOrder }
+        val sortedSteps = sortedRoutineSteps // B1: sorted once at load
         val nextIndex = routineStepIndex + 1
         if (nextIndex > sortedSteps.lastIndex) {
             // Last step just completed — signal routine completion, no
@@ -363,7 +382,7 @@ class CounterViewModel(
         // is now "ahead" of the engine — drop the watermark to match, otherwise
         // fresh taps after a reset would be swallowed until they pass the old total.
         loggedTotal = 0
-        elapsedSeconds = 0
+        _elapsedSeconds.value = 0
         _uiState.value = buildState()
         // persist() (debounced off the state change above) rewrites the saved
         // resume position at count 0. Today's already-logged History count is
@@ -390,12 +409,7 @@ class CounterViewModel(
     private fun buildState(justCompletedLap: Boolean = false): CounterUiState {
         val snap = engine.snapshot()
         val routine = activeRoutine
-        val steps = if (routine != null) {
-            val sortedSteps = routine.steps.sortedBy { it.stepOrder }
-            routineStepNames.mapIndexed { i, name -> RoutineStepDisplay(name, sortedSteps[i].targetCount) }
-        } else {
-            emptyList()
-        }
+        val steps = if (routine != null) cachedRoutineStepDisplays else emptyList()
         return CounterUiState(
             dhikr = dhikr,
             count = snap.count,
@@ -404,7 +418,6 @@ class CounterViewModel(
             canUndo = snap.canUndo,
             running = engine.isRunning(),
             locked = locked,
-            elapsedSeconds = elapsedSeconds,
             isComplete = snap.isComplete,
             justCompletedLap = justCompletedLap,
             sessionStartedAtMillis = sessionStartedAtMillis,
@@ -454,7 +467,7 @@ class CounterViewModel(
                 previousCount = snap.previousCount,
                 previousLap = snap.previousLap,
                 running = s.running,
-                elapsedSeconds = s.elapsedSeconds,
+                elapsedSeconds = _elapsedSeconds.value, // B2: flow, not _uiState
                 locked = s.locked,
                 routineId = activeRoutine?.routine?.id,
                 routineStep = routineStepIndex.coerceAtLeast(0),

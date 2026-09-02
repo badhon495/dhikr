@@ -26,7 +26,10 @@ class DhikrApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         com.dhikr.app.core.notifications.ReminderNotifications.ensureChannel(this)
-        applicationScope.launch {
+        // B7: the seed check/insert are suspend Room calls — dispatch on IO,
+        // not Default. Room runs the actual SQLite work on its own executor,
+        // but the coroutine still shouldn't sit on a CPU-bound dispatcher.
+        applicationScope.launch(Dispatchers.IO) {
             if (database.tasbihDao().count() == 0) {
                 database.tasbihDao().insertAll(SeedData.builtInTasbih)
             }

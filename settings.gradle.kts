@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Dhikr"
 include(":app")
+include(":benchmark")
+include(":baselineprofile")

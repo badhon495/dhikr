@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,6 +70,7 @@ import com.dhikr.app.core.counter.AutoCounterSensorListener
 import com.dhikr.app.core.datastore.CounterScript
 import com.dhikr.app.core.datastore.HapticMode
 import com.dhikr.app.core.haptics.rememberHaptics
+import com.dhikr.app.ui.COUNTER_TAP_AREA_TEST_TAG
 import com.dhikr.app.ui.ClampedFontScale
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
@@ -106,6 +108,9 @@ fun CounterScreen(
     onLockedChanged: (Boolean) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
+    // B2: collected separately so a 1s timer tick recomposes only the nodes
+    // that read it (top-bar label, summary dialogs), not the whole screen.
+    val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
     val colors = DhikrTheme.colors
     val haptics = rememberHaptics()
     val reducedMotion = LocalReducedMotion.current
@@ -308,7 +313,7 @@ fun CounterScreen(
                     maxLines = 1,
                 )
                 Text(
-                    text = formatSessionLabel(state.elapsedSeconds, state.totalCount),
+                    text = formatSessionLabel(elapsedSeconds, state.totalCount),
                     fontSize = 11.5.sp,
                     color = colors.faint,
                     maxLines = 1,
@@ -405,7 +410,8 @@ fun CounterScreen(
                         haptics.tick()
                     }
                     viewModel.onTap()
-                },
+                }
+                .testTag(COUNTER_TAP_AREA_TEST_TAG),
         ) {
             val viewportHeight = maxHeight
             Column(
@@ -699,7 +705,7 @@ fun CounterScreen(
                             R.string.routine_complete_body,
                             state.routineName ?: state.dhikr.name,
                             state.totalCount,
-                            formatDuration(state.elapsedSeconds),
+                            formatDuration(elapsedSeconds),
                         ),
                         fontSize = 13.5.sp,
                         color = colors.dim,
@@ -725,7 +731,7 @@ fun CounterScreen(
     if (showSessionSummary) {
         SessionSummaryDialog(
             startedAtMillis = state.sessionStartedAtMillis,
-            elapsedSeconds = state.elapsedSeconds,
+            elapsedSeconds = elapsedSeconds,
             totalCount = state.totalCount,
             onDismiss = { showSessionSummary = false },
         )

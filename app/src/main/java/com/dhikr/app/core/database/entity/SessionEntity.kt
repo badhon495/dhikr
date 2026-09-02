@@ -21,7 +21,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("tasbihId"), Index("startedAt")],
+    indices = [Index("tasbihId"), Index("startedAt"), Index("routineId")],
 )
 data class SessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

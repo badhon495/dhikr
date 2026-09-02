@@ -46,7 +46,13 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // v9: added TasbihEntity.benefitsText / benefitsGeneratedAt (cached
     // Gemini-generated fada'il, per-tasbih). No hand migration —
     // fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 9,
+    // v10: added Index("routineId") on session (it is a SET_NULL foreign key
+    // and was triggering a full-table-scan warning). No hand migration —
+    // fallbackToDestructiveMigration rebuilds + reseeds.
+    // v11: preset routines now seed with isFavorite = true (Home shows favorited
+    // routines only). No schema change; bump reseeds so existing installs pick
+    // up the new seed. No hand migration — fallbackToDestructiveMigration.
+    version = 11,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

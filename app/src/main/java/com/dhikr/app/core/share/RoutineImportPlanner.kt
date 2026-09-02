@@ -66,7 +66,8 @@ object RoutineImportPlanner {
                 id = id,
                 name = routine.name.trim(),
                 isPreset = false,
-                isFavorite = false,
+                // Imported routines land on Home; the user unstars to remove.
+                isFavorite = true,
                 createdAt = now,
                 updatedAt = now,
             )

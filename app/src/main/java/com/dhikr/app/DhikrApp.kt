@@ -26,9 +26,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -101,6 +104,7 @@ private const val ROUTE_ROUTINES_IMPORT = "routines/import"
 private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
 private const val ROUTE_SETTINGS = "settings"
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun DhikrApp(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -135,19 +139,18 @@ fun DhikrApp(
         }
         val historyRepository = remember { HistoryRepository(app.database.sessionDao(), tasbihRepository) }
         val preferencesRepository = remember { AppPreferencesRepository(context.applicationContext) }
-        val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
-        val secureKeyStore = remember { SecureKeyStore(context.applicationContext) }
-        val geminiClient = remember { GeminiClient() }
-        val benefitsRepository = remember {
-            BenefitsRepository.create(secureKeyStore, geminiClient, tasbihRepository)
-        }
         val appVersionName = remember {
             runCatching {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName
             }.getOrNull().orEmpty()
         }
-        val routineShareCodec = remember { RoutineShareCodec(AndroidBase64) }
-        val routineShareRepository = remember { RoutineShareRepository(app.database, routineShareCodec) }
+        // B4: the AI (SecureKeyStore/GeminiClient/BenefitsRepository), backup
+        // (BackupRepository) and routine-sharing (RoutineShareCodec/
+        // RoutineShareRepository) repositories are constructed inside the
+        // composable(...) destinations that use them (Tasbih editor, Settings,
+        // Routines / Routines-import) rather than here at the top of the tree,
+        // where remember{} would build all of them during the first
+        // composition even though Home never touches them (plan.md §50).
         var importReader by remember { mutableStateOf<(suspend () -> String)?>(null) }
         val reminderScheduler = remember {
             com.dhikr.app.core.notifications.ReminderScheduler(context.applicationContext)
@@ -218,7 +221,7 @@ fun DhikrApp(
             onPendingShareConsumed()
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
         CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         Scaffold(
             containerColor = DhikrTheme.colors.bg,
@@ -278,6 +281,13 @@ fun DhikrApp(
                     arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }),
                 ) { backStackEntry ->
                     val editingId = backStackEntry.arguments?.getString("id")
+                    val benefitsRepository = remember {
+                        BenefitsRepository.create(
+                            SecureKeyStore(context.applicationContext),
+                            GeminiClient(),
+                            tasbihRepository,
+                        )
+                    }
                     val viewModel: TasbihEditorViewModel = viewModel(
                         factory = TasbihEditorViewModel.Factory(
                             tasbihRepository,
@@ -330,6 +340,10 @@ fun DhikrApp(
                     MonthlyHistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
                 composable(ROUTE_ROUTINES) {
+                    val routineShareCodec = remember { RoutineShareCodec(AndroidBase64) }
+                    val routineShareRepository = remember {
+                        RoutineShareRepository(app.database, routineShareCodec)
+                    }
                     val viewModel: RoutinesViewModel = viewModel(
                         factory = RoutinesViewModel.Factory(routineRepository, tasbihRepository, reminderScheduler),
                     )
@@ -352,6 +366,9 @@ fun DhikrApp(
                 }
                 composable(ROUTE_ROUTINES_IMPORT) {
                     val reader = importReader
+                    val routineShareRepository = remember {
+                        RoutineShareRepository(app.database, RoutineShareCodec(AndroidBase64))
+                    }
                     val importVm: RoutineImportViewModel = viewModel(
                         factory = RoutineImportViewModel.Factory(routineShareRepository),
                     )
@@ -384,6 +401,8 @@ fun DhikrApp(
                     )
                 }
                 composable(ROUTE_SETTINGS) {
+                    val secureKeyStore = remember { SecureKeyStore(context.applicationContext) }
+                    val backupRepository = remember { BackupRepository(app.database, preferencesRepository) }
                     val viewModel: SettingsViewModel = viewModel(
                         factory = SettingsViewModel.Factory(
                             preferencesRepository,

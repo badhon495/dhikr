@@ -44,7 +44,8 @@ class RoutineImportPlannerTest {
         assertEquals("gen-0", routine.id)
         assertEquals("Morning", routine.name)
         assertEquals(false, routine.isPreset)
-        assertEquals(false, routine.isFavorite)
+        // Imported routines are favorited so they show on Home.
+        assertEquals(true, routine.isFavorite)
         assertEquals(false, routine.reminderEnabled)
         assertEquals(5000L, routine.createdAt)
         assertEquals(5000L, routine.updatedAt)

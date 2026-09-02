@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.dao.RoutineWithSteps
+import com.dhikr.app.ui.HOME_SCREEN_TEST_TAG
 import com.dhikr.app.ui.LocalReducedMotion
 import com.dhikr.app.ui.Motion
 import com.dhikr.app.ui.headingSemantics
@@ -74,6 +76,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(colors.bg)
             .verticalScroll(scrollState)
+            .testTag(HOME_SCREEN_TEST_TAG)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
@@ -151,16 +154,24 @@ fun HomeScreen(
             }
         }
 
-        // Routines — favorited ones if the user marked any, else all of them.
-        // Full-width cards, one per row: matches the Favourites list width but
-        // reads heavier — a step-count chip leads each card and the first step
-        // names preview the plan, so the two sections stay visually distinct.
+        // Routines — the favorited ones. Full-width cards, one per row: matches
+        // the Favourites list width but reads heavier — a step-count chip leads
+        // each card and the first step names preview the plan, so the two
+        // sections stay visually distinct. Empty = a hint pointing at Routines.
         Column {
             SectionHeader(
                 title = stringResource(R.string.home_routines_title),
                 actionLabel = stringResource(R.string.home_routines_manage),
                 onAction = onOpenRoutines,
             )
+            if (state.routines.isEmpty()) {
+                Text(
+                    stringResource(R.string.home_routines_empty_hint),
+                    fontSize = 13.sp,
+                    color = colors.faint,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
             state.routines.forEach { routineWithSteps ->
                 val done = routineWithSteps.routine.id in state.completedRoutineIds
                 val fraction = if (done) 0f

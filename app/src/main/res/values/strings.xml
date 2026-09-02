@@ -55,6 +55,8 @@
     <string name="home_favorites_all">All</string>
     <string name="home_routines_title">Routines</string>
     <string name="home_routines_manage">Manage</string>
+    <!-- Shown in the Home routines section when no routine is favorited -->
+    <string name="home_routines_empty_hint">Star a routine on the Routines page to pin it here.</string>
     <!-- Step-count chip on a Home routine card, e.g. "3 steps · 100" -->
     <string name="home_routine_step_chip">%1$d steps · %2$d</string>
     <!-- Home routine card step preview when there are more steps than shown, e.g. "SubhanAllah · Alhamdulillah +2 more" -->

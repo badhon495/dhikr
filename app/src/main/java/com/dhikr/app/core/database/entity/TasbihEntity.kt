@@ -1,9 +1,14 @@
 package com.dhikr.app.core.database.entity
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+// All fields are primitives / String / nullable primitives — genuinely
+// immutable. Annotated so Compose treats CounterUiState (which holds one) as
+// stable and can skip counter-screen recompositions.
+@Immutable
 @Entity(
     tableName = "tasbih",
     indices = [Index(value = ["isFavorite"], name = "idx_tasbih_favorite")],

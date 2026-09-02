@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.entity.TasbihEntity
+import com.dhikr.app.ui.TASBIH_LIST_TEST_TAG
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
@@ -201,7 +203,7 @@ fun TasbihLibraryScreen(
             LazyColumn(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag(TASBIH_LIST_TEST_TAG),
             ) {
                 items(state.results, key = { it.id }) { tasbih ->
                     TasbihRow(

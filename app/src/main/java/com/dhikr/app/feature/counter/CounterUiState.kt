@@ -1,9 +1,17 @@
 package com.dhikr.app.feature.counter
 
+import androidx.compose.runtime.Immutable
 import com.dhikr.app.core.database.entity.TasbihEntity
 
+@Immutable
 data class RoutineStepDisplay(val tasbihName: String, val targetCount: Int)
 
+// Elapsed session time is deliberately NOT a field here — the 1s timer tick
+// would otherwise rebuild this whole object every second and recompose the
+// entire counter screen while the user is idle. It lives on
+// CounterViewModel.elapsedSeconds (its own StateFlow) instead, collected
+// separately by the two nodes that display it.
+@Immutable
 data class CounterUiState(
     val dhikr: TasbihEntity,
     val count: Int,
@@ -12,7 +20,6 @@ data class CounterUiState(
     val canUndo: Boolean,
     val running: Boolean,
     val locked: Boolean,
-    val elapsedSeconds: Int,
     val isComplete: Boolean,
     val justCompletedLap: Boolean,
     // Wall-clock time the current session window started (see
@@ -40,7 +47,7 @@ data class CounterUiState(
                 lapTarget = 1, lapCount = 1, isBuiltIn = true, createdAt = 0, updatedAt = 0,
             ),
             count = 0, lap = 1, totalLaps = 1, canUndo = false, running = false,
-            locked = false, elapsedSeconds = 0, isComplete = false, justCompletedLap = false,
+            locked = false, isComplete = false, justCompletedLap = false,
             sessionStartedAtMillis = 0L, sessionReady = false,
         )
     }
