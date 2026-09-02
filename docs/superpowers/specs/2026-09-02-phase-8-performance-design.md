@@ -96,10 +96,14 @@ B or C is implemented until A4 has produced a committed baseline table.
     `CompilationMode.None()` / `Partial()` (Baseline Profile) /
     `Full()`, `startupMode` COLD and WARM, 5+ iterations.
   - `CounterBenchmark` — navigates into a Counter session, then a
-    measured block of 100 taps; a second test with 1000 taps.
-    `FrameTimingMetric`. Also measures undo and reset latency as
-    separate `measureRepeated` blocks where a UIAutomator action is
-    the trace boundary.
+    measured block of 100 taps; a second test with 1000 taps;
+    plus an idle-with-timer variant (session running, no taps, 10s
+    window) that measures the B2 optimization. `FrameTimingMetric`.
+    Dedicated undo / reset latency benchmarks were considered and
+    **waived** (SDD Task 4 ruling): both are single interactions on
+    an already-composed screen, the tap benchmarks exercise the same
+    recomposition path, and no Workstream B item targets undo/reset
+    latency specifically.
   - `ScrollBenchmark` — `FrameTimingMetric` over a fling on the Tasbih
     library list and on the Insights screen.
   - `NavigationBenchmark` — `FrameTimingMetric` over
