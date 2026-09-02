@@ -12,6 +12,7 @@ import com.dhikr.app.core.database.entity.RoutineStepEntity
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.SessionRepository
 import com.dhikr.app.core.model.CounterSessionState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,14 @@ class CounterViewModel(
     startingDhikrId: String? = null,
     startingRoutineId: String? = null,
     private val historyRepository: HistoryRepository,
+    // Application-scoped; survives this ViewModel being cleared. The
+    // leave-the-screen flush (logAndClearOnLeave) runs here, not on
+    // viewModelScope, because back navigation pops the Counter
+    // NavBackStackEntry and cancels viewModelScope mid-flush — which used to
+    // land the History write but cancel the matching loggedTotal watermark
+    // persist, so the same count got re-logged to History on every reopen
+    // ("tasbih fill climbs on its own").
+    private val externalScope: CoroutineScope,
 ) : ViewModel() {
 
     private lateinit var dhikr: TasbihEntity
@@ -368,7 +377,14 @@ class CounterViewModel(
      * mid-session on goal-reached, before any navigation happens.
      */
     fun logAndClearOnLeave() {
-        viewModelScope.launch {
+        if (!sessionReady) return
+        // externalScope, not viewModelScope: on back navigation the Counter
+        // NavBackStackEntry is popped and viewModelScope is cancelled while
+        // this runs. logCurrentSessionIfNonZero() would commit the History
+        // row and then the cancellation would kill persist() before it wrote
+        // the bumped loggedTotal watermark, so the next open restored the old
+        // watermark and re-logged the same count — every reopen.
+        externalScope.launch {
             logCurrentSessionIfNonZero()
             // Persist the bumped `loggedTotal` immediately (not just via the
             // debounced saver, which won't fire again after the screen is
@@ -541,6 +557,7 @@ class CounterViewModel(
         private val startingDhikrId: String? = null,
         private val startingRoutineId: String? = null,
         private val historyRepository: HistoryRepository,
+        private val externalScope: CoroutineScope,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -551,6 +568,7 @@ class CounterViewModel(
                 startingDhikrId,
                 startingRoutineId,
                 historyRepository,
+                externalScope,
             ) as T
         }
     }

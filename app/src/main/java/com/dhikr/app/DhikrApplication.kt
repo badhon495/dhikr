@@ -11,7 +11,11 @@ import kotlinx.coroutines.launch
 
 class DhikrApplication : Application() {
 
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // Outlives every ViewModel/Activity. Used for writes that must finish even
+    // though the scope that started them is being torn down — e.g. logging the
+    // in-progress counter session to History when the Counter screen's
+    // NavBackStackEntry (and its viewModelScope) is popped on back navigation.
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val database: AppDatabase by lazy {
         Room.databaseBuilder(applicationContext, AppDatabase::class.java, "dhikr.db")

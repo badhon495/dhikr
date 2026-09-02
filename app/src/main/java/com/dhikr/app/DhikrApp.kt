@@ -310,7 +310,7 @@ fun DhikrApp(
                     val viewModel: CounterViewModel = viewModel(
                         factory = CounterViewModel.Factory(
                             sessionRepository, tasbihRepository, routineRepository,
-                            dhikrId, routineId, historyRepository,
+                            dhikrId, routineId, historyRepository, app.applicationScope,
                         ),
                     )
                     CounterScreen(
