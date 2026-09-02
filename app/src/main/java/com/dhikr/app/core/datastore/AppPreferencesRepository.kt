@@ -87,8 +87,10 @@ class AppPreferencesRepository(private val context: Context) {
 
     /** Material You: derive the app palette from the device wallpaper. Only
      *  honoured on Android 12+ (see [DhikrTheme]); the store value is kept
-     *  regardless so toggling back and forth on an older device is harmless. */
-    val dynamicColorEnabled = context.preferencesDataStore.data.map { it[dynamicColorKey] ?: false }
+     *  regardless so toggling back and forth on an older device is harmless.
+     *  Defaults on: unset means the user has never touched the toggle, and
+     *  Material You is the intended out-of-the-box look on supported devices. */
+    val dynamicColorEnabled = context.preferencesDataStore.data.map { it[dynamicColorKey] ?: true }
 
     suspend fun setDynamicColorEnabled(value: Boolean) {
         context.preferencesDataStore.edit { it[dynamicColorKey] = value }

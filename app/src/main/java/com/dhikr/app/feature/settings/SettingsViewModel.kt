@@ -27,7 +27,7 @@ data class SettingsUiState(
     val hapticMode: HapticMode = HapticMode.EVERY_TAP,
     val reducedMotion: Boolean = false,
     val dailyGoalTarget: Int = 100,
-    val dynamicColorEnabled: Boolean = false,
+    val dynamicColorEnabled: Boolean = true,
     val dynamicColorSupported: Boolean = supportsDynamicColor(),
     val counterScript: CounterScript = CounterScript.PRONUNCIATION,
     val appLanguage: AppLanguage = AppLanguage.SYSTEM,

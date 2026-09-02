@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
                 AppPreferencesRepository(context.applicationContext)
             }
             val themeMode by preferencesRepository.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-            val dynamicColor by preferencesRepository.dynamicColorEnabled.collectAsState(initial = false)
+            val dynamicColor by preferencesRepository.dynamicColorEnabled.collectAsState(initial = true)
 
             // Explicit transparent style, re-applied via SideEffect whenever the
             // resolved dark/light signal flips — now driven by the user's theme
