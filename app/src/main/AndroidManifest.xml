@@ -38,6 +38,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|navigation"
             android:theme="@style/Theme.Dhikr"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
