@@ -23,7 +23,7 @@ data class RoutineWithSteps(
 interface RoutineDao {
 
     @Transaction
-    @Query("SELECT * FROM routine ORDER BY isFavorite DESC, isPreset DESC, name ASC")
+    @Query("SELECT * FROM routine ORDER BY isPreset DESC, name ASC")
     fun observeAllWithSteps(): Flow<List<RoutineWithSteps>>
 
     @Transaction

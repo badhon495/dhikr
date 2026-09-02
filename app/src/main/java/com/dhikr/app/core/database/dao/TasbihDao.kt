@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TasbihDao {
 
-    @Query("SELECT * FROM tasbih ORDER BY isFavorite DESC, isBuiltIn DESC, name ASC")
+    @Query("SELECT * FROM tasbih ORDER BY isBuiltIn DESC, name ASC")
     fun observeAll(): Flow<List<TasbihEntity>>
 
     @Query("SELECT * FROM tasbih WHERE isFavorite = 1 ORDER BY name ASC")
@@ -28,7 +28,7 @@ interface TasbihDao {
            OR arabic LIKE '%' || :query || '%'
            OR pronunciation LIKE '%' || :query || '%'
            OR translation LIKE '%' || :query || '%'
-        ORDER BY isFavorite DESC, name ASC
+        ORDER BY name ASC
         """
     )
     fun search(query: String): Flow<List<TasbihEntity>>
