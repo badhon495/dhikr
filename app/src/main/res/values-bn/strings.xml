@@ -272,6 +272,8 @@
     <string name="settings_about_offline">সম্পূর্ণ অফলাইনে কাজ করে।</string>
     <string name="settings_about_no_account">কোনো অ্যাকাউন্ট লাগে না।</string>
     <string name="settings_about_no_upload">কিছুই আপলোড হয় না। আপনার গণনা এই ডিভাইসেই থাকে।</string>
+    <string name="settings_about_developer">তৈরি করেছেন badhon495 (github.com/badhon495)</string>
+    <string name="settings_about_feedback">ফিচার পরামর্শ বা কোনো অভিযোগ? badhon495@gmail.com</string>
     <string name="settings_version">সংস্করণ %1$s</string>
 
     <!-- Reminders (Phase 5A) -->

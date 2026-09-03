@@ -1,5 +1,7 @@
 package com.dhikr.app.feature.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -270,6 +272,14 @@ fun SettingsScreen(
             AboutLine(stringResource(R.string.settings_about_offline))
             AboutLine(stringResource(R.string.settings_about_no_account))
             AboutLine(stringResource(R.string.settings_about_no_upload))
+            AboutLinkLine(
+                stringResource(R.string.settings_about_developer),
+                "https://github.com/badhon495",
+            )
+            AboutLinkLine(
+                stringResource(R.string.settings_about_feedback),
+                "mailto:badhon495@gmail.com",
+            )
             if (state.appVersion.isNotEmpty()) {
                 Text(
                     stringResource(R.string.settings_version, state.appVersion),
@@ -499,6 +509,25 @@ private fun AboutLine(text: String) {
 }
 
 @Composable
+private fun AboutLinkLine(text: String, uri: String) {
+    val colors = DhikrTheme.colors
+    val context = LocalContext.current
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        color = colors.sage,
+        modifier = Modifier
+            .padding(vertical = 3.dp)
+            .minTapTarget()
+            .clickable {
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uri)))
+                }
+            },
+    )
+}
+
+@Composable
 private fun GeminiKeyControls(
     hasKey: Boolean,
     onSave: (String) -> Unit,
@@ -568,11 +597,21 @@ private fun GeminiKeyControls(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+        val context = LocalContext.current
         Text(
             stringResource(R.string.settings_ai_key_hint),
             fontSize = 11.5.sp,
-            color = colors.faint,
-            modifier = Modifier.padding(top = 8.dp),
+            color = colors.sage,
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .minTapTarget()
+                .clickable {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/apikey")),
+                        )
+                    }
+                },
         )
         KeyActionPill(
             label = stringResource(R.string.settings_ai_key_save),
