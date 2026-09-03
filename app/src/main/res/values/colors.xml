@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#3DDC84</color>
+    <!-- Adaptive-icon background layer. Opaque cream (mirrors window_background /
+         DhikrColorTokens.bg light) so the launcher icon is self-contained and
+         legible on any wallpaper in light OR dark; Material You / themed icons
+         use the separate @drawable/ic_launcher_monochrome silhouette instead. -->
+    <color name="ic_launcher_background">#F5EAD8</color>
     <!-- Mirrors DhikrColorTokens.bg (Color.kt) so the window background under
          the transparent edge-to-edge status/nav bars matches app content
          instead of the platform's default white, which otherwise bleeds
