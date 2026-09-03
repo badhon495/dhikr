@@ -87,6 +87,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.min
+import kotlinx.coroutines.delay
 
 private const val LONG_TEXT_THRESHOLD = 90
 
@@ -237,6 +238,44 @@ fun CounterScreen(
         },
         label = "ring-progress",
     )
+
+    // On every lap rollover the ring fills to full, holds a beat, then visibly
+    // unwinds back down to 0 before the new lap starts filling again. For a
+    // 1-per-lap dhikr every tap is a rollover, so every tap gets a fresh
+    // fill -> unwind sweep (otherwise progressFraction is stuck near 0 and
+    // nothing visibly moves).
+    val ringFlourish = remember { Animatable(0f) }
+    var flourishing by remember { mutableStateOf(false) }
+    var showLapTargetNumber by remember { mutableStateOf(false) }
+    var flourishLap by remember { mutableStateOf(state.lap) }
+    var flourishBaselineSynced by remember { mutableStateOf(false) }
+    LaunchedEffect(state.sessionReady, state.lap) {
+        if (!state.sessionReady) return@LaunchedEffect
+        if (!flourishBaselineSynced) {
+            flourishLap = state.lap
+            flourishBaselineSynced = true
+            return@LaunchedEffect
+        }
+        val rolledOver = state.lap == flourishLap + 1
+        flourishLap = state.lap
+        if (rolledOver && !reducedMotion) {
+            flourishing = true
+            showLapTargetNumber = true
+            // Snap to full (the tap that completed the lap) and hold briefly.
+            ringFlourish.snapTo(1f)
+            delay(140)
+            showLapTargetNumber = false
+            // Unwind the fill all the way back to empty.
+            ringFlourish.animateTo(
+                0f,
+                animationSpec = tween(Motion.PULSE_MS, easing = Motion.StandardEasing),
+            )
+            flourishing = false
+        }
+    }
+    // While the rollover flourish plays, the ring shows the flourish sweep alone
+    // (full -> 0) so the unwind is visible; otherwise it tracks real progress.
+    val ringProgress = if (flourishing) ringFlourish.value else animatedProgress
 
     // Subtle lap-complete feedback (plan.md §14): the progress arc tints from
     // terra toward sage and back over ~300ms when the lap number ticks up.
@@ -476,11 +515,11 @@ fun CounterScreen(
                             size = arcSize,
                             style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
                         )
-                        if (animatedProgress > 0f) {
+                        if (ringProgress > 0f) {
                             drawArc(
                                 color = progressArcColor,
                                 startAngle = -90f,
-                                sweepAngle = 360f * animatedProgress,
+                                sweepAngle = 360f * ringProgress,
                                 useCenter = false,
                                 topLeft = Offset(inset, inset),
                                 size = arcSize,
@@ -509,14 +548,28 @@ fun CounterScreen(
                         },
                     ) {
                         ClampedFontScale {
+                            // During a lap-rollover flourish the number shows the
+                            // lap target with the ring full, then snaps back.
+                            // For a 1-per-lap dhikr the engine count is always 0,
+                            // so between taps show reps done (lap - 1) instead.
+                            val shownCount = when {
+                                showLapTargetNumber -> state.dhikr.lapTarget
+                                state.dhikr.lapTarget == 1 -> (state.lap - 1).coerceAtLeast(0)
+                                else -> state.count
+                            }
                             Text(
-                                text = state.count.toString(),
+                                text = shownCount.toString(),
                                 style = countStyle,
                                 color = colors.text,
                             )
                         }
                         Text(
-                            text = stringResource(R.string.counter_of_target, state.dhikr.lapTarget),
+                            // A 1-per-lap dhikr counts whole laps, so its target
+                            // is the lap count, not the (always 1) per-lap target.
+                            text = stringResource(
+                                R.string.counter_of_target,
+                                if (state.dhikr.lapTarget == 1) state.totalLaps else state.dhikr.lapTarget,
+                            ),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.faint,
