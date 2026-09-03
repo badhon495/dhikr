@@ -14,7 +14,7 @@ import androidx.test.uiautomator.Until
  * `Settings`) resolve from `res/values/strings.xml`; on a Bengali device these strings differ
  * and the [By.text] selectors would not match.
  */
-const val PACKAGE = "com.dhikr.app"
+const val PACKAGE = "com.badhon495.dhikr"
 const val TIMEOUT = 5_000L
 
 /** Wait until the Home screen has composed (testTag `home_screen`, Task 2). */

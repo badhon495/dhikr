@@ -8,7 +8,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val PACKAGE = "com.dhikr.app"
+private const val PACKAGE = "com.badhon495.dhikr"
 private const val TIMEOUT = 5_000L
 
 /**

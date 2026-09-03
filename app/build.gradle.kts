@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.dhikr.app"
+        applicationId = "com.badhon495.dhikr"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
