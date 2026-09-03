@@ -58,7 +58,13 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // v13: ~39 additional researched built-in dhikr in SeedData. No schema
     // change; bump reseeds so existing installs pick up the new list. No hand
     // migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 13,
+    // v14: second batch of researched built-in dhikr from more_dhikr.md
+    // (~120 entries: morning/evening, salah, occasions, travel, weather, social,
+    // janazah/hajj adhkar; internal + existing-seed duplicates dropped,
+    // weak-chain items flagged). No schema change; bump reseeds.
+    // v15: removed the 10 weak/disputed-chain dhikr (⚠️-flagged) from SeedData
+    // per authenticity review. No schema change; bump reseeds.
+    version = 15,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
