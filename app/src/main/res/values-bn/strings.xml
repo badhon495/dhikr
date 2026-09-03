@@ -278,6 +278,7 @@
     <string name="reminder_section_title">রিমাইন্ডার</string>
     <string name="reminder_toggle_label">দৈনিক রিমাইন্ডার</string>
     <string name="reminder_toggle_desc">এই রুটিন শুরু করার একটি স্থানীয় তাগিদ</string>
+    <string name="reminder_toggle_desc_tasbih">এই যিকিরটি পাঠ করার একটি স্থানীয় তাগিদ</string>
     <string name="reminder_time_label">সময়</string>
     <string name="reminder_days_label">পুনরাবৃত্তি</string>
     <string name="reminder_notification_title">%1$s এর সময় হয়েছে</string>

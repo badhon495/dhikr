@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.ui.ReminderSection
 import com.dhikr.app.ui.minTapTarget
 import com.dhikr.app.ui.theme.DhikrTheme
 import com.dhikr.app.ui.theme.ListRowShape
@@ -224,6 +225,17 @@ fun TasbihEditorScreen(viewModel: TasbihEditorViewModel, onBack: () -> Unit) {
                 onGenerate = viewModel::generateBenefits,
             )
         }
+
+        ReminderSection(
+            enabled = state.reminderEnabled,
+            minuteOfDay = state.reminderMinuteOfDay,
+            daysMask = state.reminderDays,
+            descriptionRes = R.string.reminder_toggle_desc_tasbih,
+            onEnabledChange = viewModel::onReminderEnabledChange,
+            onTimeChange = viewModel::onReminderTimeChange,
+            onDayToggle = viewModel::onReminderDayToggle,
+            modifier = Modifier.padding(top = 9.dp),
+        )
 
         Box(
             modifier = Modifier

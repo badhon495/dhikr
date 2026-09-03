@@ -9,6 +9,7 @@ import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.entity.TasbihEntity
 import com.dhikr.app.core.datastore.AppPreferencesRepository
 import com.dhikr.app.core.datastore.CounterScript
+import com.dhikr.app.core.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,6 +47,9 @@ data class TasbihEditorUiState(
     val benefitsGeneratedAt: Long? = null,
     val benefitsLoading: Boolean = false,
     val benefitsError: BenefitsError? = null,
+    val reminderEnabled: Boolean = false,
+    val reminderMinuteOfDay: Int = 8 * 60, // default 08:00
+    val reminderDays: Int = 0, // 0 = every day
 ) {
     val arabicRequired: Boolean get() = requiredScript == CounterScript.ARABIC
     val pronunciationRequired: Boolean get() = requiredScript == CounterScript.PRONUNCIATION
@@ -54,6 +58,7 @@ data class TasbihEditorUiState(
 class TasbihEditorViewModel(
     private val repository: TasbihRepository,
     private val preferencesRepository: AppPreferencesRepository,
+    private val reminderScheduler: ReminderScheduler,
     private val editingId: String? = null,
     private val benefitsRepository: BenefitsRepository? = null,
 ) : ViewModel() {
@@ -80,6 +85,9 @@ class TasbihEditorViewModel(
                             canGenerateBenefits = benefitsRepository != null,
                             benefitsText = entity.benefitsText,
                             benefitsGeneratedAt = entity.benefitsGeneratedAt,
+                            reminderEnabled = entity.reminderEnabled,
+                            reminderMinuteOfDay = if (entity.reminderEnabled) entity.reminderMinuteOfDay else 8 * 60,
+                            reminderDays = if (entity.reminderEnabled) entity.reminderDays else 0,
                         )
                     }
                     recomputeCanSave()
@@ -102,13 +110,25 @@ class TasbihEditorViewModel(
     fun onLapTargetChange(value: Int) = updateField { it.copy(lapTarget = value.coerceAtLeast(1)) }
     fun onDailyGoalChange(value: Int?) = updateField { it.copy(dailyGoal = value) }
 
+    fun onReminderEnabledChange(value: Boolean) = update { it.copy(reminderEnabled = value) }
+
+    fun onReminderTimeChange(minuteOfDay: Int) =
+        update { it.copy(reminderMinuteOfDay = minuteOfDay.coerceIn(0, 24 * 60 - 1)) }
+
+    fun onReminderDayToggle(dayBit: Int) = update { state ->
+        state.copy(reminderDays = state.reminderDays xor (1 shl dayBit))
+    }
+
     fun onSave(onSaved: () -> Unit) {
         val s = _uiState.value
         if (!s.canSave) return
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val existing = loadedEntity
+            val daysMask = s.reminderDays and 0x7F
+            val id: String
             if (existing != null) {
+                id = existing.id
                 repository.update(
                     existing.copy(
                         name = s.name,
@@ -119,12 +139,16 @@ class TasbihEditorViewModel(
                         lapTarget = s.lapTarget,
                         dailyGoal = s.dailyGoal,
                         updatedAt = now,
+                        reminderEnabled = s.reminderEnabled,
+                        reminderMinuteOfDay = s.reminderMinuteOfDay,
+                        reminderDays = daysMask,
                     )
                 )
             } else {
+                id = repository.newId()
                 repository.insert(
                     TasbihEntity(
-                        id = repository.newId(),
+                        id = id,
                         name = s.name,
                         arabic = s.arabic,
                         pronunciation = s.pronunciation,
@@ -136,8 +160,16 @@ class TasbihEditorViewModel(
                         isBuiltIn = false,
                         createdAt = now,
                         updatedAt = now,
+                        reminderEnabled = s.reminderEnabled,
+                        reminderMinuteOfDay = s.reminderMinuteOfDay,
+                        reminderDays = daysMask,
                     )
                 )
+            }
+            if (s.reminderEnabled) {
+                reminderScheduler.scheduleTasbih(id, s.reminderMinuteOfDay, daysMask)
+            } else {
+                reminderScheduler.cancelTasbih(id)
             }
             onSaved()
         }
@@ -189,11 +221,12 @@ class TasbihEditorViewModel(
     class Factory(
         private val repository: TasbihRepository,
         private val preferencesRepository: AppPreferencesRepository,
+        private val reminderScheduler: ReminderScheduler,
         private val editingId: String? = null,
         private val benefitsRepository: BenefitsRepository? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TasbihEditorViewModel(repository, preferencesRepository, editingId, benefitsRepository) as T
+            TasbihEditorViewModel(repository, preferencesRepository, reminderScheduler, editingId, benefitsRepository) as T
     }
 }

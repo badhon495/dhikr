@@ -26,6 +26,10 @@ class MainActivity : AppCompatActivity() {
     // by DhikrApp, which navigates to that routine's counter.
     private var pendingRoutineId by mutableStateOf<String?>(null)
 
+    // Set from the launch Intent (per-tasbih reminder-notification tap) and
+    // consumed once by DhikrApp, which navigates to that tasbih's counter.
+    private var pendingTasbihId by mutableStateOf<String?>(null)
+
     // Set from the launch Intent (widget body tap) and consumed once by
     // DhikrApp, which navigates to the counter or insights tab.
     private var pendingOpen by mutableStateOf<String?>(null)
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingRoutineId = intent?.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
+        pendingTasbihId = intent?.getStringExtra(ReminderNotifications.EXTRA_TASBIH_ID)
         pendingOpen = intent?.getStringExtra(EXTRA_OPEN)
         pendingShareUri = if (intent?.action == Intent.ACTION_VIEW) intent?.data else null
         setContent {
@@ -68,6 +73,8 @@ class MainActivity : AppCompatActivity() {
                 dynamicColor = dynamicColor,
                 pendingRoutineId = pendingRoutineId,
                 onPendingRoutineConsumed = { pendingRoutineId = null },
+                pendingTasbihId = pendingTasbihId,
+                onPendingTasbihConsumed = { pendingTasbihId = null },
                 pendingOpen = pendingOpen,
                 onPendingOpenConsumed = { pendingOpen = null },
                 pendingShareUri = pendingShareUri,
@@ -80,6 +87,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingRoutineId = intent.getStringExtra(ReminderNotifications.EXTRA_ROUTINE_ID)
+        pendingTasbihId = intent.getStringExtra(ReminderNotifications.EXTRA_TASBIH_ID)
         pendingOpen = intent.getStringExtra(EXTRA_OPEN)
         pendingShareUri = if (intent.action == Intent.ACTION_VIEW) intent.data else null
     }

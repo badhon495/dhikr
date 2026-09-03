@@ -24,8 +24,17 @@ object ReminderNotifications {
 
     const val CHANNEL_ID = "reminders"
     const val EXTRA_ROUTINE_ID = "com.dhikr.app.extra.ROUTINE_ID"
+    const val EXTRA_TASBIH_ID = "com.dhikr.app.extra.TASBIH_ID"
     const val EXTRA_IS_SNOOZE = "com.dhikr.app.extra.IS_SNOOZE"
     const val ACTION_SNOOZE = "com.dhikr.app.action.SNOOZE_REMINDER"
+
+    /**
+     * Stable notification / PendingIntent id for a reminder target. Routine and
+     * tasbih ids live in the same int space, so the tasbih side is salted to
+     * keep the two from colliding.
+     */
+    fun routineNotifId(routineId: String): Int = routineId.hashCode()
+    fun tasbihNotifId(tasbihId: String): Int = ("tasbih:$tasbihId").hashCode()
 
     fun ensureChannel(context: Context) {
         val channel = NotificationChannelCompat.Builder(CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT)
@@ -40,29 +49,40 @@ object ReminderNotifications {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
             PackageManager.PERMISSION_GRANTED
 
-    fun post(context: Context, routineId: String, routineName: String) {
+    fun post(context: Context, routineId: String, routineName: String) =
+        post(context, routineNotifId(routineId), EXTRA_ROUTINE_ID, routineId, routineName)
+
+    fun postTasbih(context: Context, tasbihId: String, tasbihName: String) =
+        post(context, tasbihNotifId(tasbihId), EXTRA_TASBIH_ID, tasbihId, tasbihName)
+
+    private fun post(
+        context: Context,
+        id: Int,
+        targetExtraKey: String,
+        targetId: String,
+        name: String,
+    ) {
         if (!hasPermission(context)) return
         ensureChannel(context)
 
-        val id = routineId.hashCode()
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
         val openIntent = Intent(context, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            putExtra(EXTRA_ROUTINE_ID, routineId)
+            putExtra(targetExtraKey, targetId)
         }
         val openPending = PendingIntent.getActivity(context, id, openIntent, flags)
 
         val snoozeIntent = Intent(context, ReminderReceiver::class.java).apply {
             action = ACTION_SNOOZE
-            putExtra(EXTRA_ROUTINE_ID, routineId)
+            putExtra(targetExtraKey, targetId)
         }
         val snoozePending = PendingIntent.getBroadcast(context, id + 1, snoozeIntent, flags)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_reminder)
             .setLargeIcon(launcherBitmap(context))
-            .setContentTitle(context.getString(R.string.reminder_notification_title, routineName))
+            .setContentTitle(context.getString(R.string.reminder_notification_title, name))
             .setContentText(context.getString(R.string.reminder_notification_body))
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
@@ -75,7 +95,11 @@ object ReminderNotifications {
     }
 
     fun cancel(context: Context, routineId: String) {
-        NotificationManagerCompat.from(context).cancel(routineId.hashCode())
+        NotificationManagerCompat.from(context).cancel(routineNotifId(routineId))
+    }
+
+    fun cancelTasbih(context: Context, tasbihId: String) {
+        NotificationManagerCompat.from(context).cancel(tasbihNotifId(tasbihId))
     }
 
     /**

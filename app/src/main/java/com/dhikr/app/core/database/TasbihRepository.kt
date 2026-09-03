@@ -37,6 +37,12 @@ class TasbihRepository(
 
     suspend fun update(tasbih: TasbihEntity) = tasbihDao.update(tasbih)
 
+    suspend fun setReminder(id: String, enabled: Boolean, minuteOfDay: Int, daysMask: Int) {
+        tasbihDao.setReminder(id, enabled, minuteOfDay, daysMask, System.currentTimeMillis())
+    }
+
+    suspend fun tasbihWithReminders(): List<TasbihEntity> = tasbihDao.tasbihWithRemindersRaw()
+
     suspend fun toggleFavorite(id: String, currentlyFavorite: Boolean) {
         tasbihDao.setFavorite(id, !currentlyFavorite)
     }

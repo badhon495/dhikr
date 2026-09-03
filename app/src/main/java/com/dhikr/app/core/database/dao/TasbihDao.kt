@@ -72,6 +72,15 @@ interface TasbihDao {
     )
     suspend fun updateBenefits(id: String, text: String, generatedAt: Long)
 
+    @Query(
+        "UPDATE tasbih SET reminderEnabled = :enabled, reminderMinuteOfDay = :minuteOfDay, " +
+            "reminderDays = :days, updatedAt = :now WHERE id = :id"
+    )
+    suspend fun setReminder(id: String, enabled: Boolean, minuteOfDay: Int, days: Int, now: Long)
+
+    @Query("SELECT * FROM tasbih WHERE reminderEnabled = 1")
+    suspend fun tasbihWithRemindersRaw(): List<TasbihEntity>
+
     @Delete
     suspend fun delete(tasbih: TasbihEntity)
 

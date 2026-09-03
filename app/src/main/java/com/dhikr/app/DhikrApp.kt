@@ -112,6 +112,8 @@ fun DhikrApp(
     dynamicColor: Boolean = false,
     pendingRoutineId: String? = null,
     onPendingRoutineConsumed: () -> Unit = {},
+    pendingTasbihId: String? = null,
+    onPendingTasbihConsumed: () -> Unit = {},
     pendingOpen: String? = null,
     onPendingOpenConsumed: () -> Unit = {},
     pendingShareUri: Uri? = null,
@@ -191,6 +193,13 @@ fun DhikrApp(
             onPendingRoutineConsumed()
         }
 
+        // Per-tasbih reminder-notification tap: deep-link into that tasbih's counter.
+        LaunchedEffect(pendingTasbihId) {
+            val id = pendingTasbihId ?: return@LaunchedEffect
+            navController.navigate("counter?dhikrId=$id")
+            onPendingTasbihConsumed()
+        }
+
         // Widget body tap: open the counter or insights tab. routineId (from a
         // reminder notification or a routine-state widget) takes precedence, so
         // when both are set this effect defers and lets the routine effect run.
@@ -268,7 +277,7 @@ fun DhikrApp(
                 }
                 composable(ROUTE_TASBIH_LIBRARY) {
                     val viewModel: TasbihLibraryViewModel = viewModel(
-                        factory = TasbihLibraryViewModel.Factory(tasbihRepository),
+                        factory = TasbihLibraryViewModel.Factory(tasbihRepository, reminderScheduler),
                     )
                     TasbihLibraryScreen(
                         viewModel = viewModel,
@@ -296,6 +305,7 @@ fun DhikrApp(
                         factory = TasbihEditorViewModel.Factory(
                             tasbihRepository,
                             preferencesRepository,
+                            reminderScheduler,
                             editingId,
                             benefitsRepository,
                         ),

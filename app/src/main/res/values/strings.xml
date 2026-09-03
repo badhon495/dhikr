@@ -281,6 +281,7 @@
     <string name="reminder_section_title">Reminder</string>
     <string name="reminder_toggle_label">Daily reminder</string>
     <string name="reminder_toggle_desc">A local nudge to start this routine</string>
+    <string name="reminder_toggle_desc_tasbih">A local nudge to recite this dhikr</string>
     <string name="reminder_time_label">Time</string>
     <string name="reminder_days_label">Repeat</string>
     <string name="reminder_notification_title">Time for %1$s</string>

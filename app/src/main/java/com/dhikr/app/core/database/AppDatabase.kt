@@ -52,7 +52,10 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // v11: preset routines now seed with isFavorite = true (Home shows favorited
     // routines only). No schema change; bump reseeds so existing installs pick
     // up the new seed. No hand migration — fallbackToDestructiveMigration.
-    version = 11,
+    // v12: added TasbihEntity.reminderEnabled / reminderMinuteOfDay /
+    // reminderDays (per-tasbih local reminder, mirrors the v7 routine fields).
+    // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 12,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

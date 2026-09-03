@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dhikr.app.core.database.DeleteResult
 import com.dhikr.app.core.database.TasbihRepository
 import com.dhikr.app.core.database.entity.TasbihEntity
+import com.dhikr.app.core.notifications.ReminderScheduler
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +46,10 @@ data class TasbihDeleteBlocked(val tasbihName: String, val routineNames: List<St
  * a delayed settle.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewModel() {
+class TasbihLibraryViewModel(
+    private val repository: TasbihRepository,
+    private val reminderScheduler: ReminderScheduler,
+) : ViewModel() {
 
     private val query = MutableStateFlow("")
 
@@ -89,7 +93,7 @@ class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewMod
     fun onDeleteTasbih(tasbih: TasbihEntity) {
         viewModelScope.launch {
             when (val result = repository.delete(tasbih)) {
-                is DeleteResult.Success -> Unit // observeAll()/search() Flows update the list automatically
+                is DeleteResult.Success -> reminderScheduler.cancelTasbih(tasbih.id)
                 is DeleteResult.BlockedByRoutines -> {
                     _deleteBlocked.tryEmit(TasbihDeleteBlocked(tasbih.name, result.routineNames))
                 }
@@ -97,9 +101,12 @@ class TasbihLibraryViewModel(private val repository: TasbihRepository) : ViewMod
         }
     }
 
-    class Factory(private val repository: TasbihRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: TasbihRepository,
+        private val reminderScheduler: ReminderScheduler,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TasbihLibraryViewModel(repository) as T
+            TasbihLibraryViewModel(repository, reminderScheduler) as T
     }
 }
