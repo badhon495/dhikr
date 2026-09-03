@@ -55,7 +55,10 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // v12: added TasbihEntity.reminderEnabled / reminderMinuteOfDay /
     // reminderDays (per-tasbih local reminder, mirrors the v7 routine fields).
     // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
-    version = 12,
+    // v13: ~39 additional researched built-in dhikr in SeedData. No schema
+    // change; bump reseeds so existing installs pick up the new list. No hand
+    // migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 13,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
