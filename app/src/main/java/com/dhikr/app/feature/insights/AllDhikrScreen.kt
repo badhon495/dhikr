@@ -122,7 +122,7 @@ fun AllDhikrScreen(viewModel: AllDhikrViewModel, onBack: () -> Unit) {
         }
 
         state.groups.forEach { group ->
-            DhikrHistoryCard(group, todayLabel, yesterdayLabel)
+            DhikrHistoryCard(group, todayLabel, yesterdayLabel, showStats = true)
         }
     }
 }

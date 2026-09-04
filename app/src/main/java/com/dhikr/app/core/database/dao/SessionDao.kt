@@ -10,6 +10,21 @@ data class TasbihDailyTotal(val tasbihId: String, val dayStartMillis: Long, val 
 
 data class TasbihTotal(val tasbihId: String, val total: Int)
 
+/**
+ * One row per Tasbih: lifetime total plus week/month totals, and the count +
+ * elapsed millis of only those sessions that had a real duration
+ * (`endedAt > startedAt`) so an average speed can be derived without
+ * instantaneous/widget sessions dragging it toward infinity.
+ */
+data class TasbihStats(
+    val tasbihId: String,
+    val total: Int,
+    val weekTotal: Int,
+    val monthTotal: Int,
+    val timedCount: Int,
+    val timedMillis: Long,
+)
+
 @Dao
 interface SessionDao {
 
@@ -26,16 +41,22 @@ interface SessionDao {
     @Query("SELECT COALESCE(SUM(count), 0) FROM session WHERE startedAt >= :sinceMillis")
     fun totalSince(sinceMillis: Long): Flow<Int>
 
-    // tasbihId-filtered total, used by HistoryRepository.historyByTasbih() for each
-    // Tasbih's lifetime total — totalSince() alone sums across all Tasbih, which
-    // would be wrong here (see HistoryRepository for details).
-    @Query("SELECT COALESCE(SUM(count), 0) FROM session WHERE tasbihId = :tasbihId")
-    suspend fun totalForTasbih(tasbihId: String): Int
-
-    // One row per Tasbih with its lifetime total — replaces calling
-    // totalForTasbih() in a per-Tasbih loop (HistoryRepository.historyByTasbih).
-    @Query("SELECT tasbihId, COALESCE(SUM(count), 0) AS total FROM session GROUP BY tasbihId")
-    suspend fun lifetimeTotalsByTasbih(): List<TasbihTotal>
+    // One row per Tasbih: lifetime total, plus week/month windowed totals and
+    // the timed-session count/millis used for average speed. The CASE-inside-SUM
+    // form keeps this a single scan/GROUP BY instead of several queries.
+    @Query(
+        """
+        SELECT tasbihId,
+               COALESCE(SUM(count), 0) AS total,
+               COALESCE(SUM(CASE WHEN startedAt >= :weekSince THEN count ELSE 0 END), 0) AS weekTotal,
+               COALESCE(SUM(CASE WHEN startedAt >= :monthSince THEN count ELSE 0 END), 0) AS monthTotal,
+               COALESCE(SUM(CASE WHEN endedAt > startedAt THEN count ELSE 0 END), 0) AS timedCount,
+               COALESCE(SUM(CASE WHEN endedAt > startedAt THEN endedAt - startedAt ELSE 0 END), 0) AS timedMillis
+        FROM session
+        GROUP BY tasbihId
+        """
+    )
+    suspend fun statsByTasbih(weekSince: Long, monthSince: Long): List<TasbihStats>
 
     // Per-Tasbih totals since a cutoff, Flow-backed so the Tasbih card's
     // progress fill re-emits whenever a session is logged — including the

@@ -8,7 +8,25 @@ import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 
-data class TasbihHistoryGroup(val tasbihId: String, val tasbihName: String, val lifetimeTotal: Int, val dailyTotals: List<Pair<Long, Int>>)
+data class TasbihHistoryGroup(
+    val tasbihId: String,
+    val tasbihName: String,
+    val lifetimeTotal: Int,
+    val dailyTotals: List<Pair<Long, Int>>,
+    val weekTotal: Int = 0,
+    val monthTotal: Int = 0,
+    val speedPerMin: Double? = null,
+)
+
+/**
+ * Average speed in counts-per-minute over sessions that had a real duration.
+ * Returns null when there is no timed activity to divide by (e.g. only
+ * widget/instantaneous sessions), which the UI renders by omitting the figure.
+ */
+fun dhikrSpeedPerMin(timedCount: Int, timedMillis: Long): Double? {
+    if (timedMillis <= 0L) return null
+    return timedCount / (timedMillis / 60_000.0)
+}
 
 /**
  * Summary of one calendar month. `consistentDays` is the number of days that
@@ -89,25 +107,36 @@ class HistoryRepository(
     }
 
     /**
-     * Three flat queries instead of the old per-Tasbih loop (which re-ran the
-     * whole-table `dailyTotalsSince` GROUP BY, plus `getById` and
-     * `totalForTasbih`, once per Tasbih): one lifetime-totals GROUP BY, one
-     * name lookup, one last-7-days GROUP BY, all folded in memory. Groups are
-     * ordered by lifetime total, descending.
+     * Three flat queries folded in memory: one `statsByTasbih` GROUP BY
+     * (lifetime + week + month totals + timed count/millis for average speed),
+     * one name lookup, one last-7-days GROUP BY for the daily bars. Groups are
+     * ordered by lifetime total, descending. `speedPerMin` is null for Tasbih
+     * with no timed sessions.
      */
     suspend fun historyByTasbih(): List<TasbihHistoryGroup> {
         val since = DayBounds.startOfTodayMillis() - 6 * dayMillis
-        val lifetimeTotals = sessionDao.lifetimeTotalsByTasbih()
-        if (lifetimeTotals.isEmpty()) return emptyList()
+        val stats = sessionDao.statsByTasbih(
+            weekSince = DayBounds.startOfTodayMillis() - 6 * dayMillis,
+            monthSince = DayBounds.startOfMonthMillis(),
+        )
+        if (stats.isEmpty()) return emptyList()
         val names = tasbihRepository.getAll().associate { it.id to it.name }
         val dailyByTasbih = sessionDao.dailyTotalsSince(since, dayMillis, localOffsetMillis())
             .groupBy { it.tasbihId }
-        return lifetimeTotals
+        return stats
             .sortedByDescending { it.total }
             .mapNotNull { row ->
                 val name = names[row.tasbihId] ?: return@mapNotNull null
                 val daily = dailyByTasbih[row.tasbihId].orEmpty().map { it.dayStartMillis to it.total }
-                TasbihHistoryGroup(row.tasbihId, name, row.total, daily)
+                TasbihHistoryGroup(
+                    tasbihId = row.tasbihId,
+                    tasbihName = name,
+                    lifetimeTotal = row.total,
+                    dailyTotals = daily,
+                    weekTotal = row.weekTotal,
+                    monthTotal = row.monthTotal,
+                    speedPerMin = dhikrSpeedPerMin(row.timedCount, row.timedMillis),
+                )
             }
     }
 

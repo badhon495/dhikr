@@ -348,6 +348,7 @@ fun DhikrHistoryCard(
     todayLabel: String,
     yesterdayLabel: String,
     modifier: Modifier = Modifier,
+    showStats: Boolean = false,
 ) {
     val colors = DhikrTheme.colors
     Column(
@@ -361,6 +362,22 @@ fun DhikrHistoryCard(
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Text(group.tasbihName, fontSize = 14.5.sp, color = colors.text)
             Text(group.lifetimeTotal.toString(), fontSize = 14.5.sp, color = colors.terra)
+        }
+        if (showStats) {
+            val speed = group.speedPerMin
+            val parts = buildList {
+                add(stringResource(R.string.insights_dhikr_stat_week, group.weekTotal))
+                add(stringResource(R.string.insights_dhikr_stat_month, group.monthTotal))
+                if (speed != null) {
+                    add(stringResource(R.string.insights_dhikr_stat_speed, Math.round(speed).toInt()))
+                }
+            }
+            Text(
+                parts.joinToString("  ·  "),
+                fontSize = 11.sp,
+                color = colors.faint,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
         group.dailyTotals.forEach { (dayStartMillis, count) ->
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {

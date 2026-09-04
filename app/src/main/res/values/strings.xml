@@ -208,6 +208,9 @@
     <string name="insights_all_dhikr_title">All Dhikr</string>
     <string name="insights_all_dhikr_search_hint">Search Dhikr</string>
     <string name="insights_all_dhikr_no_match">No Dhikr match your search.</string>
+    <string name="insights_dhikr_stat_week">This week %1$d</string>
+    <string name="insights_dhikr_stat_month">This month %1$d</string>
+    <string name="insights_dhikr_stat_speed">~%1$d/min</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>

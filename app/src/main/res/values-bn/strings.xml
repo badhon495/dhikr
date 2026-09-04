@@ -205,6 +205,9 @@
     <string name="insights_all_dhikr_title">সব যিকর</string>
     <string name="insights_all_dhikr_search_hint">যিকর খুঁজুন</string>
     <string name="insights_all_dhikr_no_match">আপনার অনুসন্ধানের সাথে কোনো যিকর মেলেনি।</string>
+    <string name="insights_dhikr_stat_week">এই সপ্তাহে %1$d</string>
+    <string name="insights_dhikr_stat_month">এই মাসে %1$d</string>
+    <string name="insights_dhikr_stat_speed">~%1$d/মিনিট</string>
 
     <!-- Settings screen -->
     <string name="settings_title">সেটিংস</string>
