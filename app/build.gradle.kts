@@ -35,8 +35,8 @@ android {
         applicationId = "com.badhon495.dhikr"
         minSdk = 24
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Ship only the languages we actually translate. Keeps the per-app
@@ -82,12 +82,21 @@ android {
         compose = true
     }
 
+    // ABI splits produce the per-architecture APKs (+ a universal APK) for
+    // direct distribution — side-load, GitHub release. They are mutually
+    // exclusive with `bundleRelease`: the .aab already carries per-ABI splits,
+    // and building both at once fails (issuetracker.google.com/402800800). So
+    // enable splits only when no bundle task is in the graph; a plain
+    // `bundleRelease` run gets a clean single-artifact build.
+    val buildingBundle = gradle.startParameter.taskNames.any {
+        it.contains("bundle", ignoreCase = true)
+    }
     splits {
         abi {
-            isEnable = true
+            isEnable = !buildingBundle
             reset()
             include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = false
+            isUniversalApk = true
         }
     }
 
