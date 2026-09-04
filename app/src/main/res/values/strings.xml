@@ -204,6 +204,10 @@
     <string name="insights_see_all_months">See all months</string>
     <string name="insights_all_months_title">Monthly history</string>
     <string name="insights_all_months_empty">No months to show yet.</string>
+    <string name="insights_see_all_dhikr">See all Dhikr</string>
+    <string name="insights_all_dhikr_title">All Dhikr</string>
+    <string name="insights_all_dhikr_search_hint">Search Dhikr</string>
+    <string name="insights_all_dhikr_no_match">No Dhikr match your search.</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>

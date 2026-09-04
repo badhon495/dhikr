@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
+import com.dhikr.app.core.database.TasbihHistoryGroup
 import com.dhikr.app.ui.INSIGHTS_SCREEN_TEST_TAG
 import com.dhikr.app.ui.ScheduleIcon
 import com.dhikr.app.ui.headingSemantics
@@ -47,11 +48,14 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+private const val DHIKR_HISTORY_PREVIEW_LIMIT = 3
+
 @Composable
 fun InsightsScreen(
     viewModel: InsightsViewModel,
     onStartCounting: () -> Unit,
     onSeeAllMonths: () -> Unit,
+    onSeeAllDhikr: () -> Unit,
     scrollToTopSignal: Int = 0,
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -316,45 +320,72 @@ fun InsightsScreen(
                 modifier = Modifier.padding(start = 6.dp),
             )
         }
-        state.historyByTasbih.forEach { group ->
-            Column(
+        state.historyByTasbih.take(DHIKR_HISTORY_PREVIEW_LIMIT).forEach { group ->
+            DhikrHistoryCard(group, todayLabel, yesterdayLabel)
+        }
+        if (state.historyByTasbih.size > DHIKR_HISTORY_PREVIEW_LIMIT) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(colors.card)
-                    .padding(14.dp),
+                    .padding(top = 2.dp)
+                    .clip(PillShape)
+                    .clickable(role = Role.Button) { onSeeAllDhikr() }
+                    .minTapTarget()
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
             ) {
-                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    Text(group.tasbihName, fontSize = 14.5.sp, color = colors.text)
-                    Text(group.lifetimeTotal.toString(), fontSize = 14.5.sp, color = colors.terra)
+                Text(
+                    stringResource(R.string.insights_see_all_dhikr),
+                    fontSize = 12.sp,
+                    color = colors.sage,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DhikrHistoryCard(
+    group: TasbihHistoryGroup,
+    todayLabel: String,
+    yesterdayLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = DhikrTheme.colors
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(colors.card)
+            .padding(14.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Text(group.tasbihName, fontSize = 14.5.sp, color = colors.text)
+            Text(group.lifetimeTotal.toString(), fontSize = 14.5.sp, color = colors.terra)
+        }
+        group.dailyTotals.forEach { (dayStartMillis, count) ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {
+                Text(
+                    formatDayLabel(dayStartMillis, todayLabel, yesterdayLabel),
+                    fontSize = 11.sp,
+                    color = colors.faint,
+                    modifier = Modifier.width(72.dp),
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(7.dp)
+                        .clip(PillShape)
+                        .background(colors.track),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth((count.toFloat() / 200f).coerceIn(0f, 1f))
+                            .height(7.dp)
+                            .clip(PillShape)
+                            .background(colors.sage),
+                    )
                 }
-                group.dailyTotals.forEach { (dayStartMillis, count) ->
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 6.dp)) {
-                        Text(
-                            formatDayLabel(dayStartMillis, todayLabel, yesterdayLabel),
-                            fontSize = 11.sp,
-                            color = colors.faint,
-                            modifier = Modifier.width(72.dp),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(7.dp)
-                                .clip(PillShape)
-                                .background(colors.track),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth((count.toFloat() / 200f).coerceIn(0f, 1f))
-                                    .height(7.dp)
-                                    .clip(PillShape)
-                                    .background(colors.sage),
-                            )
-                        }
-                        Text(count.toString(), fontSize = 12.sp, color = colors.dim, modifier = Modifier.padding(start = 8.dp))
-                    }
-                }
+                Text(count.toString(), fontSize = 12.sp, color = colors.dim, modifier = Modifier.padding(start = 8.dp))
             }
         }
     }

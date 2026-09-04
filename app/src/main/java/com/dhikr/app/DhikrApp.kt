@@ -64,6 +64,8 @@ import com.dhikr.app.feature.counter.CounterScreen
 import com.dhikr.app.feature.counter.CounterViewModel
 import com.dhikr.app.feature.home.HomeScreen
 import com.dhikr.app.feature.home.HomeViewModel
+import com.dhikr.app.feature.insights.AllDhikrScreen
+import com.dhikr.app.feature.insights.AllDhikrViewModel
 import com.dhikr.app.feature.insights.InsightsScreen
 import com.dhikr.app.feature.insights.InsightsViewModel
 import com.dhikr.app.feature.insights.MonthlyHistoryScreen
@@ -100,6 +102,7 @@ private const val ROUTE_TASBIH_EDITOR = "tasbih/editor?id={id}"
 private const val ROUTE_COUNTER = "counter?dhikrId={dhikrId}&routineId={routineId}"
 private const val ROUTE_INSIGHTS = "insights"
 private const val ROUTE_MONTHLY_HISTORY = "insights/months"
+private const val ROUTE_ALL_DHIKR = "insights/dhikr"
 private const val ROUTE_ROUTINES = "routines"
 private const val ROUTE_ROUTINES_IMPORT = "routines/import"
 private const val ROUTE_ROUTINE_EDITOR = "routines/editor?id={id}"
@@ -345,6 +348,7 @@ fun DhikrApp(
                         scrollToTopSignal = signalOf(ROUTE_INSIGHTS),
                         onStartCounting = { navController.navigate("counter") },
                         onSeeAllMonths = { navController.navigate(ROUTE_MONTHLY_HISTORY) },
+                        onSeeAllDhikr = { navController.navigate(ROUTE_ALL_DHIKR) },
                     )
                 }
                 composable(ROUTE_MONTHLY_HISTORY) {
@@ -352,6 +356,12 @@ fun DhikrApp(
                         factory = MonthlyHistoryViewModel.Factory(historyRepository),
                     )
                     MonthlyHistoryScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+                }
+                composable(ROUTE_ALL_DHIKR) {
+                    val viewModel: AllDhikrViewModel = viewModel(
+                        factory = AllDhikrViewModel.Factory(historyRepository),
+                    )
+                    AllDhikrScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
                 }
                 composable(ROUTE_ROUTINES) {
                     val routineShareCodec = remember { RoutineShareCodec(AndroidBase64) }
