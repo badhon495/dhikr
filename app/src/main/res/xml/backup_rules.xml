@@ -4,9 +4,14 @@
   seeded/derived data and its schema evolves without migrations, so a restored
   copy from an older app version cannot be opened. Exclude it; back up only the
   user's real preferences.
+
+  ai_secrets is EncryptedSharedPreferences: its ciphertext is wrapped by a
+  hardware-backed key that never leaves the origin device, so a restored copy
+  is undecryptable and only serves to break the key store on the new device.
 -->
 <full-backup-content>
     <exclude domain="database" path="dhikr.db" />
     <exclude domain="database" path="dhikr.db-shm" />
     <exclude domain="database" path="dhikr.db-wal" />
+    <exclude domain="sharedpref" path="ai_secrets.xml" />
 </full-backup-content>
