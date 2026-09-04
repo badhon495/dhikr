@@ -37,7 +37,34 @@ object SeedData {
         updatedAt = SEED_TIMESTAMP,
     )
 
-    val builtInTasbih: List<TasbihEntity> = listOf(
+    private fun name(
+        n: Int,
+        translit: String,
+        arabic: String,
+        bangla: String,
+        meaningBn: String,
+        meaningEn: String,
+    ) = TasbihEntity(
+        id = "asma_%02d".format(n),
+        name = translit,
+        arabic = arabic,
+        pronunciation = bangla,
+        translation = "$meaningBn — $meaningEn",
+        note = "আসমাউল হুসনা #$n। ৯৯ নামের প্রসিদ্ধ তালিকা — তিরমিযি ৩৫০৭, ইবনে মাজাহ ৩৮৬১।",
+        source = "Jami at-Tirmidhi 3507",
+        lapTarget = 3,
+        lapCount = 1,
+        isFavorite = false,
+        isBuiltIn = true,
+        createdAt = SEED_TIMESTAMP,
+        updatedAt = SEED_TIMESTAMP,
+    )
+
+    val builtInTasbih: List<TasbihEntity> by lazy {
+        coreTasbih + asmaUlHusnaList
+    }
+
+    private val coreTasbih: List<TasbihEntity> = listOf(
         TasbihEntity(
             id = "kursi",
             name = "Ayatul Kursi",
@@ -1675,6 +1702,115 @@ object SeedData {
             source = "Sahih al-Bukhari 5009",
         ),
 
+        // --- Asma-ul-Husna: the 99 names of Allah ----------------------------
+        // Canonical order follows the well-known al-Walid b. Muslim enumeration
+        // appended to the hadith of Abu Hurayrah (Jami at-Tirmidhi 3507 / Sunan
+        // Ibn Majah 3861) — the list used on virtually every printed poster and
+        // app. `translation` carries the Bangla meaning followed by the English.
+        // Each name recites lightly, so lapTarget = 3. The 99 rows live in
+        // `asmaUlHusnaList` below and builtInTasbih concatenates them lazily.
+    )
+
+    private val asmaUlHusnaList: List<TasbihEntity> = listOf(
+        name(1, "Ar-Rahman", "الرَّحْمَٰنُ", "আর-রহমান", "পরম করুণাময়", "The Most Compassionate"),
+        name(2, "Ar-Rahim", "الرَّحِيمُ", "আর-রহীম", "পরম দয়ালু", "The Most Merciful"),
+        name(3, "Al-Malik", "الْمَلِكُ", "আল-মালিক", "অধিপতি", "The King, the Sovereign"),
+        name(4, "Al-Quddus", "الْقُدُّوسُ", "আল-কুদ্দূস", "মহাপবিত্র", "The Most Holy"),
+        name(5, "As-Salam", "السَّلَامُ", "আস-সালাম", "শান্তির উৎস", "The Source of Peace"),
+        name(6, "Al-Mu'min", "الْمُؤْمِنُ", "আল-মু'মিন", "নিরাপত্তাদাতা", "The Granter of Security"),
+        name(7, "Al-Muhaymin", "الْمُهَيْمِنُ", "আল-মুহাইমিন", "রক্ষণাবেক্ষণকারী", "The Guardian, the Overseer"),
+        name(8, "Al-Aziz", "الْعَزِيزُ", "আল-আযীয", "মহাপরাক্রমশালী", "The Almighty"),
+        name(9, "Al-Jabbar", "الْجَبَّارُ", "আল-জাব্বার", "দুর্নিবার", "The Compeller, the Restorer"),
+        name(10, "Al-Mutakabbir", "الْمُتَكَبِّرُ", "আল-মুতাকাব্বির", "মহিমান্বিত", "The Supreme in Greatness"),
+        name(11, "Al-Khaliq", "الْخَالِقُ", "আল-খালিক", "সৃষ্টিকর্তা", "The Creator"),
+        name(12, "Al-Bari'", "الْبَارِئُ", "আল-বারি", "উদ্ভাবনকারী", "The Originator"),
+        name(13, "Al-Musawwir", "الْمُصَوِّرُ", "আল-মুসাউইর", "রূপদানকারী", "The Fashioner"),
+        name(14, "Al-Ghaffar", "الْغَفَّارُ", "আল-গাফ্ফার", "পরম ক্ষমাশীল", "The All-Forgiving"),
+        name(15, "Al-Qahhar", "الْقَهَّارُ", "আল-কাহহার", "মহাপ্রতাপশালী", "The All-Prevailing"),
+        name(16, "Al-Wahhab", "الْوَهَّابُ", "আল-ওয়াহহাব", "মহাদাতা", "The Bestower"),
+        name(17, "Ar-Razzaq", "الرَّزَّاقُ", "আর-রাযযাক", "রিযিকদাতা", "The Provider"),
+        name(18, "Al-Fattah", "الْفَتَّاحُ", "আল-ফাত্তাহ", "মহাবিজয়দাতা", "The Opener, the Judge"),
+        name(19, "Al-Alim", "الْعَلِيمُ", "আল-আলীম", "সর্বজ্ঞ", "The All-Knowing"),
+        name(20, "Al-Qabid", "الْقَابِضُ", "আল-কাবিদ", "সংকোচনকারী", "The Withholder"),
+        name(21, "Al-Basit", "الْبَاسِطُ", "আল-বাসিত", "প্রসারণকারী", "The Extender"),
+        name(22, "Al-Khafid", "الْخَافِضُ", "আল-খাফিদ", "অবনতকারী", "The Reducer"),
+        name(23, "Ar-Rafi'", "الرَّافِعُ", "আর-রাফি", "উন্নতকারী", "The Exalter"),
+        name(24, "Al-Mu'izz", "الْمُعِزُّ", "আল-মুইয্য", "সম্মানদাতা", "The Honourer"),
+        name(25, "Al-Mudhill", "الْمُذِلُّ", "আল-মুযিল্ল", "অপমানকারী", "The Dishonourer"),
+        name(26, "As-Sami'", "السَّمِيعُ", "আস-সামী", "সর্বশ্রোতা", "The All-Hearing"),
+        name(27, "Al-Basir", "الْبَصِيرُ", "আল-বাসীর", "সর্বদ্রষ্টা", "The All-Seeing"),
+        name(28, "Al-Hakam", "الْحَكَمُ", "আল-হাকাম", "বিচারক", "The Judge"),
+        name(29, "Al-Adl", "الْعَدْلُ", "আল-আদল", "ন্যায়পরায়ণ", "The Utterly Just"),
+        name(30, "Al-Latif", "اللَّطِيفُ", "আল-লাতীফ", "সূক্ষ্মদর্শী", "The Subtle, the Gentle"),
+        name(31, "Al-Khabir", "الْخَبِيرُ", "আল-খাবীর", "সম্যক অবগত", "The All-Aware"),
+        name(32, "Al-Halim", "الْحَلِيمُ", "আল-হালীম", "পরম সহনশীল", "The Forbearing"),
+        name(33, "Al-Azim", "الْعَظِيمُ", "আল-আযীম", "মহান", "The Magnificent"),
+        name(34, "Al-Ghafur", "الْغَفُورُ", "আল-গাফূর", "ক্ষমাশীল", "The All-Forgiving"),
+        name(35, "Ash-Shakur", "الشَّكُورُ", "আশ-শাকূর", "গুণগ্রাহী", "The Most Appreciative"),
+        name(36, "Al-Ali", "الْعَلِيُّ", "আল-আলী", "সুউচ্চ", "The Most High"),
+        name(37, "Al-Kabir", "الْكَبِيرُ", "আল-কাবীর", "সর্বাপেক্ষা বড়", "The Most Great"),
+        name(38, "Al-Hafiz", "الْحَفِيظُ", "আল-হাফীয", "সংরক্ষণকারী", "The Preserver"),
+        name(39, "Al-Muqit", "الْمُقِيتُ", "আল-মুকীত", "আহার্যদাতা", "The Sustainer"),
+        name(40, "Al-Hasib", "الْحَسِيبُ", "আল-হাসীব", "হিসাবগ্রহণকারী", "The Reckoner"),
+        name(41, "Al-Jalil", "الْجَلِيلُ", "আল-জালীল", "মহিমাময়", "The Majestic"),
+        name(42, "Al-Karim", "الْكَرِيمُ", "আল-কারীম", "মহানুভব", "The Most Generous"),
+        name(43, "Ar-Raqib", "الرَّقِيبُ", "আর-রাকীব", "পর্যবেক্ষণকারী", "The Watchful"),
+        name(44, "Al-Mujib", "الْمُجِيبُ", "আল-মুজীব", "প্রার্থনা কবুলকারী", "The Responsive"),
+        name(45, "Al-Wasi'", "الْوَاسِعُ", "আল-ওয়াসি", "সর্বব্যাপী", "The All-Encompassing"),
+        name(46, "Al-Hakim", "الْحَكِيمُ", "আল-হাকীম", "প্রজ্ঞাময়", "The All-Wise"),
+        name(47, "Al-Wadud", "الْوَدُودُ", "আল-ওয়াদূদ", "পরম প্রেমময়", "The Most Loving"),
+        name(48, "Al-Majid", "الْمَجِيدُ", "আল-মাজীদ", "মহাগৌরবান্বিত", "The All-Glorious"),
+        name(49, "Al-Ba'ith", "الْبَاعِثُ", "আল-বা'ইছ", "পুনরুত্থানকারী", "The Resurrector"),
+        name(50, "Ash-Shahid", "الشَّهِيدُ", "আশ-শাহীদ", "সর্বজ্ঞ সাক্ষী", "The All-Witnessing"),
+        name(51, "Al-Haqq", "الْحَقُّ", "আল-হাক্ক", "পরম সত্য", "The Absolute Truth"),
+        name(52, "Al-Wakil", "الْوَكِيلُ", "আল-ওয়াকীল", "কর্মবিধায়ক", "The Trustee, the Disposer of Affairs"),
+        name(53, "Al-Qawiyy", "الْقَوِيُّ", "আল-কাউইয়্য", "মহাশক্তিধর", "The All-Strong"),
+        name(54, "Al-Matin", "الْمَتِينُ", "আল-মাতীন", "সুদৃঢ়", "The Firm, the Steadfast"),
+        name(55, "Al-Waliyy", "الْوَلِيُّ", "আল-ওয়ালী", "অভিভাবক বন্ধু", "The Protecting Friend"),
+        name(56, "Al-Hamid", "الْحَمِيدُ", "আল-হামীদ", "প্রশংসিত", "The Praiseworthy"),
+        name(57, "Al-Muhsi", "الْمُحْصِي", "আল-মুহসী", "পূর্ণ গণনাকারী", "The All-Enumerating"),
+        name(58, "Al-Mubdi'", "الْمُبْدِئُ", "আল-মুবদি", "প্রথম সৃষ্টিকারী", "The Originator"),
+        name(59, "Al-Mu'id", "الْمُعِيدُ", "আল-মুঈদ", "পুনঃসৃষ্টিকারী", "The Restorer"),
+        name(60, "Al-Muhyi", "الْمُحْيِي", "আল-মুহয়ী", "জীবনদাতা", "The Giver of Life"),
+        name(61, "Al-Mumit", "الْمُمِيتُ", "আল-মুমীত", "মৃত্যুদাতা", "The Bringer of Death"),
+        name(62, "Al-Hayy", "الْحَيُّ", "আল-হাইয়্য", "চিরঞ্জীব", "The Ever-Living"),
+        name(63, "Al-Qayyum", "الْقَيُّومُ", "আল-কাইয়্যূম", "স্বয়ংস্থিত সর্বসত্তার ধারক", "The Self-Subsisting Sustainer of all"),
+        name(64, "Al-Wajid", "الْوَاجِدُ", "আল-ওয়াজিদ", "অভাবমুক্ত", "The Perceiver, the Finder"),
+        name(65, "Al-Majid", "الْمَاجِدُ", "আল-মাজিদ", "মহিমান্বিত", "The Illustrious"),
+        name(66, "Al-Wahid", "الْوَاحِدُ", "আল-ওয়াহিদ", "এক", "The One"),
+        name(67, "Al-Ahad", "الْأَحَدُ", "আল-আহাদ", "অদ্বিতীয়", "The Indivisible, the Unique"),
+        name(68, "As-Samad", "الصَّمَدُ", "আস-সামাদ", "অমুখাপেক্ষী", "The Eternal, the Self-Sufficient"),
+        name(69, "Al-Qadir", "الْقَادِرُ", "আল-কাদির", "সর্বশক্তিমান", "The All-Powerful"),
+        name(70, "Al-Muqtadir", "الْمُقْتَدِرُ", "আল-মুকতাদির", "প্রবল ক্ষমতাধর", "The All-Determining"),
+        name(71, "Al-Muqaddim", "الْمُقَدِّمُ", "আল-মুকাদ্দিম", "অগ্রসরকারী", "The Expediter"),
+        name(72, "Al-Mu'akhkhir", "الْمُؤَخِّرُ", "আল-মু'আখখির", "বিলম্বকারী", "The Delayer"),
+        name(73, "Al-Awwal", "الْأَوَّلُ", "আল-আউয়াল", "অনাদি", "The First"),
+        name(74, "Al-Akhir", "الْآخِرُ", "আল-আখির", "অনন্ত", "The Last"),
+        name(75, "Az-Zahir", "الظَّاهِرُ", "আয-যাহির", "প্রকাশ্য", "The Manifest"),
+        name(76, "Al-Batin", "الْبَاطِنُ", "আল-বাতিন", "অপ্রকাশ্য", "The Hidden"),
+        name(77, "Al-Wali", "الْوَالِي", "আল-ওয়ালী", "সর্বময় কর্তা", "The Governor"),
+        name(78, "Al-Muta'ali", "الْمُتَعَالِي", "আল-মুতাআলী", "সর্বোচ্চ মহান", "The Most Exalted"),
+        name(79, "Al-Barr", "الْبَرُّ", "আল-বার্র", "কল্যাণকারী", "The Source of All Goodness"),
+        name(80, "At-Tawwab", "التَّوَّابُ", "আত-তাওয়াব", "তওবা কবুলকারী", "The Ever-Accepting of Repentance"),
+        name(81, "Al-Muntaqim", "الْمُنْتَقِمُ", "আল-মুনতাকিম", "প্রতিশোধ গ্রহণকারী", "The Avenger"),
+        name(82, "Al-Afuww", "الْعَفُوُّ", "আল-আফুউ", "পরম মার্জনাকারী", "The Pardoner"),
+        name(83, "Ar-Ra'uf", "الرَّءُوفُ", "আর-রাঊফ", "পরম স্নেহশীল", "The Ever-Gentle, the Kind"),
+        name(84, "Malik-ul-Mulk", "مَالِكُ الْمُلْكِ", "মালিকুল মুলক", "সমগ্র রাজত্বের অধিপতি", "Master of the Kingdom"),
+        name(85, "Dhul-Jalali wal-Ikram", "ذُو الْجَلَالِ وَالْإِكْرَامِ", "যুল জালালি ওয়াল ইকরাম", "মহিমা ও সম্মানের অধিকারী", "Possessor of Majesty and Honour"),
+        name(86, "Al-Muqsit", "الْمُقْسِطُ", "আল-মুকসিত", "ন্যায়বিচারক", "The Equitable"),
+        name(87, "Al-Jami'", "الْجَامِعُ", "আল-জামি", "একত্রকারী", "The Gatherer"),
+        name(88, "Al-Ghani", "الْغَنِيُّ", "আল-গানী", "অভাবমুক্ত ঐশ্বর্যবান", "The Self-Sufficient"),
+        name(89, "Al-Mughni", "الْمُغْنِي", "আল-মুগনী", "অভাবমোচনকারী", "The Enricher"),
+        name(90, "Al-Mani'", "الْمَانِعُ", "আল-মানি", "প্রতিরোধকারী", "The Withholder, the Preventer"),
+        name(91, "Ad-Darr", "الضَّارُّ", "আদ-দার্র", "অনিষ্টের ক্ষমতাধর", "The Distresser"),
+        name(92, "An-Nafi'", "النَّافِعُ", "আন-নাফি", "কল্যাণদাতা", "The Bestower of Benefit"),
+        name(93, "An-Nur", "النُّورُ", "আন-নূর", "জ্যোতি", "The Light"),
+        name(94, "Al-Hadi", "الْهَادِي", "আল-হাদী", "পথপ্রদর্শক", "The Guide"),
+        name(95, "Al-Badi'", "الْبَدِيعُ", "আল-বাদী", "অতুলনীয় স্রষ্টা", "The Incomparable Originator"),
+        name(96, "Al-Baqi", "الْبَاقِي", "আল-বাকী", "চিরস্থায়ী", "The Ever-Enduring"),
+        name(97, "Al-Warith", "الْوَارِثُ", "আল-ওয়ারিছ", "চূড়ান্ত উত্তরাধিকারী", "The Inheritor"),
+        name(98, "Ar-Rashid", "الرَّشِيدُ", "আর-রাশীদ", "সঠিক পথের পরিচালক", "The Guide to the Right Path"),
+        name(99, "As-Sabur", "الصَّبُورُ", "আস-সাবূর", "পরম ধৈর্যশীল", "The Most Patient"),
     )
 
     // Presets seed as favorites so they appear on Home out of the box; the user
@@ -1684,9 +1820,14 @@ object SeedData {
         RoutineEntity(id = "evening", name = "Evening Dhikr", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
         RoutineEntity(id = "after_salah", name = "After Salah", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
         RoutineEntity(id = "before_sleep", name = "Before Sleep", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
+        RoutineEntity(id = "asma_ul_husna", name = "Asma-ul-Husna", isPreset = true, isFavorite = true, createdAt = SEED_TIMESTAMP, updatedAt = SEED_TIMESTAMP),
     )
 
-    val presetRoutineSteps: List<RoutineStepEntity> = listOf(
+    val presetRoutineSteps: List<RoutineStepEntity> by lazy {
+        coreRoutineSteps + asmaUlHusnaSteps
+    }
+
+    private val coreRoutineSteps: List<RoutineStepEntity> = listOf(
         // Morning Dhikr: SubhanAllah x33, Alhamdulillah x33, AllahuAkbar x34 (matches
         // the prototype's ROUTINES array and design README's own example exactly —
         // design/Dhikr Android App.dc.html's `morning`/`salah` routine definitions)
@@ -1709,4 +1850,14 @@ object SeedData {
         RoutineStepEntity(routineId = "before_sleep", tasbihId = "istighfar", stepOrder = 0, targetCount = 100),
         RoutineStepEntity(routineId = "before_sleep", tasbihId = "bihamdihi", stepOrder = 1, targetCount = 100),
     )
+
+    // Asma-ul-Husna: walk all 99 names in canonical order, 3 recitations each.
+    private val asmaUlHusnaSteps: List<RoutineStepEntity> = (1..99).map { n ->
+        RoutineStepEntity(
+            routineId = "asma_ul_husna",
+            tasbihId = "asma_%02d".format(n),
+            stepOrder = n - 1,
+            targetCount = 3,
+        )
+    }
 }

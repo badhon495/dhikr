@@ -16,11 +16,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -408,16 +412,28 @@ fun CounterScreen(
         }
 
         // ---- Routine progress chips: current sage-filled, completed faint,
-        // upcoming dim. Only rendered when a routine is actively running. ----
+        // upcoming dim. Only rendered when a routine is actively running. A
+        // routine can have many steps (the Asma-ul-Husna preset has 99), so the
+        // strip scrolls horizontally and keeps the current step in view. ----
         if (state.routineSteps.isNotEmpty()) {
-            Row(
+            val chipListState = rememberLazyListState()
+            LaunchedEffect(state.currentRoutineStepIndex) {
+                val target = state.currentRoutineStepIndex
+                if (target >= 0 && target < state.routineSteps.size) {
+                    // Bias one item earlier so the current chip is not flush to
+                    // the leading edge.
+                    chipListState.animateScrollToItem((target - 1).coerceAtLeast(0))
+                }
+            }
+            LazyRow(
+                state = chipListState,
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
+                contentPadding = PaddingValues(horizontal = 14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp)
                     .padding(bottom = 8.dp),
             ) {
-                state.routineSteps.forEachIndexed { index, step ->
+                itemsIndexed(state.routineSteps) { index, step ->
                     val isCurrent = index == state.currentRoutineStepIndex
                     val isCompleted = index < state.currentRoutineStepIndex
                     val bg = if (isCurrent) colors.sage else colors.surface
@@ -436,6 +452,7 @@ fun CounterScreen(
                             "${step.tasbihName.substringBefore(' ')} ${step.targetCount}",
                             fontSize = 11.5.sp,
                             color = fg,
+                            maxLines = 1,
                         )
                     }
                 }

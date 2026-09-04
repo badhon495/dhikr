@@ -64,7 +64,11 @@ import com.dhikr.app.core.database.entity.TasbihProgressEntity
     // weak-chain items flagged). No schema change; bump reseeds.
     // v15: removed the 10 weak/disputed-chain dhikr (⚠️-flagged) from SeedData
     // per authenticity review. No schema change; bump reseeds.
-    version = 15,
+    // v16: added the 99 names of Allah (Asma-ul-Husna) as built-in tasbih
+    // (asma_01..asma_99) plus a favorited 99-step "Asma-ul-Husna" preset
+    // routine. No schema change; bump reseeds so existing installs pick them up.
+    // No hand migration — fallbackToDestructiveMigration rebuilds + reseeds.
+    version = 16,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
