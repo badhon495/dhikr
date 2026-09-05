@@ -292,6 +292,7 @@
     <string name="settings_about_no_upload">Nothing is uploaded. Your counts stay on this device.</string>
     <string name="settings_about_developer">Developed by badhon495 (github.com/badhon495)</string>
     <string name="settings_about_feedback">Feature suggestions or concerns? badhon495@gmail.com</string>
+    <string name="settings_about_disclaimer">Disclaimer: the developer of this app is not an Islamic scholar. Content is gathered from the internet with help from AI. If you spot a mistake, please email badhon495@gmail.com.</string>
     <string name="settings_version">Version %1$s</string>
 
     <!-- Reminders (Phase 5A) -->

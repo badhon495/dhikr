@@ -280,6 +280,7 @@ fun SettingsScreen(
                 stringResource(R.string.settings_about_feedback),
                 "mailto:badhon495@gmail.com",
             )
+            AboutLine(stringResource(R.string.settings_about_disclaimer))
             if (state.appVersion.isNotEmpty()) {
                 Text(
                     stringResource(R.string.settings_version, state.appVersion),

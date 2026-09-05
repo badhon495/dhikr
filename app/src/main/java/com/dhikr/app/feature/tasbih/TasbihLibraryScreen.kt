@@ -466,43 +466,47 @@ private fun TasbihRow(
                 .widthIn(max = 96.dp)
                 .padding(horizontal = 8.dp),
         )
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                // Read-only view of the Tasbih's note (edited via the editor
-                // screen); an empty note still opens the dialog with a
-                // placeholder line rather than looking unresponsive.
-                .clickable(role = Role.Button, onClickLabel = notesDescription) { onOpenNotes() }
-                .minTapTarget()
-                .semantics { contentDescription = notesDescription }
-                .padding(6.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = noteIcon(),
-                contentDescription = null,
-                tint = if (tasbih.note.isNotBlank()) colors.dim else colors.faint,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
-                .minTapTarget()
-                .semantics {
-                    contentDescription = favoriteDescription
-                    stateDescription = favoriteState
-                }
-                .padding(6.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = if (tasbih.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                contentDescription = null,
-                tint = if (tasbih.isFavorite) colors.terra else colors.faint,
-                modifier = Modifier.size(20.dp),
-            )
+        // Note + favorite stacked vertically (not side by side) so the two
+        // buttons share one column's width instead of two.
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    // Read-only view of the Tasbih's note (edited via the editor
+                    // screen); an empty note still opens the dialog with a
+                    // placeholder line rather than looking unresponsive.
+                    .clickable(role = Role.Button, onClickLabel = notesDescription) { onOpenNotes() }
+                    .minTapTarget()
+                    .semantics { contentDescription = notesDescription }
+                    .padding(6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = noteIcon(),
+                    contentDescription = null,
+                    tint = if (tasbih.note.isNotBlank()) colors.dim else colors.faint,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable(role = Role.Switch, onClickLabel = favoriteDescription) { onToggleFavorite() }
+                    .minTapTarget()
+                    .semantics {
+                        contentDescription = favoriteDescription
+                        stateDescription = favoriteState
+                    }
+                    .padding(6.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (tasbih.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = null,
+                    tint = if (tasbih.isFavorite) colors.terra else colors.faint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         }
     }
