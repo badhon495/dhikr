@@ -121,6 +121,7 @@ fun CounterScreen(
     val reducedMotion = LocalReducedMotion.current
     var showResetDialog by remember { mutableStateOf(false) }
     var showSessionSummary by remember { mutableStateOf(false) }
+    var showNotesDialog by remember { mutableStateOf(false) }
 
     // The on-screen back chevron is gated on !state.locked, but the system
     // back gesture/button bypasses that entirely — it doesn't go through
@@ -395,6 +396,26 @@ fun CounterScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
+                    // Read-only, so it stays gated on sessionReady/locked like the
+                    // rest of the row rather than the note's own emptiness — an
+                    // empty note still opens the dialog (with a placeholder line)
+                    // rather than looking broken/unresponsive.
+                    .clickable(enabled = state.sessionReady && !state.locked) { showNotesDialog = true },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = noteIcon(),
+                    contentDescription = stringResource(R.string.counter_notes_content_description),
+                    tint = if (state.locked) colors.faint else {
+                        if (state.dhikr.note.isNotBlank()) colors.dim else colors.faint
+                    },
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
                     // The lock toggle is otherwise always enabled — it is the only
                     // way back out of the locked state — but is still gated on
                     // sessionReady (finding #2): Room's seed data may not have
@@ -644,67 +665,87 @@ fun CounterScreen(
             }
         }
 
-        // ---- Control row: undo, pause/resume, reset ----
+        // ---- Control row: prev, undo, pause/resume, reset, next. (Notes moved
+        // to the top bar, beside the lock toggle — it's a look-something-up
+        // action, not a counting control, and living here made the row
+        // asymmetric once the top bar had a free slot for it.)
+        // Icon-only throughout (no visible labels) — every button's meaning is
+        // still exposed to TalkBack via contentDescription. Prev/Next switch
+        // between tasbih in Tasbih-Library order and are only ever shown
+        // outside a routine — a routine already advances its own steps in
+        // sequence, so paging through unrelated tasbih there would be
+        // meaningless (and could desync the routine's step tracking).
+        val isRoutineActive = state.routineSteps.isNotEmpty()
         Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(horizontal = 8.dp, vertical = 16.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
+            if (!isRoutineActive) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(colors.surface)
+                        .clickable(enabled = state.canGoToPrevious && !state.locked) { viewModel.onPrevious() }
+                        .minTapTarget(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = backChevronIcon(),
+                        contentDescription = stringResource(R.string.counter_previous_content_description),
+                        tint = if (state.canGoToPrevious && !state.locked) colors.dim else colors.faint,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            Box(
                 modifier = Modifier
-                    .clip(PillShape)
+                    .size(46.dp)
+                    .clip(CircleShape)
                     .background(colors.surface)
                     // Undo is blocked while locked, same as reset — a pocket
                     // touch shouldn't be able to unwind counted taps either.
                     .clickable(enabled = state.sessionReady && state.canUndo && !state.locked) { viewModel.onUndo() }
-                    .minTapTarget()
-                    .padding(horizontal = 18.dp, vertical = 11.dp),
+                    .minTapTarget(),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = undoIcon(),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.counter_undo),
                     tint = if (state.canUndo && !state.locked) colors.text else colors.faint,
                     modifier = Modifier.size(17.dp),
                 )
-                Text(
-                    text = stringResource(R.string.counter_undo),
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (state.canUndo && !state.locked) colors.text else colors.faint,
-                )
             }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
+            Box(
                 modifier = Modifier
-                    .clip(PillShape)
+                    .size(46.dp)
+                    .clip(CircleShape)
                     .background(if (state.locked) colors.surface else colors.sage)
                     // Room's seed data may not have loaded yet (finding #2).
                     // Pause/resume is blocked while locked too — the lock's
                     // whole point is a session that can't be knocked off
                     // course by a stray touch.
                     .clickable(enabled = state.sessionReady && !state.locked) { viewModel.onTogglePause() }
-                    .minTapTarget()
-                    .padding(horizontal = 18.dp, vertical = 11.dp),
+                    .minTapTarget(),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = if (state.running) {
+                Icon(
+                    imageVector = if (state.running) pauseIcon() else playIcon(),
+                    contentDescription = if (state.running) {
                         stringResource(R.string.counter_pause)
                     } else {
                         stringResource(R.string.counter_resume)
                     },
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (state.locked) colors.faint else colors.onSage,
+                    tint = if (state.locked) colors.faint else colors.onSage,
+                    modifier = Modifier.size(17.dp),
                 )
             }
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(46.dp)
                     .clip(CircleShape)
                     .background(colors.surface)
                     // Reset is destructive, so it is blocked while locked and, when
@@ -720,6 +761,24 @@ fun CounterScreen(
                     tint = if (state.locked) colors.faint else colors.dim,
                     modifier = Modifier.size(18.dp),
                 )
+            }
+            if (!isRoutineActive) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(colors.surface)
+                        .clickable(enabled = state.canGoToNext && !state.locked) { viewModel.onNext() }
+                        .minTapTarget(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = forwardChevronIcon(),
+                        contentDescription = stringResource(R.string.counter_next_content_description),
+                        tint = if (state.canGoToNext && !state.locked) colors.dim else colors.faint,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
         }
     }
@@ -844,6 +903,33 @@ fun CounterScreen(
             elapsedSeconds = elapsedSeconds,
             totalCount = state.totalCount,
             onDismiss = { showSessionSummary = false },
+        )
+    }
+
+    if (showNotesDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotesDialog = false },
+            title = { Text(stringResource(R.string.counter_notes_dialog_title)) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            textContentColor = colors.dim,
+            shape = DialogShape,
+            text = {
+                Text(
+                    text = state.dhikr.note.ifBlank { stringResource(R.string.counter_notes_empty) },
+                    fontSize = 14.sp,
+                    color = colors.dim,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showNotesDialog = false }) {
+                    Text(
+                        text = stringResource(R.string.session_summary_close),
+                        color = colors.sage,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
         )
     }
 }

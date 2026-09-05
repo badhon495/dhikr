@@ -43,6 +43,130 @@ fun backChevronIcon(): ImageVector = ImageVector.Builder(
     }
 }.build()
 
+/** Mirror of [backChevronIcon] — points right instead of left. Used for the
+ * "next tasbih" control row button; [backChevronIcon] itself doubles as the
+ * "previous tasbih" icon since the shapes are identical. */
+fun forwardChevronIcon(): ImageVector = ImageVector.Builder(
+    name = "ForwardChevron",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    // SVG: M9 6l6 6-6 6
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+        pathFillType = PathFillType.NonZero,
+    ) {
+        moveTo(9f, 6f)
+        lineTo(15f, 12f)
+        lineTo(9f, 18f)
+    }
+}.build()
+
+/** Two vertical bars — standard pause glyph, shown while the session is running. */
+fun pauseIcon(): ImageVector = ImageVector.Builder(
+    name = "Pause",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ) {
+        moveTo(8f, 5f)
+        lineTo(8f, 19f)
+    }
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ) {
+        moveTo(16f, 5f)
+        lineTo(16f, 19f)
+    }
+}.build()
+
+/** Right-pointing triangle — standard play glyph, shown while paused (tap to resume). */
+fun playIcon(): ImageVector = ImageVector.Builder(
+    name = "Play",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(
+        fill = SolidColor(Color.Black),
+        stroke = null,
+        pathFillType = PathFillType.NonZero,
+    ) {
+        moveTo(7f, 4.5f)
+        lineTo(19f, 12f)
+        lineTo(7f, 19.5f)
+        close()
+    }
+}.build()
+
+/** Sheet-of-notes glyph: a document outline with two ruled lines. */
+fun noteIcon(): ImageVector = ImageVector.Builder(
+    name = "Note",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+        pathFillType = PathFillType.NonZero,
+    ) {
+        moveTo(6f, 3.5f)
+        lineTo(18f, 3.5f)
+        curveTo(18.83f, 3.5f, 19.5f, 4.17f, 19.5f, 5f)
+        lineTo(19.5f, 19f)
+        curveTo(19.5f, 19.83f, 18.83f, 20.5f, 18f, 20.5f)
+        lineTo(6f, 20.5f)
+        curveTo(5.17f, 20.5f, 4.5f, 19.83f, 4.5f, 19f)
+        lineTo(4.5f, 5f)
+        curveTo(4.5f, 4.17f, 5.17f, 3.5f, 6f, 3.5f)
+        close()
+    }
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ) {
+        moveTo(8f, 9f)
+        lineTo(16f, 9f)
+    }
+    path(
+        fill = null,
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = STROKE_WIDTH,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round,
+    ) {
+        moveTo(8f, 14f)
+        lineTo(14f, 14f)
+    }
+}.build()
+
 fun undoIcon(): ImageVector = ImageVector.Builder(
     name = "Undo",
     defaultWidth = 24.dp,

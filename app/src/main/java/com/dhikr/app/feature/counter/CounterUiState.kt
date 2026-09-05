@@ -36,6 +36,11 @@ data class CounterUiState(
     // tap area and control row on this so they don't present live-looking
     // affordances while there is nothing to count yet (finding #2).
     val sessionReady: Boolean = true,
+    // Control-row prev/next: true only outside a routine (a routine already
+    // advances its own steps in sequence) and when a neighbor exists in
+    // Tasbih-Library order — see CounterViewModel's tasbihOrder cache.
+    val canGoToPrevious: Boolean = false,
+    val canGoToNext: Boolean = false,
 ) {
     val totalCount: Int get() = (lap - 1) * dhikr.lapTarget + count
     val progressFraction: Float get() = count.toFloat() / dhikr.lapTarget.toFloat()

@@ -18,6 +18,11 @@
     <string name="counter_tap_hint_locked">Locked — counting still works</string>
     <string name="counter_tap_action_label">Count</string>
     <string name="counter_count_description">%1$d of %2$d</string>
+    <string name="counter_previous_content_description">Previous tasbih</string>
+    <string name="counter_next_content_description">Next tasbih</string>
+    <string name="counter_notes_content_description">Notes</string>
+    <string name="counter_notes_dialog_title">Notes</string>
+    <string name="counter_notes_empty">No notes added for this tasbih yet.</string>
 
     <!-- Reset confirmation dialog -->
     <string name="reset_dialog_title">Reset this session?</string>

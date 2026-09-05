@@ -18,6 +18,11 @@
     <string name="counter_tap_hint_locked">লক করা — গণনা তবুও চলছে</string>
     <string name="counter_tap_action_label">গণনা</string>
     <string name="counter_count_description">%2$d এর %1$d</string>
+    <string name="counter_previous_content_description">পূর্ববর্তী তসবিহ</string>
+    <string name="counter_next_content_description">পরবর্তী তসবিহ</string>
+    <string name="counter_notes_content_description">নোট</string>
+    <string name="counter_notes_dialog_title">নোট</string>
+    <string name="counter_notes_empty">এই তসবিহর জন্য এখনো কোনো নোট যোগ করা হয়নি।</string>
 
     <!-- Reset confirmation dialog -->
     <string name="reset_dialog_title">এই সেশন রিসেট করবেন?</string>

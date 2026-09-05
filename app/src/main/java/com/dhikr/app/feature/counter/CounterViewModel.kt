@@ -72,6 +72,13 @@ class CounterViewModel(
     // case dhikr/engine are never assigned and _uiState stays at Empty.
     private var sessionReady = false
 
+    // Every tasbih id, in the same order the Tasbih Library screen lists them
+    // (isBuiltIn DESC, name ASC — see TasbihDao.observeAll()). Loaded once when
+    // a standalone (non-routine) session starts, and used only to drive the
+    // control row's prev/next buttons — never touched on the routine path,
+    // since those buttons are hidden entirely while a routine is active.
+    private var tasbihOrder: List<String> = emptyList()
+
     // Routine state — empty/−1 means "not running a routine".
     private var activeRoutine: RoutineWithSteps? = null
     private var routineStepIndex = -1
@@ -222,6 +229,7 @@ class CounterViewModel(
         if (loaded == null) return // nothing to load; _uiState stays at Empty
         dhikr = loaded
         engine = TasbihCounter(dhikr.lapTarget, dhikr.lapCount)
+        tasbihOrder = tasbihRepository.getAll().map { it.id }
         // Per-Tasbih saved position for today (survives opening other Tasbih,
         // cleared at local midnight). Authoritative; the single DataStore
         // session is only a fallback for the pre-progress-row cold-start case.
@@ -478,6 +486,62 @@ class CounterViewModel(
         _uiState.value = buildState()
     }
 
+    /** Control-row "previous" — steps to the tasbih immediately before the
+     * current one in [tasbihOrder]. No-op past the first entry, during a
+     * routine, or before a session has loaded (finding #2 guard). */
+    fun onPrevious() {
+        if (!sessionReady || activeRoutine != null) return
+        val index = tasbihOrder.indexOf(dhikr.id)
+        if (index <= 0) return
+        viewModelScope.launch {
+            val target = tasbihRepository.getById(tasbihOrder[index - 1]) ?: return@launch
+            switchStandaloneTasbih(target)
+        }
+    }
+
+    /** Control-row "next" — the mirror of [onPrevious]. */
+    fun onNext() {
+        if (!sessionReady || activeRoutine != null) return
+        val index = tasbihOrder.indexOf(dhikr.id)
+        if (index < 0 || index >= tasbihOrder.lastIndex) return
+        viewModelScope.launch {
+            val target = tasbihRepository.getById(tasbihOrder[index + 1]) ?: return@launch
+            switchStandaloneTasbih(target)
+        }
+    }
+
+    /**
+     * Swaps the in-progress standalone session over to [newTasbih] without
+     * navigating — the screen instance (and this ViewModel) stays put, so
+     * repeated prev/next taps don't grow the nav back stack the way opening a
+     * tasbih from Home/Library does. Whatever was in progress on the current
+     * tasbih is logged first, exactly like a routine step advancing
+     * (advanceRoutineStep()); the target's own saved per-tasbih progress (if
+     * any) is then restored, same as a fresh navigation into it would.
+     */
+    private suspend fun switchStandaloneTasbih(newTasbih: TasbihEntity) {
+        logCurrentSessionIfNonZero()
+        dhikr = newTasbih
+        engine = TasbihCounter(newTasbih.lapTarget, newTasbih.lapCount)
+        val savedProgress = tasbihRepository.getSessionProgress(newTasbih.id)
+        if (savedProgress != null) {
+            val restoredLap = savedProgress.lap.coerceIn(1, newTasbih.lapCount + 1)
+            val restoredCount = savedProgress.count
+                .coerceIn(0, (newTasbih.lapTarget - 1).coerceAtLeast(0))
+            engine.restore(count = restoredCount, lap = restoredLap, previous = null)
+            loggedTotal = savedProgress.loggedInSession.coerceAtLeast(0)
+        } else {
+            loggedTotal = 0
+        }
+        // A fresh session window for the newly-shown tasbih, same as opening a
+        // different tasbih via navigation would start at (see initializeSession —
+        // elapsedSeconds only ever carries over when the global saved session
+        // slot happens to already point at that exact tasbih).
+        _elapsedSeconds.value = 0
+        sessionStartedAtMillis = System.currentTimeMillis()
+        _uiState.value = buildState()
+    }
+
     fun onToggleLock() {
         // See onTap() — same not-ready-yet guard (finding #2). Unlike the
         // other handlers this one doesn't touch engine/dhikr directly, but
@@ -491,6 +555,7 @@ class CounterViewModel(
         val snap = engine.snapshot()
         val routine = activeRoutine
         val steps = if (routine != null) cachedRoutineStepDisplays else emptyList()
+        val tasbihIndex = if (routine == null) tasbihOrder.indexOf(dhikr.id) else -1
         return CounterUiState(
             dhikr = dhikr,
             count = snap.count,
@@ -509,6 +574,8 @@ class CounterViewModel(
             // set true (initializeSession()'s success path, or the handlers
             // above, all of which now guard on it first) — see finding #2.
             sessionReady = true,
+            canGoToPrevious = tasbihIndex > 0,
+            canGoToNext = tasbihIndex in 0 until tasbihOrder.lastIndex,
         )
     }
 
