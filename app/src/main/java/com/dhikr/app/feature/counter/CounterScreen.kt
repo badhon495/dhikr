@@ -30,9 +30,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -348,21 +353,24 @@ fun CounterScreen(
                 .padding(horizontal = 14.dp, vertical = 6.dp)
                 .height(48.dp),
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    // Back navigation is blocked while the counter is locked, so a
-                    // stray pocket-touch can't drop out of an active session.
-                    .clickable(enabled = !state.locked) { onBack() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = backChevronIcon(),
-                    contentDescription = stringResource(R.string.counter_back_content_description),
-                    tint = if (state.locked) colors.faint else colors.dim,
-                    modifier = Modifier.size(21.dp),
-                )
+            val backLabel = stringResource(R.string.counter_back_content_description)
+            IconButtonTooltip(label = backLabel) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        // Back navigation is blocked while the counter is locked, so a
+                        // stray pocket-touch can't drop out of an active session.
+                        .clickable(enabled = !state.locked) { onBack() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = backChevronIcon(),
+                        contentDescription = backLabel,
+                        tint = if (state.locked) colors.faint else colors.dim,
+                        modifier = Modifier.size(21.dp),
+                    )
+                }
             }
             val sessionLabelDescription = stringResource(R.string.counter_session_label_content_description)
             Column(
@@ -392,43 +400,49 @@ fun CounterScreen(
                         },
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    // Read-only, so it stays gated on sessionReady/locked like the
-                    // rest of the row rather than the note's own emptiness — an
-                    // empty note still opens the dialog (with a placeholder line)
-                    // rather than looking broken/unresponsive.
-                    .clickable(enabled = state.sessionReady && !state.locked) { showNotesDialog = true },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = noteIcon(),
-                    contentDescription = stringResource(R.string.counter_notes_content_description),
-                    tint = if (state.locked) colors.faint else {
-                        if (state.dhikr.note.isNotBlank()) colors.dim else colors.faint
-                    },
-                    modifier = Modifier.size(18.dp),
-                )
+            val notesLabel = stringResource(R.string.counter_notes_content_description)
+            IconButtonTooltip(label = notesLabel) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        // Read-only, so it stays gated on sessionReady/locked like the
+                        // rest of the row rather than the note's own emptiness — an
+                        // empty note still opens the dialog (with a placeholder line)
+                        // rather than looking broken/unresponsive.
+                        .clickable(enabled = state.sessionReady && !state.locked) { showNotesDialog = true },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = noteIcon(),
+                        contentDescription = notesLabel,
+                        tint = if (state.locked) colors.faint else {
+                            if (state.dhikr.note.isNotBlank()) colors.dim else colors.faint
+                        },
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
             }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    // The lock toggle is otherwise always enabled — it is the only
-                    // way back out of the locked state — but is still gated on
-                    // sessionReady (finding #2): Room's seed data may not have
-                    // loaded yet, and there is nothing to lock/unlock before then.
-                    .clickable(enabled = state.sessionReady) { viewModel.onToggleLock() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = lockIcon(state.locked),
-                    contentDescription = stringResource(R.string.counter_lock_content_description),
-                    tint = if (state.locked) colors.terra else colors.faint,
-                    modifier = Modifier.size(19.dp),
-                )
+            val lockLabel = stringResource(R.string.counter_lock_content_description)
+            IconButtonTooltip(label = lockLabel) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        // The lock toggle is otherwise always enabled — it is the only
+                        // way back out of the locked state — but is still gated on
+                        // sessionReady (finding #2): Room's seed data may not have
+                        // loaded yet, and there is nothing to lock/unlock before then.
+                        .clickable(enabled = state.sessionReady) { viewModel.onToggleLock() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = lockIcon(state.locked),
+                        contentDescription = lockLabel,
+                        tint = if (state.locked) colors.terra else colors.faint,
+                        modifier = Modifier.size(19.dp),
+                    )
+                }
             }
         }
 
@@ -684,100 +698,115 @@ fun CounterScreen(
                 .padding(horizontal = 8.dp, vertical = 16.dp),
         ) {
             if (!isRoutineActive) {
+                val previousLabel = stringResource(R.string.counter_previous_content_description)
+                IconButtonTooltip(label = previousLabel) {
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(colors.surface)
+                            .clickable(enabled = state.canGoToPrevious && !state.locked) { viewModel.onPrevious() }
+                            .minTapTarget(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = backChevronIcon(),
+                            contentDescription = previousLabel,
+                            tint = if (state.canGoToPrevious && !state.locked) colors.dim else colors.faint,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+            val undoLabel = stringResource(R.string.counter_undo)
+            IconButtonTooltip(label = undoLabel) {
                 Box(
                     modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
                         .background(colors.surface)
-                        .clickable(enabled = state.canGoToPrevious && !state.locked) { viewModel.onPrevious() }
+                        // Undo is blocked while locked, same as reset — a pocket
+                        // touch shouldn't be able to unwind counted taps either.
+                        .clickable(enabled = state.sessionReady && state.canUndo && !state.locked) { viewModel.onUndo() }
                         .minTapTarget(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = backChevronIcon(),
-                        contentDescription = stringResource(R.string.counter_previous_content_description),
-                        tint = if (state.canGoToPrevious && !state.locked) colors.dim else colors.faint,
+                        imageVector = undoIcon(),
+                        contentDescription = undoLabel,
+                        tint = if (state.canUndo && !state.locked) colors.text else colors.faint,
+                        modifier = Modifier.size(17.dp),
+                    )
+                }
+            }
+            val pauseResumeLabel = if (state.running) {
+                stringResource(R.string.counter_pause)
+            } else {
+                stringResource(R.string.counter_resume)
+            }
+            IconButtonTooltip(label = pauseResumeLabel) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(if (state.locked) colors.surface else colors.sage)
+                        // Room's seed data may not have loaded yet (finding #2).
+                        // Pause/resume is blocked while locked too — the lock's
+                        // whole point is a session that can't be knocked off
+                        // course by a stray touch.
+                        .clickable(enabled = state.sessionReady && !state.locked) { viewModel.onTogglePause() }
+                        .minTapTarget(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (state.running) pauseIcon() else playIcon(),
+                        contentDescription = pauseResumeLabel,
+                        tint = if (state.locked) colors.faint else colors.onSage,
+                        modifier = Modifier.size(17.dp),
+                    )
+                }
+            }
+            val resetLabel = stringResource(R.string.counter_reset_content_description)
+            IconButtonTooltip(label = resetLabel) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(colors.surface)
+                        // Reset is destructive, so it is blocked while locked and, when
+                        // unlocked, only opens the confirmation dialog. Also gated on
+                        // sessionReady (finding #2) — Room's seed data may not have
+                        // loaded yet.
+                        .clickable(enabled = state.sessionReady && !state.locked) { showResetDialog = true },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = resetIcon(),
+                        contentDescription = resetLabel,
+                        tint = if (state.locked) colors.faint else colors.dim,
                         modifier = Modifier.size(18.dp),
                     )
                 }
             }
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(colors.surface)
-                    // Undo is blocked while locked, same as reset — a pocket
-                    // touch shouldn't be able to unwind counted taps either.
-                    .clickable(enabled = state.sessionReady && state.canUndo && !state.locked) { viewModel.onUndo() }
-                    .minTapTarget(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = undoIcon(),
-                    contentDescription = stringResource(R.string.counter_undo),
-                    tint = if (state.canUndo && !state.locked) colors.text else colors.faint,
-                    modifier = Modifier.size(17.dp),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(if (state.locked) colors.surface else colors.sage)
-                    // Room's seed data may not have loaded yet (finding #2).
-                    // Pause/resume is blocked while locked too — the lock's
-                    // whole point is a session that can't be knocked off
-                    // course by a stray touch.
-                    .clickable(enabled = state.sessionReady && !state.locked) { viewModel.onTogglePause() }
-                    .minTapTarget(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (state.running) pauseIcon() else playIcon(),
-                    contentDescription = if (state.running) {
-                        stringResource(R.string.counter_pause)
-                    } else {
-                        stringResource(R.string.counter_resume)
-                    },
-                    tint = if (state.locked) colors.faint else colors.onSage,
-                    modifier = Modifier.size(17.dp),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(colors.surface)
-                    // Reset is destructive, so it is blocked while locked and, when
-                    // unlocked, only opens the confirmation dialog. Also gated on
-                    // sessionReady (finding #2) — Room's seed data may not have
-                    // loaded yet.
-                    .clickable(enabled = state.sessionReady && !state.locked) { showResetDialog = true },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = resetIcon(),
-                    contentDescription = stringResource(R.string.counter_reset_content_description),
-                    tint = if (state.locked) colors.faint else colors.dim,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
             if (!isRoutineActive) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(CircleShape)
-                        .background(colors.surface)
-                        .clickable(enabled = state.canGoToNext && !state.locked) { viewModel.onNext() }
-                        .minTapTarget(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = forwardChevronIcon(),
-                        contentDescription = stringResource(R.string.counter_next_content_description),
-                        tint = if (state.canGoToNext && !state.locked) colors.dim else colors.faint,
-                        modifier = Modifier.size(18.dp),
-                    )
+                val nextLabel = stringResource(R.string.counter_next_content_description)
+                IconButtonTooltip(label = nextLabel) {
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(colors.surface)
+                            .clickable(enabled = state.canGoToNext && !state.locked) { viewModel.onNext() }
+                            .minTapTarget(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = forwardChevronIcon(),
+                            contentDescription = nextLabel,
+                            tint = if (state.canGoToNext && !state.locked) colors.dim else colors.faint,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 }
             }
         }
@@ -980,6 +1009,27 @@ private fun SessionSummaryDialog(
                 )
             }
         },
+    )
+}
+
+/**
+ * Wraps an icon-only button so a long-press pops up its name as a small
+ * tooltip label — every button on this screen is icon-only (no visible
+ * text), so this is the only way to surface what each one does short of
+ * TalkBack. [label] doubles as the tooltip text and should be the same
+ * string already passed as the wrapped button's contentDescription.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun IconButtonTooltip(
+    label: String,
+    content: @Composable () -> Unit,
+) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = { PlainTooltip { Text(label) } },
+        state = rememberTooltipState(),
+        content = content,
     )
 }
 
