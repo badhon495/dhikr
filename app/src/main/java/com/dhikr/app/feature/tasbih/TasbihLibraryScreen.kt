@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dhikr.app.R
 import com.dhikr.app.core.database.entity.TasbihEntity
+import com.dhikr.app.feature.counter.noteIcon
 import com.dhikr.app.ui.TASBIH_LIST_TEST_TAG
 import com.dhikr.app.ui.headingSemantics
 import com.dhikr.app.ui.minTapTarget
@@ -86,6 +87,7 @@ fun TasbihLibraryScreen(
     var actionMenuTarget by remember { mutableStateOf<TasbihEntity?>(null) }
     var deleteConfirmTarget by remember { mutableStateOf<TasbihEntity?>(null) }
     var deleteBlockedMessage by remember { mutableStateOf<TasbihDeleteBlocked?>(null) }
+    var notesTarget by remember { mutableStateOf<TasbihEntity?>(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.deleteBlocked.collect { deleteBlockedMessage = it }
@@ -213,6 +215,7 @@ fun TasbihLibraryScreen(
                         onToggleFavorite = {
                             viewModel.onToggleFavorite(tasbih.id, tasbih.isFavorite)
                         },
+                        onOpenNotes = { notesTarget = tasbih },
                         // Long-press opens the Edit/Delete menu for every
                         // Tasbih, built-in included.
                         onLongPress = { actionMenuTarget = tasbih },
@@ -291,6 +294,33 @@ fun TasbihLibraryScreen(
             },
         )
     }
+
+    notesTarget?.let { tasbih ->
+        AlertDialog(
+            onDismissRequest = { notesTarget = null },
+            title = { Text(stringResource(R.string.tasbih_library_notes_dialog_title)) },
+            containerColor = colors.card,
+            titleContentColor = colors.text,
+            textContentColor = colors.dim,
+            shape = DialogShape,
+            text = {
+                Text(
+                    text = tasbih.note.ifBlank { stringResource(R.string.tasbih_library_notes_empty) },
+                    fontSize = 14.sp,
+                    color = colors.dim,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { notesTarget = null }) {
+                    Text(
+                        text = stringResource(R.string.session_summary_close),
+                        color = colors.sage,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -353,6 +383,7 @@ private fun TasbihRow(
     progress: Float,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onOpenNotes: () -> Unit,
     onLongPress: (() -> Unit)?,
 ) {
     val colors = DhikrTheme.colors
@@ -361,6 +392,7 @@ private fun TasbihRow(
         if (tasbih.isFavorite) R.string.tasbih_library_favorite_state_on
         else R.string.tasbih_library_favorite_state_off,
     )
+    val notesDescription = stringResource(R.string.tasbih_library_notes_content_description)
     val fill = progress.coerceIn(0f, 1f)
 
     Box(
@@ -434,6 +466,25 @@ private fun TasbihRow(
                 .widthIn(max = 96.dp)
                 .padding(horizontal = 8.dp),
         )
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                // Read-only view of the Tasbih's note (edited via the editor
+                // screen); an empty note still opens the dialog with a
+                // placeholder line rather than looking unresponsive.
+                .clickable(role = Role.Button, onClickLabel = notesDescription) { onOpenNotes() }
+                .minTapTarget()
+                .semantics { contentDescription = notesDescription }
+                .padding(6.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = noteIcon(),
+                contentDescription = null,
+                tint = if (tasbih.note.isNotBlank()) colors.dim else colors.faint,
+                modifier = Modifier.size(18.dp),
+            )
+        }
         Box(
             modifier = Modifier
                 .clip(CircleShape)

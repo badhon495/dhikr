@@ -79,6 +79,9 @@
     <string name="tasbih_library_favorite_content_description">Favorite</string>
     <string name="tasbih_library_favorite_state_on">Favourited</string>
     <string name="tasbih_library_favorite_state_off">Not favourited</string>
+    <string name="tasbih_library_notes_content_description">Notes</string>
+    <string name="tasbih_library_notes_dialog_title">Notes</string>
+    <string name="tasbih_library_notes_empty">No notes added for this tasbih yet.</string>
     <string name="tasbih_library_meta_laps">%1$d × %2$d laps</string>
     <string name="tasbih_library_meta_per_lap">%1$d per lap</string>
     <string name="tasbih_library_actions_title">%1$s</string>

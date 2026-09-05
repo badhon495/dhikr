@@ -76,6 +76,9 @@
     <string name="tasbih_library_favorite_content_description">প্রিয়</string>
     <string name="tasbih_library_favorite_state_on">প্রিয় করা হয়েছে</string>
     <string name="tasbih_library_favorite_state_off">প্রিয় নয়</string>
+    <string name="tasbih_library_notes_content_description">নোট</string>
+    <string name="tasbih_library_notes_dialog_title">নোট</string>
+    <string name="tasbih_library_notes_empty">এই তসবিহর জন্য এখনো কোনো নোট যোগ করা হয়নি।</string>
     <string name="tasbih_library_meta_laps">%1$d × %2$d ল্যাপ</string>
     <string name="tasbih_library_meta_per_lap">প্রতি ল্যাপে %1$d</string>
     <string name="tasbih_library_actions_title">%1$s</string>
